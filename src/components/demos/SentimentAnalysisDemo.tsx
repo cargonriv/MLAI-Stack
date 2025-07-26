@@ -9,8 +9,26 @@ const SentimentAnalysisDemo = () => {
   const [sentiment, setSentiment] = useState<{label: string, score: number, color: string} | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Input validation and sanitization
+  const validateAndSanitizeInput = (input: string): string => {
+    // Remove potentially harmful characters and limit length
+    const sanitized = input
+      .replace(/[<>{}]/g, '') // Remove potentially dangerous characters
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
+      .slice(0, 1000); // Limit to 1000 characters
+    
+    return sanitized;
+  };
+
+  const handleTextChange = (value: string) => {
+    const sanitizedText = validateAndSanitizeInput(value);
+    setText(sanitizedText);
+  };
+
   const analyzeSentiment = () => {
-    if (!text.trim()) return;
+    const sanitizedText = validateAndSanitizeInput(text);
+    if (!sanitizedText.trim() || sanitizedText.length < 3) return;
     
     setIsAnalyzing(true);
     
@@ -19,7 +37,7 @@ const SentimentAnalysisDemo = () => {
       const positiveWords = ['good', 'great', 'amazing', 'excellent', 'wonderful', 'fantastic', 'love', 'awesome'];
       const negativeWords = ['bad', 'terrible', 'awful', 'horrible', 'hate', 'disgusting', 'worst'];
       
-      const words = text.toLowerCase().split(' ');
+      const words = sanitizedText.toLowerCase().split(' ');
       const positiveCount = words.filter(word => positiveWords.some(pw => word.includes(pw))).length;
       const negativeCount = words.filter(word => negativeWords.some(nw => word.includes(nw))).length;
       
@@ -43,12 +61,16 @@ const SentimentAnalysisDemo = () => {
         <Textarea
           placeholder="Enter text to analyze sentiment... (e.g., 'I love this amazing product!')"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleTextChange(e.target.value)}
           className="min-h-[100px] bg-background/50 border-border/50 focus:border-primary/50"
+          maxLength={1000}
         />
+        <div className="text-xs text-muted-foreground text-right">
+          {text.length}/1000 characters
+        </div>
         <Button 
           onClick={analyzeSentiment}
-          disabled={!text.trim() || isAnalyzing}
+          disabled={!text.trim() || text.length < 3 || isAnalyzing}
           className="w-full bg-gradient-accent hover:shadow-glow-accent transition-all duration-300"
         >
           {isAnalyzing ? (
