@@ -14,8 +14,7 @@ const SentimentAnalysisDemo = () => {
     // Remove potentially harmful characters and limit length
     const sanitized = input
       .replace(/[<>{}]/g, '') // Remove potentially dangerous characters
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim()
+      .replace(/\s{2,}/g, ' ') // Normalize multiple whitespace to single space
       .slice(0, 1000); // Limit to 1000 characters
     
     return sanitized;
