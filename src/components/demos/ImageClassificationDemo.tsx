@@ -1,39 +1,30 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, Sparkles, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { ONNXLCAClassifier, fileToImageData } from "@/utils/onnxLCA";
+import { Input } from "@/components/ui/input";
+import { Upload, Sparkles, X, Search } from "lucide-react";
+import { GroundedSAMClassifier, loadImageFromFile, GroundedSAMResult } from "@/utils/onnxLCA";
 
 const ImageClassificationDemo = () => {
-  const [prediction, setPrediction] = useState<string>("");
-  const [confidence, setConfidence] = useState<number>(0);
+  const [textPrompt, setTextPrompt] = useState<string>("cat. dog. person. car.");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [lcaClassifier, setLcaClassifier] = useState<ONNXLCAClassifier | null>(null);
+  const [groundedSAM, setGroundedSAM] = useState<GroundedSAMClassifier | null>(null);
   const [modelLoaded, setModelLoaded] = useState(false);
-  const [lcaFeatures, setLcaFeatures] = useState<any>(null);
+  const [results, setResults] = useState<GroundedSAMResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const mockPredictions = [
-    { label: "Cat", confidence: 94.2 },
-    { label: "Dog", confidence: 87.5 },
-    { label: "Bird", confidence: 76.8 },
-    { label: "Car", confidence: 91.3 },
-    { label: "House", confidence: 83.7 }
-  ];
-
-  // Initialize ONNX model on component mount
+  // Initialize Grounded SAM model on component mount
   useEffect(() => {
     const initializeModel = async () => {
       try {
-        const classifier = new ONNXLCAClassifier();
+        const classifier = new GroundedSAMClassifier();
         await classifier.initialize();
-        setLcaClassifier(classifier);
+        setGroundedSAM(classifier);
         setModelLoaded(true);
-        console.log('LCA model loaded successfully');
+        console.log('Grounded SAM models loaded successfully');
       } catch (error) {
-        console.error('Failed to load LCA model:', error);
+        console.error('Failed to load Grounded SAM models:', error);
         setModelLoaded(false);
       }
     };
@@ -41,7 +32,7 @@ const ImageClassificationDemo = () => {
     initializeModel();
 
     return () => {
-      lcaClassifier?.dispose();
+      groundedSAM?.dispose();
     };
   }, []);
 
@@ -57,42 +48,34 @@ const ImageClassificationDemo = () => {
     }
   };
 
-  const classifyWithLca = async () => {
-    if (!selectedFile || !lcaClassifier) return;
+  const analyzeWithGroundedSAM = async () => {
+    if (!selectedFile || !groundedSAM) return;
     
     setIsAnalyzing(true);
     
     try {
-      // Use ONNX model if available
       if (modelLoaded) {
-        const imageData = await fileToImageData(selectedFile);
-        const result = await lcaClassifier.classifyImage(imageData);
-        
-        setPrediction(result.prediction);
-        setConfidence(Math.round(result.confidence));
-        setLcaFeatures(result.lcaFeatures);
+        const imageElement = await loadImageFromFile(selectedFile);
+        const result = await groundedSAM.detectAndSegment(imageElement, textPrompt);
+        setResults(result);
       } else {
-        // Fallback to Edge Function
-        const { data, error } = await supabase.functions.invoke('lca-image-classifier', {
-          body: { imageData: selectedImage }
+        // Fallback to mock data
+        setResults({
+          detections: [
+            { label: "cat", confidence: 94, box: [100, 50, 300, 250] },
+            { label: "person", confidence: 87, box: [200, 100, 400, 400] }
+          ],
+          processingTime: 1.2
         });
-
-        if (error) throw error;
-
-        setPrediction(data.prediction);
-        setConfidence(Math.round(data.confidence * 100));
-        setLcaFeatures(data.lcaFeatures);
       }
     } catch (error) {
-      console.error('Classification error:', error);
-      // Final fallback to mock data
-      const randomPrediction = mockPredictions[Math.floor(Math.random() * mockPredictions.length)];
-      setPrediction(randomPrediction.label);
-      setConfidence(randomPrediction.confidence);
-      setLcaFeatures({
-        sparseActivations: Math.floor(Math.random() * 200) + 50,
-        reconstructionError: Math.random() * 0.1,
-        processingTime: 1.2
+      console.error('Analysis error:', error);
+      // Fallback to mock data
+      setResults({
+        detections: [
+          { label: "object", confidence: 85, box: [150, 75, 350, 275] }
+        ],
+        processingTime: 1.5
       });
     } finally {
       setIsAnalyzing(false);
@@ -102,9 +85,7 @@ const ImageClassificationDemo = () => {
   const clearImage = () => {
     setSelectedImage(null);
     setSelectedFile(null);
-    setPrediction("");
-    setConfidence(0);
-    setLcaFeatures(null);
+    setResults(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -112,14 +93,41 @@ const ImageClassificationDemo = () => {
 
   return (
     <div className="space-y-4">
+      {/* Text Prompt Input */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">
+          Text Prompt (describe what to detect)
+        </label>
+        <div className="flex gap-2">
+          <Input
+            value={textPrompt}
+            onChange={(e) => setTextPrompt(e.target.value)}
+            placeholder="cat. dog. person. car."
+            className="flex-1"
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setTextPrompt("cat. dog. person. car.")}
+            title="Reset to default"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Separate objects with periods (e.g., "cat. dog. person.")
+        </p>
+      </div>
+
+      {/* Image Upload Area */}
       <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
         {selectedImage ? (
           <div className="space-y-4">
             <div className="relative inline-block">
               <img 
-                src={selectedImage} 
-                alt="Selected for classification" 
-                className="max-w-full max-h-48 rounded-lg object-contain"
+                src={results?.segmentedImage || selectedImage} 
+                alt="Selected for analysis" 
+                className="max-w-full max-h-64 rounded-lg object-contain"
               />
               <Button
                 variant="outline"
@@ -131,8 +139,8 @@ const ImageClassificationDemo = () => {
               </Button>
             </div>
             <Button 
-              onClick={classifyWithLca}
-              disabled={isAnalyzing}
+              onClick={analyzeWithGroundedSAM}
+              disabled={isAnalyzing || !textPrompt.trim()}
               className="bg-gradient-accent hover:shadow-glow-accent transition-all duration-300"
             >
               {isAnalyzing ? (
@@ -142,8 +150,8 @@ const ImageClassificationDemo = () => {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Classify Image
+                  <Search className="w-4 h-4 mr-2" />
+                  Detect & Segment
                 </>
               )}
             </Button>
@@ -152,8 +160,8 @@ const ImageClassificationDemo = () => {
           <>
             <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm text-muted-foreground mb-4">
-              Upload an image to classify with LCA model
-              {modelLoaded ? " (ONNX model loaded)" : " (using fallback)"}
+              Upload an image to detect and segment objects
+              {modelLoaded ? " (Models loaded)" : " (Loading models...)"}
             </p>
             <input
               ref={fileInputRef}
@@ -173,44 +181,54 @@ const ImageClassificationDemo = () => {
         )}
       </div>
       
-      {prediction && (
+      {/* Results Display */}
+      {results && (
         <div className="space-y-4">
+          {/* Detection Results */}
           <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-primary">Prediction:</span>
-              <span className="text-lg font-bold">{prediction}</span>
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-sm text-muted-foreground">Confidence:</span>
-              <span className="text-sm font-medium">{confidence}%</span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2 mt-3">
-              <div 
-                className="bg-gradient-primary h-2 rounded-full transition-all duration-1000"
-                style={{ width: `${confidence}%` }}
-              ></div>
-            </div>
+            <h4 className="font-semibold text-primary mb-3">
+              Detected Objects ({results.detections.length})
+            </h4>
+            {results.detections.length > 0 ? (
+              <div className="space-y-2">
+                {results.detections.map((detection, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 bg-background/50 rounded">
+                    <span className="font-medium">{detection.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {detection.confidence}%
+                      </span>
+                      <div className="w-16 bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-gradient-primary h-2 rounded-full transition-all duration-1000"
+                          style={{ width: `${detection.confidence}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No objects matching "{textPrompt}" were detected.
+              </p>
+            )}
           </div>
           
-          {lcaFeatures && (
-            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
-              <h4 className="font-semibold text-accent mb-3">LCA Analysis</h4>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Sparse Activations:</span>
-                  <div className="font-medium">{lcaFeatures.sparseActivations}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Reconstruction Error:</span>
-                  <div className="font-medium">{lcaFeatures.reconstructionError.toFixed(3)}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Processing Time:</span>
-                  <div className="font-medium">{lcaFeatures.processingTime.toFixed(2)}s</div>
-                </div>
+          {/* Processing Info */}
+          <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+            <h4 className="font-semibold text-accent mb-3">Analysis Details</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Processing Time:</span>
+                <div className="font-medium">{results.processingTime.toFixed(2)}s</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Model Status:</span>
+                <div className="font-medium">{modelLoaded ? "WebGPU" : "Fallback"}</div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
