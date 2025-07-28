@@ -37,29 +37,29 @@ const ModelsSection = () => {
       demoComponent: <RecommendationDemo />
     },
     {
-      title: "Time Series Forecasting",
-      description: "LSTM network for predicting future values in sequential data",
-      explanation: "Long Short-Term Memory (LSTM) network designed to capture temporal dependencies in time series data. Uses multiple LSTM layers with dropout regularization and attention mechanisms to forecast future values while handling seasonality and trends.",
-      githubUrl: "https://github.com/yourusername/time-series-lstm",
-      tags: ["LSTM", "Time Series", "Forecasting", "Keras"],
-      accuracy: "85.3%",
-      dataset: "Stock Prices + Weather"
+      title: "NBA Player Performance Predictor",
+      description: "AdaBoost Regressor that computes performance scores for NBA players using real-time statistics",
+      explanation: "This machine learning model uses an AdaBoost Regressor to analyze and score NBA players based on their latest performance statistics pulled from the internet. The ensemble method combines multiple weak learners to create a robust predictor that evaluates player effectiveness across various game metrics.",
+      githubUrl: "https://github.com/cargonriv/BoostGM",
+      tags: ["AdaBoost", "Regression", "Sports Analytics", "Python"],
+      accuracy: "88.7%",
+      dataset: "NBA Player Stats"
     },
     {
-      title: "GAN Image Generator",
-      description: "Generative Adversarial Network for creating realistic synthetic images",
-      explanation: "A Deep Convolutional GAN (DCGAN) that generates high-quality synthetic images through adversarial training. The generator creates images from random noise while the discriminator learns to distinguish real from fake images, resulting in increasingly realistic outputs.",
-      githubUrl: "https://github.com/yourusername/dcgan-generator",
-      tags: ["GAN", "Generative AI", "DCGAN", "PyTorch"],
-      dataset: "CelebA Faces"
+      title: "LCA Sparse Coding Network",
+      description: "PyTorch implementation of Locally Competitive Algorithm for neural sparse coding on linked datasets",
+      explanation: "Implements the Locally Competitive Algorithm (LCA), a neuroscientific model that performs sparse coding by modeling lateral competition observed in the visual cortex. This network builds convolutional sparse coding layers that compete to represent shared input portions, mimicking brain functionality for efficient feature representation.",
+      githubUrl: "https://github.com/cargonriv/linked-lca",
+      tags: ["LCA", "Sparse Coding", "Neuroscience", "PyTorch"],
+      dataset: "ImageNet + Allen Institute Data"
     },
     {
-      title: "Reinforcement Learning Agent",
-      description: "Deep Q-Network agent that masters complex game environments",
-      explanation: "Implements Deep Q-Learning with experience replay and target networks to learn optimal strategies in game environments. The agent uses convolutional layers to process visual input and learns through trial and error, gradually improving its performance.",
-      githubUrl: "https://github.com/yourusername/dqn-agent",
-      tags: ["DQN", "Reinforcement Learning", "OpenAI Gym", "Deep RL"],
-      dataset: "Atari Games"
+      title: "PacWarrior Genetic Algorithm Agent",
+      description: "Genetic algorithm-based reinforcement learning agent designed for Pac-Man style environments",
+      explanation: "A sophisticated AI agent that uses genetic algorithms to evolve optimal strategies for navigating Pac-Man environments. The system employs evolutionary computation principles with selection, crossover, and mutation operators to develop increasingly effective game-playing behaviors through generations of iterative improvement.",
+      githubUrl: "https://github.com/cargonriv/PacWarrior",
+      tags: ["Genetic Algorithm", "Game AI", "Evolution", "C/Python"],
+      dataset: "Pac-Man Game States"
     }
   ];
 
