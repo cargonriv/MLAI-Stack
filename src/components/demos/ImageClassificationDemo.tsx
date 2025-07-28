@@ -157,7 +157,17 @@ const ImageClassificationDemo = () => {
               </Button>
             </div>
             <Button 
-              onClick={analyzeWithGroundedSAM}
+              onClick={() => {
+                console.log('Button clicked!', { 
+                  isAnalyzing, 
+                  textPrompt, 
+                  textPromptTrimmed: textPrompt.trim(),
+                  disabled: isAnalyzing || !textPrompt.trim(),
+                  selectedFile: !!selectedFile,
+                  groundedSAM: !!groundedSAM 
+                });
+                analyzeWithGroundedSAM();
+              }}
               disabled={isAnalyzing || !textPrompt.trim()}
               className="bg-gradient-accent hover:shadow-glow-accent transition-all duration-300"
             >
