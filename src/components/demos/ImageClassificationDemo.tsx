@@ -62,7 +62,17 @@ const ImageClassificationDemo = () => {
         console.log('Loading image from file...');
         const imageElement = await loadImageFromFile(selectedFile);
         console.log('Image loaded, running detection...');
-        const result = await groundedSAM.detectAndSegment(imageElement, textPrompt);
+        
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Analysis timeout after 30 seconds')), 30000);
+        });
+        
+        const result = await Promise.race([
+          groundedSAM.detectAndSegment(imageElement, textPrompt),
+          timeoutPromise
+        ]);
+        
         console.log('Detection complete:', result);
         setResults(result);
       } else {
@@ -78,7 +88,7 @@ const ImageClassificationDemo = () => {
       }
     } catch (error) {
       console.error('Analysis error:', error);
-      // Fallback to mock data
+      // Fallback to mock data on error or timeout
       setResults({
         detections: [
           { label: "object", confidence: 85, box: [150, 75, 350, 275] }

@@ -23,45 +23,23 @@ export class GroundedSAMClassifier {
     try {
       console.log('Loading Grounded SAM models...');
       
-      // Use models that have ONNX support for browser compatibility
+      // Use CPU-only mode to avoid WebGPU issues
       this.detector = await pipeline(
         'object-detection',
         'Xenova/detr-resnet-50',
         { 
-          device: 'webgpu',
+          device: 'cpu',
           revision: 'main'
         }
       );
 
       console.log('Object detection model loaded successfully');
 
-      // For segmentation, use a model that's known to work in browser
-      this.segmenter = await pipeline(
-        'image-segmentation',
-        'Xenova/detr-resnet-50-panoptic',
-        { 
-          device: 'webgpu',
-          revision: 'main'
-        }
-      );
-
-      console.log('Image segmentation model loaded successfully');
-
       this.initialized = true;
-      console.log('Grounded SAM models loaded successfully');
+      console.log('Grounded SAM models loaded successfully (detection only)');
     } catch (error) {
-      console.error('Failed to load models with WebGPU:', error);
-      // Fallback to CPU with browser-compatible models
-      try {
-        console.log('Attempting CPU fallback...');
-        this.detector = await pipeline('object-detection', 'Xenova/detr-resnet-50');
-        this.segmenter = await pipeline('image-segmentation', 'Xenova/detr-resnet-50-panoptic');
-        this.initialized = true;
-        console.log('Grounded SAM models loaded successfully (CPU fallback)');
-      } catch (fallbackError) {
-        console.error('Failed to load models on CPU fallback:', fallbackError);
-        throw fallbackError;
-      }
+      console.error('Failed to load detection model:', error);
+      throw error;
     }
   }
 
@@ -111,16 +89,11 @@ export class GroundedSAMClassifier {
         box: [detection.box.xmin, detection.box.ymin, detection.box.xmax, detection.box.ymax]
       }));
 
-      // Run segmentation if detections found
+      // Create visualization with bounding boxes
       let segmentedImage;
       if (detections.length > 0) {
-        console.log('Running image segmentation...');
-        try {
-          const segmentationResults = await this.segmenter(imageData);
-          segmentedImage = await this.visualizeSegmentation(canvas, detections, segmentationResults);
-        } catch (segError) {
-          console.warn('Segmentation failed, continuing with detection only:', segError);
-        }
+        console.log('Creating detection visualization...');
+        segmentedImage = await this.visualizeSegmentation(canvas, detections, []);
       }
 
       const processingTime = (performance.now() - startTime) / 1000;
