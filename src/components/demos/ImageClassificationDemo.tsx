@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Sparkles, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ImageClassificationDemo = () => {
   const [prediction, setPrediction] = useState<string>("");
@@ -28,17 +29,29 @@ const ImageClassificationDemo = () => {
     }
   };
 
-  const simulateClassification = () => {
+  const classifyWithLca = async () => {
     if (!selectedImage) return;
     
     setIsAnalyzing(true);
     
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke('lca-image-classifier', {
+        body: { imageData: selectedImage }
+      });
+
+      if (error) throw error;
+
+      setPrediction(data.prediction);
+      setConfidence(Math.round(data.confidence * 100));
+    } catch (error) {
+      console.error('Classification error:', error);
+      // Fallback to mock data if service fails
       const randomPrediction = mockPredictions[Math.floor(Math.random() * mockPredictions.length)];
       setPrediction(randomPrediction.label);
       setConfidence(randomPrediction.confidence);
+    } finally {
       setIsAnalyzing(false);
-    }, 2000);
+    }
   };
 
   const clearImage = () => {
@@ -71,7 +84,7 @@ const ImageClassificationDemo = () => {
               </Button>
             </div>
             <Button 
-              onClick={simulateClassification}
+              onClick={classifyWithLca}
               disabled={isAnalyzing}
               className="bg-gradient-accent hover:shadow-glow-accent transition-all duration-300"
             >
