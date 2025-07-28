@@ -23,28 +23,39 @@ export class GroundedSAMClassifier {
     try {
       console.log('Loading Grounded SAM models...');
       
-      // Initialize object detection pipeline (using DETR or similar)
+      // Use models that have ONNX support for browser compatibility
       this.detector = await pipeline(
         'object-detection',
-        'facebook/detr-resnet-50',
-        { device: 'webgpu' }
+        'Xenova/detr-resnet-50',
+        { 
+          device: 'webgpu',
+          revision: 'main'
+        }
       );
 
-      // Initialize image segmentation pipeline
+      console.log('Object detection model loaded successfully');
+
+      // For segmentation, use a model that's known to work in browser
       this.segmenter = await pipeline(
         'image-segmentation',
-        'facebook/detr-resnet-50-panoptic',
-        { device: 'webgpu' }
+        'Xenova/detr-resnet-50-panoptic',
+        { 
+          device: 'webgpu',
+          revision: 'main'
+        }
       );
+
+      console.log('Image segmentation model loaded successfully');
 
       this.initialized = true;
       console.log('Grounded SAM models loaded successfully');
     } catch (error) {
-      console.error('Failed to load models:', error);
-      // Fallback to CPU if WebGPU fails
+      console.error('Failed to load models with WebGPU:', error);
+      // Fallback to CPU with browser-compatible models
       try {
-        this.detector = await pipeline('object-detection', 'facebook/detr-resnet-50');
-        this.segmenter = await pipeline('image-segmentation', 'facebook/detr-resnet-50-panoptic');
+        console.log('Attempting CPU fallback...');
+        this.detector = await pipeline('object-detection', 'Xenova/detr-resnet-50');
+        this.segmenter = await pipeline('image-segmentation', 'Xenova/detr-resnet-50-panoptic');
         this.initialized = true;
         console.log('Grounded SAM models loaded successfully (CPU fallback)');
       } catch (fallbackError) {

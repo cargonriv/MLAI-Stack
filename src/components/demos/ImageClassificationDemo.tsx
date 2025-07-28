@@ -49,16 +49,24 @@ const ImageClassificationDemo = () => {
   };
 
   const analyzeWithGroundedSAM = async () => {
-    if (!selectedFile || !groundedSAM) return;
+    if (!selectedFile || !groundedSAM) {
+      console.log('Missing requirements:', { selectedFile: !!selectedFile, groundedSAM: !!groundedSAM });
+      return;
+    }
     
+    console.log('Starting analysis with:', { textPrompt, modelLoaded });
     setIsAnalyzing(true);
     
     try {
       if (modelLoaded) {
+        console.log('Loading image from file...');
         const imageElement = await loadImageFromFile(selectedFile);
+        console.log('Image loaded, running detection...');
         const result = await groundedSAM.detectAndSegment(imageElement, textPrompt);
+        console.log('Detection complete:', result);
         setResults(result);
       } else {
+        console.log('Models not loaded, using fallback data');
         // Fallback to mock data
         setResults({
           detections: [
