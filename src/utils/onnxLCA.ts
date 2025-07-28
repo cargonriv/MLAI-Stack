@@ -23,12 +23,12 @@ export class GroundedSAMClassifier {
     try {
       console.log('Loading Grounded SAM models...');
       
-      // Use CPU-only mode to avoid WebGPU issues
+      // Use WASM mode for reliable cross-platform support
       this.detector = await pipeline(
         'object-detection',
         'Xenova/detr-resnet-50',
         { 
-          device: 'cpu',
+          device: 'wasm',
           revision: 'main'
         }
       );
