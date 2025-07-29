@@ -90,15 +90,11 @@ const ModelCard = ({
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <Button 
-              className="flex-1 bg-gradient-primary hover:shadow-glow-primary transition-all duration-300"
+              className="w-full bg-gradient-primary hover:shadow-glow-primary transition-all duration-300"
               onClick={() => window.open(githubUrl, '_blank')}
             >
               <Github className="w-4 h-4 mr-2" />
               View Code
-            </Button>
-            <Button variant="secondary" className="flex-1">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Live Demo
             </Button>
           </div>
         </div>

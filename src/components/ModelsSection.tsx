@@ -7,13 +7,13 @@ import { Brain, Cpu, Zap } from "lucide-react";
 const ModelsSection = () => {
   const models = [
     {
-      title: "CNN Image Classifier",
-      description: "Deep learning model for accurate image recognition across 1000+ categories",
-      explanation: "This convolutional neural network uses multiple layers of filters to detect features like edges, shapes, and patterns. The model was trained on ImageNet dataset using transfer learning from ResNet-50, achieving high accuracy through data augmentation and fine-tuning techniques.",
-      githubUrl: "https://github.com/yourusername/cnn-classifier",
-      tags: ["CNN", "Computer Vision", "PyTorch", "ResNet"],
-      accuracy: "94.2%",
-      dataset: "ImageNet",
+      title: "Grounded SAM Object Detection",
+      description: "Advanced object detection and segmentation using Grounded SAM (Segment Anything Model)",
+      explanation: "Combines Grounding DINO for object detection with Meta's Segment Anything Model (SAM) for precise segmentation. This powerful combination allows for text-prompted object detection and pixel-perfect segmentation masks, enabling zero-shot detection of any object described in natural language.",
+      githubUrl: "https://github.com/IDEA-Research/Grounded-Segment-Anything",
+      tags: ["SAM", "Object Detection", "Segmentation", "Zero-shot"],
+      accuracy: "High Precision",
+      dataset: "SA-1B + Custom",
       demoComponent: <ImageClassificationDemo />
     },
     {
