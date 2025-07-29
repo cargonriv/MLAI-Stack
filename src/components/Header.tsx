@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Home, User, Briefcase, Mail, ExternalLink } from "lucide-react";
+import { Menu, X, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Header = () => {
@@ -8,9 +8,12 @@ const Header = () => {
 
   const navItems = [
     { name: "Home", href: "/", icon: Home },
-    { name: "Blog", href: "/blog", icon: User },
-    { name: "Portfolio", href: "/portfolio", icon: Briefcase },
-    { name: "Contact", href: "/contact", icon: Mail },
+    { name: "About", href: "/about", icon: User },
+    { name: "Blog", href: "/blog", icon: BookOpen },
+    { name: "Resume", href: "/resume", icon: FileText },
+    { name: "Projects", href: "/projects", icon: Folder },
+    { name: "Portfolio", href: "/portfolio/favorite-models", icon: Brain },
+    { name: "Capstone", href: "/capstone", icon: GraduationCap },
   ];
 
   return (
@@ -41,10 +44,10 @@ const Header = () => {
               variant="secondary"
               size="sm"
               className="opacity-70 hover:opacity-100 transition-opacity"
-              onClick={() => window.open("https://cargonriv.com", "_blank")}
+              onClick={() => window.open("https://linkedin.com/in/cargonriv", "_blank")}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Main Site
+              Contact
             </Button>
           </nav>
 
@@ -72,12 +75,12 @@ const Header = () => {
                   variant="secondary"
                   className="justify-start mt-4"
                   onClick={() => {
-                    window.open("https://cargonriv.com", "_blank");
+                    window.open("https://linkedin.com/in/cargonriv", "_blank");
                     setIsOpen(false);
                   }}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Main Site
+                  Contact
                 </Button>
               </div>
             </SheetContent>
