@@ -1,4 +1,4 @@
-# Carlos Rivera - ML Engineer Portfolio & AI Demo Stack
+# ML Engineer Portfolio & AI Demo Stack
 
 Welcome to my comprehensive portfolio website featuring an interactive machine learning model collection and professional showcase.
 
@@ -16,7 +16,7 @@ This is a full-stack React application that serves as both my personal portfolio
 - Advanced computer vision capabilities using state-of-the-art foundation models
 
 **Natural Language Processing**
-- **Sentiment Analysis**: Real-time text sentiment classification with confidence metrics
+- **BERT Sentiment Analysis**: Real-time text sentiment classification using BERT with confidence metrics
 - Input validation and text preprocessing
 - Supports various text formats and lengths
 
@@ -84,10 +84,10 @@ This is a full-stack React application that serves as both my personal portfolio
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone github.com/cargonriv/MLAI-Stack
 
 # Navigate to project directory
-cd carlos-portfolio
+cd MLAI-Stack
 
 # Install dependencies
 npm install
@@ -113,7 +113,7 @@ Visit the live application to explore the interactive ML demos and portfolio con
 
 ## 📞 Contact
 
-**Carlos Rivera**
+**Carlos Gonzalez Rivera**
 - Email: cargonriv@pm.me
 - LinkedIn: [Connect with me](https://linkedin.com/in/carlosriver)
 - Portfolio: Live demos and project showcase
