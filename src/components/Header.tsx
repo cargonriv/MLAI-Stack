@@ -24,7 +24,7 @@ const Header = () => {
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
               <img 
-                src="public/avatar.png" 
+                src="/MLAI-Stack/avatar.png" 
                 alt="avatar" 
                 className="w-9 h-15 hover:opacity-80"
               />
