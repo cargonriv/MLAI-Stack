@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ModelsSection from "@/components/ModelsSection";
 
-const FavoriteModels = () => {
+const Showcase = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -14,4 +14,4 @@ const FavoriteModels = () => {
   );
 };
 
-export default FavoriteModels;
+export default Showcase;

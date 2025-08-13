@@ -5,13 +5,13 @@ const Blog = () => {
     {
       title: "Automating Healthcare Diagnostics",
       excerpt: "When I first dove into the project of predicting Sudden Infant Death Syndrome (SIDS), I had no idea how deeply personal it would become. Our capstone began in January 2024, the last full-time semester of my master's at Rice University. At the same time, my wife and I were preparing to welcome our first child...",
-      date: "2024",
+      date: "2025",
       link: "/blog/automating-healthcare-diagnostics"
     },
     {
       title: "Segmenting the Invisible",
       excerpt: "In biological imaging, we often deal with the 'invisible' – microscopic cells, bacterial colonies, or subtle patterns that evade easy detection. Traditional image analysis required painstaking tuning of algorithms or training models from scratch on limited data. Today, a new wave of foundation models is changing everything...",
-      date: "2024",
+      date: "2025",
       link: "/blog/segmenting-the-invisible"
     },
     {

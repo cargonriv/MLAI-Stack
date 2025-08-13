@@ -12,7 +12,7 @@ const Header = () => {
     { name: "Blog", href: "/blog", icon: BookOpen },
     { name: "Resume", href: "/resume", icon: FileText },
     { name: "Projects", href: "/projects", icon: Folder },
-    { name: "Portfolio", href: "/portfolio/favorite-models", icon: Brain },
+    { name: "Showcase", href: "/showcase", icon: Brain },
     { name: "Capstone", href: "/capstone", icon: GraduationCap },
   ];
 
@@ -23,7 +23,11 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-background font-bold text-lg">C</span>
+              <img 
+                src="public/avatar.png" 
+                alt="avatar" 
+                className="w-9 h-15 hover:opacity-80"
+              />
             </div>
             <span className="font-bold text-lg text-foreground">cargonriv's domain</span>
           </div>

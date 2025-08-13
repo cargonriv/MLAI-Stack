@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowDown, Github, Linkedin, Twitter, Instagram } from "lucide-react";
+import { ArrowDown, Mail, Github, Linkedin, Twitter, Instagram } from "lucide-react";
 
 const Hero = () => {
   const scrollToModels = () => {
@@ -27,25 +27,28 @@ const Hero = () => {
             M.E.C.E., B.S.B.M.E.
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            Neuroengineer || Data Scientist || Computer Vision Researcher || Private Thoughts || Father
+            Neuroengineer || Data Scientist
           </p>
           <p className="text-base md:text-lg text-muted-foreground/80 mb-12 max-w-2xl mx-auto">
-            Welcome to my favorite ML models showcase - a curated collection of my most impactful machine learning projects.
+            Welcome to my ML/AI Showcase: a curated collection of my most impactful projects.
           </p>
           
           {/* Social Links */}
           <div className="flex justify-center gap-4 mb-12">
+            <Button variant="secondary" size="lg" className="group" onClick={() => window.open('mailto:cargonriv@pm.me', '_blank')}>
+              <Mail className="w-12 h-12 group-hover:scale-110 transition-transform" />
+            </Button>
+            <Button variant="secondary" size="lg" className="group" onClick={() => window.open('https://www.github.com/cargonriv', '_blank')}>
+              <Github className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            </Button>
             <Button variant="secondary" size="lg" className="group" onClick={() => window.open('https://www.linkedin.com/in/cargonriv', '_blank')}>
-              <Linkedin className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-              LinkedIn
+              <Linkedin className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </Button>
             <Button variant="secondary" size="lg" className="group" onClick={() => window.open('https://www.instagram.com/cargonriv', '_blank')}>
-              <Instagram className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-              Instagram
+              <Instagram className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </Button>
             <Button variant="secondary" size="lg" className="group" onClick={() => window.open('https://www.x.com/luffyswhale', '_blank')}>
-              <Twitter className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-              Twitter
+              <Twitter className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </Button>
           </div>
           

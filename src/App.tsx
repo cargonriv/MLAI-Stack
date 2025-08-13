@@ -10,7 +10,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Resume from "./pages/Resume";
 import Projects from "./pages/Projects";
-import FavoriteModels from "./pages/FavoriteModels";
+import Showcase from "./pages/Showcase";
 import Capstone from "./pages/Capstone";
 import NotFound from "./pages/NotFound";
 
@@ -29,7 +29,7 @@ const App = () => (
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/resume" element={<Resume />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/portfolio/favorite-models" element={<FavoriteModels />} />
+          <Route path="/showcase" element={<Showcase />} />
           <Route path="/capstone" element={<Capstone />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
