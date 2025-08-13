@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink } from "lucide-react";
+import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "About", href: "/about", icon: User },
-    { name: "Blog", href: "/blog", icon: BookOpen },
-    { name: "Resume", href: "/resume", icon: FileText },
-    { name: "Projects", href: "/projects", icon: Folder },
-    { name: "Showcase", href: "/showcase", icon: Brain },
-    { name: "Capstone", href: "/capstone", icon: GraduationCap },
+    { name: "Home", href: "#/", icon: Home },
+    { name: "About", href: "#/about", icon: User },
+    { name: "Blog", href: "#/blog", icon: BookOpen },
+    { name: "Resume", href: "#/resume", icon: FileText },
+    { name: "Projects", href: "#/projects", icon: Folder },
+    { name: "Showcase", href: "#/showcase", icon: Brain },
+    { name: "Capstone", href: "#/capstone", icon: GraduationCap },
   ];
 
   return (

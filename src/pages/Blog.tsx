@@ -47,7 +47,7 @@ const Blog = () => {
                   <div key={index} className="bg-card p-6 rounded-lg shadow-sm border">
                     <h2 className="text-2xl font-semibold mb-4">
                       <a 
-                        href={post.link} 
+                        href={`#${post.link}`} 
                         className="hover:text-primary transition-colors"
                       >
                         {post.title}
@@ -57,7 +57,7 @@ const Blog = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">{post.date}</span>
                       <a 
-                        href={post.link}
+                        href={`#${post.link}`}
                         className="text-primary hover:text-primary/80 transition-colors"
                       >
                         Read More →

@@ -95,7 +95,7 @@ const Projects = () => {
                       <div className="flex gap-2">
                         {project.link && (
                           <a 
-                            href={project.link}
+                            href={`#${project.link}`}
                             className="text-primary hover:text-primary/80 transition-colors text-sm"
                           >
                             Read More →

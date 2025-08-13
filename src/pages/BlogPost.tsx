@@ -46,7 +46,7 @@ const BlogPost = () => {
       <SafeHtml
         title="Post not found | cargonriv.com"
         description="The blog post you are looking for could not be found."
-        html={`<h1>Post not found</h1><p>We couldn't find this article. Please go back to the <a href='/blog'>blog</a>.</p>`}
+        html={`<h1>Post not found</h1><p>We couldn't find this article. Please go back to the <a href='#/blog'>blog</a>.</p>`}
         canonical={window.location.href}
       />
     );
