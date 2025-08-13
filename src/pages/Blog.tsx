@@ -49,8 +49,6 @@ const Blog = () => {
                       <a 
                         href={post.link} 
                         className="hover:text-primary transition-colors"
-                        target="_blank"
-                        rel="noopener noreferrer"
                       >
                         {post.title}
                       </a>
@@ -60,8 +58,6 @@ const Blog = () => {
                       <span className="text-sm text-muted-foreground">{post.date}</span>
                       <a 
                         href={post.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="text-primary hover:text-primary/80 transition-colors"
                       >
                         Read More →
