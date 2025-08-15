@@ -1,0 +1,413 @@
+/* Browser Compatibility and Fallbacks */
+
+/* CSS Feature Detection and Fallbacks */
+@layer base {
+  /* Backdrop Filter Fallbacks */
+  .backdrop-blur-fallback {
+    /* Fallback for browsers without backdrop-filter support */
+    background: rgba(34, 39, 46, 0.95);
+  }
+  
+  @supports (backdrop-filter: blur(10px)) {
+    .backdrop-blur-fallback {
+      background: rgba(34, 39, 46, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+  }
+  
+  /* CSS Grid Fallbacks */
+  .grid-fallback {
+    /* Flexbox fallback for older browsers */
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  @supports (display: grid) {
+    .grid-fallback {
+      display: grid;
+    }
+  }
+  
+  /* CSS Custom Properties Fallbacks */
+  .color-fallback {
+    /* Static color fallback */
+    background-color: #6366f1;
+    color: #ffffff;
+  }
+  
+  @supports (color: hsl(var(--accent-primary))) {
+    .color-fallback {
+      background-color: hsl(var(--accent-primary));
+      color: hsl(var(--foreground-primary));
+    }
+  }
+  
+  /* Clip-path Fallbacks */
+  .clip-path-fallback {
+    /* Border-radius fallback */
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  
+  @supports (clip-path: circle(50%)) {
+    .clip-path-fallback {
+      border-radius: 0;
+      clip-path: circle(50%);
+    }
+  }
+  
+  /* CSS Filters Fallbacks */
+  .filter-fallback {
+    /* Opacity fallback for blur effects */
+    opacity: 0.9;
+  }
+  
+  @supports (filter: blur(5px)) {
+    .filter-fallback {
+      opacity: 1;
+      filter: blur(5px);
+      -webkit-filter: blur(5px);
+    }
+  }
+  
+  /* Sticky Position Fallbacks */
+  .sticky-fallback {
+    /* Fixed position fallback */
+    position: fixed;
+    top: 0;
+    z-index: 50;
+  }
+  
+  @supports (position: sticky) {
+    .sticky-fallback {
+      position: sticky;
+    }
+  }
+  
+  /* CSS Transforms Fallbacks */
+  .transform-fallback {
+    /* Margin-based positioning fallback */
+    margin-left: 10px;
+    margin-top: -5px;
+  }
+  
+  @supports (transform: translateX(10px)) {
+    .transform-fallback {
+      margin-left: 0;
+      margin-top: 0;
+      transform: translateX(10px) translateY(-5px);
+      -webkit-transform: translateX(10px) translateY(-5px);
+      -moz-transform: translateX(10px) translateY(-5px);
+      -ms-transform: translateX(10px) translateY(-5px);
+    }
+  }
+  
+  /* Flexbox Fallbacks */
+  .flex-fallback {
+    /* Table-cell fallback for centering */
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+  }
+  
+  @supports (display: flex) {
+    .flex-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  /* CSS Animations Fallbacks */
+  .animation-fallback {
+    /* Static state for browsers without animation support */
+    opacity: 1;
+    transform: none;
+  }
+  
+  @supports (animation: fadeIn 1s ease) {
+    .animation-fallback {
+      animation: fadeIn 1s ease;
+    }
+  }
+  
+  /* CSS Gradients Fallbacks */
+  .gradient-fallback {
+    /* Solid color fallback */
+    background-color: #6366f1;
+  }
+  
+  @supports (background: linear-gradient(45deg, red, blue)) {
+    .gradient-fallback {
+      background: linear-gradient(135deg, hsl(var(--accent-primary)), hsl(var(--accent-secondary)));
+    }
+  }
+  
+  /* CSS Mask Fallbacks */
+  .mask-fallback {
+    /* Border and overflow fallback */
+    border: 2px solid transparent;
+    overflow: hidden;
+  }
+  
+  @supports (mask: linear-gradient(#fff 0 0)) {
+    .mask-fallback {
+      border: none;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: xor;
+      -webkit-mask-composite: xor;
+    }
+  }
+}
+
+/* Browser-Specific Fixes */
+@layer utilities {
+  /* Safari-specific fixes */
+  @supports (-webkit-appearance: none) {
+    .safari-fix {
+      /* Fix for Safari's button styling */
+      -webkit-appearance: none;
+      -webkit-border-radius: 0;
+    }
+    
+    .safari-backdrop-fix {
+      /* Enhanced backdrop-filter for Safari */
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+    }
+    
+    .safari-transform-fix {
+      /* Fix for Safari's transform rendering */
+      -webkit-transform-style: preserve-3d;
+      transform-style: preserve-3d;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+  }
+  
+  /* Firefox-specific fixes */
+  @-moz-document url-prefix() {
+    .firefox-fix {
+      /* Fix for Firefox's scrollbar styling */
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--accent-primary)) hsl(var(--background-secondary));
+    }
+    
+    .firefox-backdrop-fix {
+      /* Firefox backdrop-filter alternative */
+      background: rgba(34, 39, 46, 0.95);
+    }
+  }
+  
+  /* Chrome/Edge-specific fixes */
+  @supports (-webkit-background-clip: text) {
+    .chrome-gradient-text {
+      background: linear-gradient(135deg, hsl(var(--accent-primary)), hsl(var(--accent-secondary)));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+  
+  /* Internet Explorer 11 fallbacks (if needed) */
+  @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .ie11-fallback {
+      /* IE11 flexbox fixes */
+      display: -ms-flexbox;
+      -ms-flex-align: center;
+      -ms-flex-pack: center;
+    }
+  }
+  
+  /* Edge Legacy fixes */
+  @supports (-ms-ime-align: auto) {
+    .edge-legacy-fix {
+      /* Edge Legacy grid fixes */
+      display: -ms-grid;
+      -ms-grid-columns: 1fr 1fr 1fr;
+      -ms-grid-rows: auto;
+    }
+  }
+}
+
+/* Performance Optimizations for Different Browsers */
+@layer components {
+  /* Hardware acceleration for better performance */
+  .hw-accelerated {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Optimized animations for different browsers */
+  .optimized-animation {
+    /* Use transform and opacity for best performance */
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    -webkit-transition: -webkit-transform 0.3s ease, opacity 0.3s ease;
+    -moz-transition: -moz-transform 0.3s ease, opacity 0.3s ease;
+    -ms-transition: -ms-transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  /* Cross-browser smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Cross-browser user-select */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Cross-browser box-sizing */
+  .border-box {
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-friendly {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+  
+  .page-break-after {
+    page-break-after: always;
+  }
+  
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+}
+
+/* High Contrast Mode Enhancements */
+@media (prefers-contrast: high) {
+  .high-contrast-enhanced {
+    border: 2px solid currentColor !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+  }
+  
+  .high-contrast-button {
+    border: 3px solid ButtonText !important;
+    background: ButtonFace !important;
+    color: ButtonText !important;
+  }
+  
+  .high-contrast-link {
+    color: LinkText !important;
+    text-decoration: underline !important;
+  }
+}
+
+/* Forced Colors Mode (Windows High Contrast) */
+@media (forced-colors: active) {
+  .forced-colors-fix {
+    forced-color-adjust: none;
+    border: 1px solid ButtonText;
+  }
+  
+  .forced-colors-auto {
+    forced-color-adjust: auto;
+  }
+}
+
+/* Reduced Data Mode */
+@media (prefers-reduced-data: reduce) {
+  .data-saver {
+    /* Disable heavy animations and effects */
+    animation: none !important;
+    transition: none !important;
+    background-image: none !important;
+  }
+  
+  .data-saver-image {
+    /* Provide low-quality image alternatives */
+    filter: blur(2px);
+    opacity: 0.8;
+  }
+}
+
+/* Color Gamut Support */
+@media (color-gamut: p3) {
+  .p3-colors {
+    /* Enhanced colors for P3 displays */
+    --accent-primary: color(display-p3 0.4 0.2 1);
+    --accent-secondary: color(display-p3 0.6 0.2 1);
+  }
+}
+
+@media (color-gamut: rec2020) {
+  .rec2020-colors {
+    /* Enhanced colors for Rec2020 displays */
+    --accent-primary: color(rec2020 0.4 0.2 1);
+    --accent-secondary: color(rec2020 0.6 0.2 1);
+  }
+}
+
+/* Hover Capability Detection */
+@media (hover: none) {
+  .no-hover {
+    /* Remove hover effects on touch devices */
+    transition: none;
+  }
+  
+  .no-hover:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (hover: hover) {
+  .hover-enabled {
+    /* Enhanced hover effects for devices with hover capability */
+    transition: all 0.3s ease;
+  }
+}
+
+/* Pointer Capability Detection */
+@media (pointer: coarse) {
+  .coarse-pointer {
+    /* Larger touch targets for coarse pointers */
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px;
+  }
+}
+
+@media (pointer: fine) {
+  .fine-pointer {
+    /* Smaller, more precise targets for fine pointers */
+    min-height: 32px;
+    min-width: 32px;
+    padding: 8px;
+  }
+}
+
+/* Any-Pointer Detection */
+@media (any-pointer: coarse) {
+  .any-coarse-pointer {
+    /* Accommodate both touch and mouse input */
+    min-height: 40px;
+    min-width: 40px;
+  }
+}

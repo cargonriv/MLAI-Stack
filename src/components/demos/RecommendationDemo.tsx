@@ -58,15 +58,15 @@ const RecommendationDemo = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <div>
-        <p className="text-sm text-muted-foreground mb-3">Select your favorite genres:</p>
-        <div className="flex flex-wrap gap-2 mb-4">
+        <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">Select your favorite genres:</p>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
           {genres.map(genre => (
             <Badge
               key={genre}
               variant={selectedGenres.includes(genre) ? "default" : "secondary"}
-              className={`cursor-pointer transition-all ${
+              className={`cursor-pointer transition-all touch-manipulation active:scale-95 text-xs sm:text-sm px-2 py-1 ${
                 selectedGenres.includes(genre) 
                   ? 'bg-gradient-primary shadow-glow-primary/50' 
                   : 'hover:bg-primary/20'
@@ -81,16 +81,16 @@ const RecommendationDemo = () => {
         <Button 
           onClick={generateRecommendations}
           disabled={selectedGenres.length === 0 || isGenerating}
-          className="w-full bg-gradient-accent hover:shadow-glow-accent transition-all duration-300"
+          className="w-full bg-gradient-accent hover:shadow-glow-accent transition-all duration-300 touch-manipulation active:scale-95 text-sm sm:text-base py-2.5 sm:py-3"
         >
           {isGenerating ? (
             <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />
               Generating...
             </>
           ) : (
             <>
-              <Star className="w-4 h-4 mr-2" />
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
               Get Recommendations
             </>
           )}
@@ -98,18 +98,18 @@ const RecommendationDemo = () => {
       </div>
       
       {recommendations.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="font-semibold text-primary">Recommended for you:</h4>
+        <div className="space-y-2 sm:space-y-3">
+          <h4 className="font-semibold text-primary text-sm sm:text-base">Recommended for you:</h4>
           {recommendations.map((movie, index) => (
-            <div key={index} className="bg-secondary/30 rounded-lg p-3 border border-border/50">
+            <div key={index} className="bg-secondary/30 rounded-lg p-2.5 sm:p-3 border border-border/50 touch-manipulation hover:bg-secondary/40 transition-colors duration-200">
               <div className="flex justify-between items-center">
-                <div>
-                  <h5 className="font-medium">{movie.title}</h5>
-                  <p className="text-sm text-muted-foreground">{movie.genre}</p>
+                <div className="min-w-0 flex-1 mr-2">
+                  <h5 className="font-medium text-sm sm:text-base truncate">{movie.title}</h5>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{movie.genre}</p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  <span className="font-medium">{movie.rating}</span>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current" />
+                  <span className="font-medium text-sm sm:text-base">{movie.rating}</span>
                 </div>
               </div>
             </div>
