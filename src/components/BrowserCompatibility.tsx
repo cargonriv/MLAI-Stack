@@ -1,21 +1,27 @@
 /**
- * Browser Compatibility Component
+ * Browser Compatibility Component with Toggle Functionality
  * Initializes browser compatibility features and provides testing interface
  */
 
 import React, { useEffect, useState } from 'react';
 import { initializeBrowserCompatibility, browserInfo, featureSupport } from '../utils/browserCompatibility';
 import { runBrowserCompatibilityTests, quickCompatibilityCheck, type TestSuite } from '../utils/testingUtilities';
+import { ChevronDown, ChevronUp, Shield, AlertTriangle, CheckCircle, XCircle, Play } from 'lucide-react';
 
 interface BrowserCompatibilityProps {
   showTestResults?: boolean;
   autoRunTests?: boolean;
+  defaultOpen?: boolean;
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 }
 
 export const BrowserCompatibility: React.FC<BrowserCompatibilityProps> = ({
   showTestResults = false,
-  autoRunTests = false
+  autoRunTests = false,
+  defaultOpen = false,
+  position = 'bottom-left'
 }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isInitialized, setIsInitialized] = useState(false);
   const [testResults, setTestResults] = useState<TestSuite[]>([]);
   const [isTestingRunning, setIsTestingRunning] = useState(false);
@@ -59,133 +65,187 @@ export const BrowserCompatibility: React.FC<BrowserCompatibilityProps> = ({
     }
   };
 
-  if (!showTestResults && !compatibilityWarning) {
-    return null; // Component is working silently
-  }
+  const getPositionClasses = () => {
+    switch (position) {
+      case 'top-left':
+        return 'top-4 left-4';
+      case 'top-right':
+        return 'top-4 right-4';
+      case 'bottom-left':
+        return 'bottom-4 left-4';
+      case 'bottom-right':
+      default:
+        return 'bottom-4 right-4';
+    }
+  };
+
+  const getCompatibilityStatus = () => {
+    if (compatibilityWarning) return 'warning';
+    if (!isInitialized) return 'loading';
+    return 'good';
+  };
+
+  const getStatusIcon = () => {
+    const status = getCompatibilityStatus();
+    switch (status) {
+      case 'warning':
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      case 'loading':
+        return <Shield className="w-4 h-4 text-muted-foreground animate-pulse" />;
+      case 'good':
+      default:
+        return <Shield className="w-4 h-4 text-green-500" />;
+    }
+  };
 
   return (
-    <div className="browser-compatibility">
-      {compatibilityWarning && (
-        <div className="compatibility-warning bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
+    <div className={`fixed ${getPositionClasses()} z-50 max-w-md`}>
+      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg">
+        {/* Header with toggle */}
+        <div 
+          className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => setIsOpen(!isOpen)}
+        >
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <span className="text-yellow-500 font-medium">Browser Compatibility Warning</span>
+            {getStatusIcon()}
+            <span className="text-sm font-medium text-foreground">Browser Compatibility</span>
+            {compatibilityWarning && (
+              <div className="w-2 h-2 rounded-full bg-yellow-500" />
+            )}
           </div>
-          <p className="text-yellow-400 mt-2">{compatibilityWarning}</p>
+          {isOpen ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
         </div>
-      )}
 
-      {showTestResults && (
-        <div className="compatibility-testing bg-bg-secondary rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-fg-primary">Browser Compatibility Testing</h3>
-            <button
-              onClick={runTests}
-              disabled={isTestingRunning}
-              className="px-4 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-secondary transition-colors disabled:opacity-50"
-            >
-              {isTestingRunning ? 'Running Tests...' : 'Run Tests'}
-            </button>
-          </div>
+        {/* Collapsible content */}
+        {isOpen && (
+          <div className="border-t border-border p-3 space-y-4 max-h-96 overflow-y-auto">
+            {/* Compatibility Warning */}
+            {compatibilityWarning && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-yellow-500 font-medium text-sm">Compatibility Warning</span>
+                    <p className="text-yellow-400 text-xs mt-1">{compatibilityWarning}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-          {/* Browser Information */}
-          <div className="browser-info mb-6">
-            <h4 className="text-md font-medium text-fg-primary mb-2">Browser Information</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-fg-tertiary">Browser:</span>
-                <span className="text-fg-primary ml-2">{browserInfo.name} {browserInfo.version}</span>
-              </div>
-              <div>
-                <span className="text-fg-tertiary">Engine:</span>
-                <span className="text-fg-primary ml-2">{browserInfo.engine}</span>
-              </div>
-              <div>
-                <span className="text-fg-tertiary">Platform:</span>
-                <span className="text-fg-primary ml-2">{browserInfo.platform}</span>
-              </div>
-              <div>
-                <span className="text-fg-tertiary">Device:</span>
-                <span className="text-fg-primary ml-2">
-                  {browserInfo.isMobile ? 'Mobile' : browserInfo.isTablet ? 'Tablet' : 'Desktop'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature Support */}
-          <div className="feature-support mb-6">
-            <h4 className="text-md font-medium text-fg-primary mb-2">Feature Support</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
-              {Object.entries(featureSupport).map(([feature, supported]) => (
-                <div key={feature} className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${supported ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span className="text-fg-secondary capitalize">
-                    {feature.replace(/([A-Z])/g, ' $1').toLowerCase()}
+            {/* Browser Information */}
+            <div>
+              <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                <Shield className="w-3 h-3" />
+                Browser Information
+              </h4>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Browser:</span>
+                  <span className="text-foreground font-mono">{browserInfo.name} {browserInfo.version}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Engine:</span>
+                  <span className="text-foreground font-mono">{browserInfo.engine}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Platform:</span>
+                  <span className="text-foreground font-mono">{browserInfo.platform}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Device:</span>
+                  <span className="text-foreground font-mono">
+                    {browserInfo.isMobile ? 'Mobile' : browserInfo.isTablet ? 'Tablet' : 'Desktop'}
                   </span>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
 
-          {/* Test Results */}
-          {testResults.length > 0 && (
-            <div className="test-results">
-              <h4 className="text-md font-medium text-fg-primary mb-4">Test Results</h4>
-              <div className="space-y-4">
-                {testResults.map((suite, index) => (
-                  <div key={index} className="test-suite bg-bg-tertiary rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h5 className="font-medium text-fg-primary">{suite.name}</h5>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-fg-secondary">{suite.overallScore}/100</span>
-                        <span className={`w-3 h-3 rounded-full ${suite.passed ? 'bg-green-500' : 'bg-red-500'}`} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {suite.results.map((result, resultIndex) => (
-                        <div key={resultIndex} className="flex items-start gap-3 text-sm">
-                          <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${result.passed ? 'bg-green-500' : 'bg-red-500'}`} />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-fg-primary">{result.name}</span>
-                              {result.score && (
-                                <span className="text-fg-tertiary">{Math.round(result.score)}/100</span>
-                              )}
-                            </div>
-                            {result.details && (
-                              <p className="text-fg-secondary mt-1">{result.details}</p>
-                            )}
-                            {result.recommendations && result.recommendations.length > 0 && (
-                              <div className="mt-1">
-                                <p className="text-yellow-400 text-xs">
-                                  Recommendations: {result.recommendations.join(', ')}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+            {/* Feature Support */}
+            <div>
+              <h4 className="text-sm font-medium text-foreground mb-2">Feature Support</h4>
+              <div className="grid grid-cols-2 gap-1 text-xs">
+                {Object.entries(featureSupport).slice(0, 8).map(([feature, supported]) => (
+                  <div key={feature} className="flex items-center gap-2">
+                    {supported ? (
+                      <CheckCircle className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <XCircle className="w-3 h-3 text-red-500" />
+                    )}
+                    <span className="text-muted-foreground capitalize truncate">
+                      {feature.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                    </span>
                   </div>
                 ))}
               </div>
+              {Object.keys(featureSupport).length > 8 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  +{Object.keys(featureSupport).length - 8} more features
+                </p>
+              )}
             </div>
-          )}
 
-          {isTestingRunning && (
-            <div className="testing-progress flex items-center justify-center py-8">
-              <div className="flex items-center gap-3">
-                <div className="animate-spin w-6 h-6 border-2 border-accent-primary border-t-transparent rounded-full" />
-                <span className="text-fg-secondary">Running compatibility tests...</span>
-              </div>
+            {/* Test Controls */}
+            <div className="flex gap-2 pt-2 border-t border-border">
+              <button
+                onClick={runTests}
+                disabled={isTestingRunning}
+                className="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors disabled:opacity-50"
+              >
+                {isTestingRunning ? (
+                  <>
+                    <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3" />
+                    Run Tests
+                  </>
+                )}
+              </button>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Test Results */}
+            {testResults.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-2">Test Results</h4>
+                <div className="space-y-2">
+                  {testResults.slice(0, 3).map((suite, index) => (
+                    <div key={index} className="bg-muted/50 rounded p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-foreground">{suite.name}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground">{suite.overallScore}/100</span>
+                          {suite.passed ? (
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                          ) : (
+                            <XCircle className="w-3 h-3 text-red-500" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {suite.results.filter(r => r.passed).length}/{suite.results.length} tests passed
+                      </div>
+                    </div>
+                  ))}
+                  {testResults.length > 3 && (
+                    <p className="text-xs text-muted-foreground">
+                      +{testResults.length - 3} more test suites
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
+
+
   );
 };
 

@@ -11,12 +11,12 @@ import { initializeBrowserDetection, loadPolyfills, needsPolyfills } from "@/uti
 import { initializeCompatibilityTesting } from "@/utils/compatibility-testing";
 import BrowserCompatibility from "@/components/BrowserCompatibility";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { ErrorBoundary, AsyncErrorBoundary } from "@/components/ui/error-boundary";
 import { OfflineIndicator } from "@/hooks/use-offline";
 import { ErrorProvider } from "@/components/ui/global-error-handler";
+import DevTools from "@/components/DevTools";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -137,11 +137,7 @@ const AppContent = () => {
       </ErrorBoundary>
       
       <AccessibilityStatus />
-      <PerformanceMonitor />
-      <BrowserCompatibility 
-        showTestResults={process.env.NODE_ENV === 'development'} 
-        autoRunTests={false} 
-      />
+      <DevTools showInProduction={false} />
     </div>
   );
 };
