@@ -1,9 +1,9 @@
+/* Import browser compatibility styles */
+@import './styles/browser-compatibility.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import browser compatibility styles */
-@import './styles/browser-compatibility.css';
 
 /* Enhanced Design System Foundation
 All colors, gradients, typography, spacing, and animations are defined here.

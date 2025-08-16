@@ -110,7 +110,7 @@ export const useOffline = (options: OfflineOptions = {}) => {
 };
 
 // Hook for handling offline-first data
-export const useOfflineData = <T>(
+export const useOfflineData = <T,>(
   key: string,
   fetcher: () => Promise<T>,
   options: {

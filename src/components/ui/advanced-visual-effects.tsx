@@ -303,12 +303,5 @@ export const ThemeTransition: React.FC<ThemeTransitionProps> = ({
   );
 };
 
-// Export all components
-export {
-  AdvancedVisualEffects as default,
-  GradientBorder,
-  Hover3D,
-  ParticleEffect,
-  DynamicColorScheme,
-  ThemeTransition
-};
+// Default export
+export default AdvancedVisualEffects;
