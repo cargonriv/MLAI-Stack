@@ -10,15 +10,36 @@
     <meta property="og:title" content="mlai-stack" />
     <meta property="og:description" content="Project Portfolio" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="public/favicon.ico" />
+    <meta property="og:image" content="/MLAI-Stack/favicon.ico" />
 
     <!-- <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" /> -->
+    
+    <!-- GitHub Pages SPA support -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    <script type="module" crossorigin src="/assets/index-CCiAHDBM.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/chunk-GGlCyLKE.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-CZQdJmFu.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-R14w_Am9.js">
+    <link rel="stylesheet" crossorigin href="/assets/css/index-CXg1Apro.css">
   </head>
 
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root"></div>
   </body>
 </html>
