@@ -1,7 +1,124 @@
-/* Browser Compatibility and Fallbacks */
+/* Enhanced Browser Compatibility and Fallbacks */
+/* Comprehensive cross-browser support for modern CSS features */
+
+/* Vendor Prefixes for Experimental Features */
+@layer base {
+  /* Enhanced Backdrop Filter with all vendor prefixes */
+  .backdrop-blur-enhanced {
+    /* Fallback background */
+    background: rgba(34, 39, 46, 0.95);
+    /* Webkit prefix for Safari */
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* Standard property */
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  /* CSS Grid with vendor prefixes and fallbacks */
+  .grid-enhanced {
+    /* IE10+ Grid */
+    display: -ms-grid;
+    -ms-grid-columns: 1fr 1fr 1fr;
+    -ms-grid-rows: auto;
+    /* Flexbox fallback */
+    display: flex;
+    flex-wrap: wrap;
+    /* Modern Grid */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  /* Enhanced Flexbox with all prefixes */
+  .flex-enhanced {
+    /* Old flexbox syntax */
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    /* Modern flexbox */
+    display: flex;
+    /* Webkit prefix */
+    -webkit-flex-direction: row;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    /* Standard properties */
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Enhanced Transform with all vendor prefixes */
+  .transform-enhanced {
+    /* Webkit prefix */
+    -webkit-transform: translateX(10px) translateY(-5px) scale(1.05);
+    /* Mozilla prefix */
+    -moz-transform: translateX(10px) translateY(-5px) scale(1.05);
+    /* Microsoft prefix */
+    -ms-transform: translateX(10px) translateY(-5px) scale(1.05);
+    /* Opera prefix */
+    -o-transform: translateX(10px) translateY(-5px) scale(1.05);
+    /* Standard property */
+    transform: translateX(10px) translateY(-5px) scale(1.05);
+  }
+  
+  /* Enhanced Transition with all vendor prefixes */
+  .transition-enhanced {
+    /* Webkit prefix */
+    -webkit-transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Mozilla prefix */
+    -moz-transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Microsoft prefix */
+    -ms-transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Opera prefix */
+    -o-transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Standard property */
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  
+  /* Enhanced Animation with vendor prefixes */
+  .animation-enhanced {
+    /* Webkit prefix */
+    -webkit-animation: fadeIn 1s ease-out forwards;
+    /* Mozilla prefix */
+    -moz-animation: fadeIn 1s ease-out forwards;
+    /* Microsoft prefix */
+    -ms-animation: fadeIn 1s ease-out forwards;
+    /* Opera prefix */
+    -o-animation: fadeIn 1s ease-out forwards;
+    /* Standard property */
+    animation: fadeIn 1s ease-out forwards;
+  }
+  
+  /* Enhanced Filter with vendor prefixes */
+  .filter-enhanced {
+    /* Webkit prefix */
+    -webkit-filter: blur(5px) brightness(1.1) saturate(1.2);
+    /* Standard property */
+    filter: blur(5px) brightness(1.1) saturate(1.2);
+  }
+  
+  /* Enhanced User Select with all prefixes */
+  .user-select-none {
+    /* Webkit prefix */
+    -webkit-user-select: none;
+    /* Mozilla prefix */
+    -moz-user-select: none;
+    /* Microsoft prefix */
+    -ms-user-select: none;
+    /* Standard property */
+    user-select: none;
+  }
+  
+  /* Enhanced Box Sizing with vendor prefixes */
+  .box-sizing-border {
+    /* Webkit prefix */
+    -webkit-box-sizing: border-box;
+    /* Mozilla prefix */
+    -moz-box-sizing: border-box;
+    /* Standard property */
+    box-sizing: border-box;
+  }
 
 /* CSS Feature Detection and Fallbacks */
-@layer base {
   /* Backdrop Filter Fallbacks */
   .backdrop-blur-fallback {
     /* Fallback for browsers without backdrop-filter support */
@@ -409,5 +526,321 @@
     /* Accommodate both touch and mouse input */
     min-height: 40px;
     min-width: 40px;
+  }
+}
+
+/* Enhanced Keyframe Animations with Vendor Prefixes */
+@-webkit-keyframes fadeIn {
+  from { opacity: 0; -webkit-transform: translateY(20px); }
+  to { opacity: 1; -webkit-transform: translateY(0); }
+}
+
+@-moz-keyframes fadeIn {
+  from { opacity: 0; -moz-transform: translateY(20px); }
+  to { opacity: 1; -moz-transform: translateY(0); }
+}
+
+@-ms-keyframes fadeIn {
+  from { opacity: 0; -ms-transform: translateY(20px); }
+  to { opacity: 1; -ms-transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@-webkit-keyframes slideUp {
+  from { opacity: 0; -webkit-transform: translate3d(0, 20px, 0); }
+  to { opacity: 1; -webkit-transform: translate3d(0, 0, 0); }
+}
+
+@-moz-keyframes slideUp {
+  from { opacity: 0; -moz-transform: translate3d(0, 20px, 0); }
+  to { opacity: 1; -moz-transform: translate3d(0, 0, 0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translate3d(0, 20px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@-webkit-keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@-webkit-keyframes spin {
+  from { -webkit-transform: rotate(0deg); }
+  to { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes float {
+  0%, 100% { -webkit-transform: translateY(0px); }
+  50% { -webkit-transform: translateY(-10px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@-webkit-keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@-webkit-keyframes bounce {
+  0%, 20%, 53%, 80%, 100% { -webkit-transform: translate3d(0, 0, 0); }
+  40%, 43% { -webkit-transform: translate3d(0, -30px, 0); }
+  70% { -webkit-transform: translate3d(0, -15px, 0); }
+  90% { -webkit-transform: translate3d(0, -4px, 0); }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% { transform: translate3d(0, 0, 0); }
+  40%, 43% { transform: translate3d(0, -30px, 0); }
+  70% { transform: translate3d(0, -15px, 0); }
+  90% { transform: translate3d(0, -4px, 0); }
+}
+
+/* Browser-Specific Performance Optimizations */
+@layer utilities {
+  /* Hardware acceleration for all browsers */
+  .hw-accelerated-enhanced {
+    /* Force hardware acceleration */
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    -o-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Optimize for animations */
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    /* Improve rendering */
+    -webkit-perspective: 1000px;
+    -moz-perspective: 1000px;
+    -ms-perspective: 1000px;
+    perspective: 1000px;
+    /* Optimize repaints */
+    will-change: transform, opacity;
+  }
+  
+  /* Enhanced smooth scrolling for all browsers */
+  .smooth-scroll-enhanced {
+    /* Standard property */
+    scroll-behavior: smooth;
+    /* iOS momentum scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent scroll chaining */
+    overscroll-behavior: contain;
+    /* Optimize scrolling performance */
+    scroll-snap-type: y mandatory;
+  }
+  
+  /* Cross-browser text rendering optimization */
+  .text-rendering-optimized {
+    /* Webkit text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Optimize text rendering */
+    text-rendering: optimizeLegibility;
+    /* Improve font display */
+    font-display: swap;
+  }
+  
+  /* Enhanced appearance reset for form elements */
+  .appearance-none-enhanced {
+    /* Webkit appearance */
+    -webkit-appearance: none;
+    /* Mozilla appearance */
+    -moz-appearance: none;
+    /* Standard appearance */
+    appearance: none;
+    /* Remove default styling */
+    border: none;
+    outline: none;
+    background: none;
+  }
+}
+
+/* Advanced Browser-Specific Fixes */
+@layer components {
+  /* Enhanced Safari fixes */
+  @supports (-webkit-appearance: none) {
+    .safari-enhanced-fix {
+      /* Fix backdrop-filter performance */
+      -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(120%);
+      backdrop-filter: blur(20px) saturate(180%) brightness(120%);
+      /* Fix transform rendering issues */
+      -webkit-transform-style: preserve-3d;
+      transform-style: preserve-3d;
+      /* Fix z-index stacking */
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      /* Fix button styling */
+      -webkit-appearance: none;
+      -webkit-border-radius: 0;
+    }
+    
+    .safari-gradient-fix {
+      /* Fix gradient text rendering */
+      background: -webkit-linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      /* Fallback for older Safari */
+      color: #6366f1;
+    }
+  }
+  
+  /* Enhanced Firefox fixes */
+  @-moz-document url-prefix() {
+    .firefox-enhanced-fix {
+      /* Fix scrollbar styling */
+      scrollbar-width: thin;
+      scrollbar-color: #6366f1 #1f2937;
+      /* Fix backdrop-filter alternative */
+      background: rgba(34, 39, 46, 0.95);
+      /* Fix flexbox issues */
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+    
+    .firefox-input-fix {
+      /* Fix input styling */
+      -moz-appearance: none;
+      appearance: none;
+      /* Fix focus outline */
+      outline: none;
+      border: 2px solid transparent;
+    }
+    
+    .firefox-input-fix:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+  }
+  
+  /* Enhanced Chrome/Edge fixes */
+  @supports (-webkit-background-clip: text) {
+    .chrome-enhanced-fix {
+      /* Fix gradient text */
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      /* Fix selection color */
+      -webkit-text-stroke: 1px transparent;
+    }
+    
+    .chrome-scrollbar-fix {
+      /* Custom scrollbar styling */
+      scrollbar-width: thin;
+      scrollbar-color: #6366f1 #1f2937;
+    }
+    
+    .chrome-scrollbar-fix::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .chrome-scrollbar-fix::-webkit-scrollbar-track {
+      background: #1f2937;
+      border-radius: 4px;
+    }
+    
+    .chrome-scrollbar-fix::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 4px;
+    }
+    
+    .chrome-scrollbar-fix::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #5b5bd6, #7c3aed);
+    }
+  }
+  
+  /* Enhanced input styling for all browsers */
+  .input-enhanced {
+    /* Reset appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* Enhanced styling */
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+    transition: all 0.3s ease;
+  }
+  
+  .input-enhanced:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Enhanced button styling for all browsers */
+  .button-enhanced {
+    /* Reset appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* Enhanced styling */
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    /* Enhanced transitions */
+    -webkit-transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    -moz-transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Hardware acceleration */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+  }
+  
+  .button-enhanced:hover {
+    -webkit-transform: translateY(-2px) scale(1.02);
+    -moz-transform: translateY(-2px) scale(1.02);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+  }
+  
+  .button-enhanced:active {
+    -webkit-transform: translateY(0) scale(0.98);
+    -moz-transform: translateY(0) scale(0.98);
+    transform: translateY(0) scale(0.98);
+  }
+  
+  .button-enhanced:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
   }
 }

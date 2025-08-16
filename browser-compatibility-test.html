@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Compatibility Test Page</title>
+    <style>
+        /* Test CSS Features */
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .test-flex {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .test-backdrop {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .test-clip-path {
+            clip-path: circle(50%);
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+        }
+        
+        .test-transform {
+            transform: translateZ(0) scale(1.1);
+            -webkit-transform: translateZ(0) scale(1.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .test-animation {
+            animation: fadeIn 2s ease infinite alternate;
+            -webkit-animation: fadeIn 2s ease infinite alternate;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+        
+        @-webkit-keyframes fadeIn {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+        
+        .test-custom-props {
+            --test-color: #6366f1;
+            color: var(--test-color);
+            background: hsl(var(--test-hsl, 220 100% 50%));
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #0f0f23;
+            color: #f8fafc;
+        }
+        
+        .test-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid #374151;
+            border-radius: 8px;
+        }
+        
+        .status {
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        
+        .status.pass { background: #065f46; color: #d1fae5; }
+        .status.fail { background: #7f1d1d; color: #fecaca; }
+    </style>
+</head>
+<body>
+    <h1>Browser Compatibility Test Page</h1>
+    <p>This page tests various CSS and JavaScript features for browser compatibility.</p>
+    
+    <div class="test-section">
+        <h2>CSS Grid Test</h2>
+        <div class="test-grid">
+            <div style="background: #374151; padding: 1rem; border-radius: 4px;">Grid Item 1</div>
+            <div style="background: #374151; padding: 1rem; border-radius: 4px;">Grid Item 2</div>
+            <div style="background: #374151; padding: 1rem; border-radius: 4px;">Grid Item 3</div>
+        </div>
+        <div id="grid-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Flexbox Test</h2>
+        <div class="test-flex" style="background: #374151; border-radius: 4px;">
+            <span>Centered with Flexbox</span>
+        </div>
+        <div id="flex-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Backdrop Filter Test</h2>
+        <div style="background: linear-gradient(45deg, #6366f1, #8b5cf6); padding: 2rem; border-radius: 8px;">
+            <div class="test-backdrop">
+                <p>This should have a backdrop blur effect</p>
+            </div>
+        </div>
+        <div id="backdrop-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Clip Path Test</h2>
+        <div class="test-clip-path"></div>
+        <div id="clippath-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Transform Test</h2>
+        <div class="test-transform" style="background: #6366f1; color: white; padding: 1rem; border-radius: 4px; display: inline-block;">
+            Hover me (should scale)
+        </div>
+        <div id="transform-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Animation Test</h2>
+        <div class="test-animation" style="background: #8b5cf6; color: white; padding: 1rem; border-radius: 4px; display: inline-block;">
+            Animated Element
+        </div>
+        <div id="animation-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Custom Properties Test</h2>
+        <div class="test-custom-props" style="padding: 1rem; border-radius: 4px;">
+            Text with custom property color
+        </div>
+        <div id="customprops-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>JavaScript Features Test</h2>
+        <div id="js-results"></div>
+    </div>
+    
+    <script>
+        // Test CSS feature support
+        function testCSSSupport() {
+            const tests = [
+                { name: 'grid', property: 'display', value: 'grid', elementId: 'grid-status' },
+                { name: 'flex', property: 'display', value: 'flex', elementId: 'flex-status' },
+                { name: 'backdrop', property: 'backdrop-filter', value: 'blur(10px)', elementId: 'backdrop-status' },
+                { name: 'clippath', property: 'clip-path', value: 'circle(50%)', elementId: 'clippath-status' },
+                { name: 'transform', property: 'transform', value: 'translateZ(0)', elementId: 'transform-status' },
+                { name: 'animation', property: 'animation', value: 'fadeIn 1s ease', elementId: 'animation-status' },
+                { name: 'customprops', property: 'color', value: 'var(--test)', elementId: 'customprops-status' }
+            ];
+            
+            tests.forEach(test => {
+                const supported = CSS.supports && CSS.supports(test.property, test.value);
+                const element = document.getElementById(test.elementId);
+                if (element) {
+                    element.textContent = supported ? 'PASS - Feature supported' : 'FAIL - Feature not supported';
+                    element.className = 'status ' + (supported ? 'pass' : 'fail');
+                }
+            });
+        }
+        
+        // Test JavaScript features
+        function testJSFeatures() {
+            const results = document.getElementById('js-results');
+            const tests = [
+                { name: 'ES6 Modules', test: () => typeof Symbol !== 'undefined' },
+                { name: 'Async/Await', test: () => (async () => {}).constructor === (async function(){}).constructor },
+                { name: 'Fetch API', test: () => typeof fetch !== 'undefined' },
+                { name: 'IntersectionObserver', test: () => 'IntersectionObserver' in window },
+                { name: 'ResizeObserver', test: () => 'ResizeObserver' in window },
+                { name: 'WebGL', test: () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+                    } catch { return false; }
+                }},
+                { name: 'Service Worker', test: () => 'serviceWorker' in navigator },
+                { name: 'Local Storage', test: () => typeof Storage !== 'undefined' && 'localStorage' in window },
+                { name: 'IndexedDB', test: () => 'indexedDB' in window }
+            ];
+            
+            let html = '<h3>JavaScript Feature Support</h3>';
+            tests.forEach(test => {
+                try {
+                    const supported = test.test();
+                    html += `<div class="status ${supported ? 'pass' : 'fail'}">${test.name}: ${supported ? 'PASS' : 'FAIL'}</div>`;
+                } catch (error) {
+                    html += `<div class="status fail">${test.name}: ERROR - ${error.message}</div>`;
+                }
+            });
+            
+            results.innerHTML = html;
+        }
+        
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            testCSSSupport();
+            testJSFeatures();
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,7 @@ import AccessibilityStatus from "@/components/AccessibilityStatus";
 import { performanceMonitor } from "@/utils/performance";
 import { initializeBrowserDetection, loadPolyfills, needsPolyfills } from "@/utils/browser-detection";
 import { initializeCompatibilityTesting } from "@/utils/compatibility-testing";
+import BrowserCompatibility from "@/components/BrowserCompatibility";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import { PageTransition } from "@/components/ui/page-transition";
@@ -137,6 +138,10 @@ const AppContent = () => {
       
       <AccessibilityStatus />
       <PerformanceMonitor />
+      <BrowserCompatibility 
+        showTestResults={process.env.NODE_ENV === 'development'} 
+        autoRunTests={false} 
+      />
     </div>
   );
 };

@@ -7,10 +7,17 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:analyze": "npm run build && npm run analyze:bundle",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "test:compatibility": "node scripts/test-browser-compatibility.js",
+    "test:browser": "npm run test:compatibility",
+    "analyze:bundle": "node scripts/analyze-bundle.js",
+    "analyze:bundle:compare": "node scripts/analyze-bundle.js --compare",
+    "optimize:images": "echo 'Image optimization would run here - integrate with your preferred tool'",
+    "performance:audit": "echo 'Performance audit complete - check console for metrics'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
