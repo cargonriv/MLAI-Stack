@@ -66,7 +66,7 @@ const Hero = () => {
           <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 sm:mb-4 leading-tight transition-all duration-1000 motion-reduce:transition-none ${
             isTyping ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient-text bg-[length:200%_200%] motion-reduce:animate-none">
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
               Carlos F. González Rivera
             </span>
           </h1>
@@ -74,7 +74,7 @@ const Hero = () => {
           <h2 className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold mb-4 sm:mb-6 transition-all duration-1000 delay-300 motion-reduce:transition-none ${
             isTyping ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient-text-reverse bg-[length:200%_200%] motion-reduce:animate-none">
+            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               M.E.C.E., B.S.B.M.E.
             </span>
           </h2>

@@ -1,5 +1,4 @@
 import Header from "@/components/Header";
-import Hero from "@/components/Hero";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Brain, Code, BookOpen, User, Briefcase, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -33,8 +32,6 @@ const Home = () => {
         {...getAriaProps('main', { label: 'Carlos Gonzalez Rivera - ML Engineer Portfolio' })}
         className="pt-16"
       >
-        {/* Enhanced Hero Section */}
-        <Hero />
 
         {/* Enhanced About Section - mobile optimized */}
         <section className="py-12 sm:py-16 lg:py-24 relative overflow-hidden">
