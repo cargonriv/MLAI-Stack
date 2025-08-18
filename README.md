@@ -17,6 +17,7 @@ This is a full-stack React application that serves as both my personal portfolio
 
 **Natural Language Processing**
 - **BERT Sentiment Analysis**: Real-time text sentiment classification using BERT with confidence metrics
+- **FastAPI Backend**: Dedicated Python backend with DistilBERT model for server-side inference
 - Input validation and text preprocessing
 - Supports various text formats and lengths
 
@@ -41,10 +42,11 @@ This is a full-stack React application that serves as both my personal portfolio
 - Custom model loading and management utilities
 
 **Backend & Infrastructure**
+- **FastAPI Backend**: Python-based API server with BERT sentiment analysis
 - Supabase integration for data management
 - Edge functions for serverless ML processing
 - Real-time data synchronization
-- Secure API endpoints
+- Secure API endpoints with CORS support
 
 ## 📋 Portfolio Sections
 
@@ -92,11 +94,64 @@ cd MLAI-Stack
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (frontend only)
+npm run dev
+
+# Start full-stack development (frontend + FastAPI backend)
+npm run dev:full
+
+# Or start services separately:
+# Terminal 1: Start FastAPI backend
+npm run dev:backend
+
+# Terminal 2: Start frontend
 npm run dev
 
 # Build for production
 npm run build
+```
+
+## 🐍 FastAPI Backend
+
+The sentiment analysis demo now includes a dedicated FastAPI backend for server-side BERT inference:
+
+### Backend Features
+- **DistilBERT Model**: Fast, accurate sentiment analysis using Hugging Face Transformers
+- **Real-time API**: `/api/sentiment` endpoint for instant text analysis
+- **Model Information**: `/api/model-info` endpoint with detailed model specs
+- **Health Monitoring**: `/api/health` for service status checks
+- **CORS Enabled**: Ready for frontend integration
+
+### Backend Setup
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start FastAPI server
+python main.py
+```
+
+### API Usage
+```bash
+# Test sentiment analysis
+curl -X POST "http://localhost:8000/api/sentiment" \
+     -H "Content-Type: application/json" \
+     -d '{"text": "I love this product!"}'
+
+# Check API documentation
+open http://localhost:8000/docs
 ```
 
 ## 📊 Model Performance
