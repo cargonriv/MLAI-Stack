@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlai-backend
+  namespace: mlai-sentiment
+  labels:
+    app: mlai-backend
+    component: api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: mlai-backend
+  template:
+    metadata:
+      labels:
+        app: mlai-backend
+        component: api
+    spec:
+      containers:
+      - name: backend
+        image: mlai-backend:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: HOST
+          value: "0.0.0.0"
+        - name: PORT
+          value: "8000"
+        - name: WORKERS
+          value: "1"
+        - name: MODEL_NAME
+          value: "distilbert-base-uncased-finetuned-sst-2-english"
+        - name: MAX_TEXT_LENGTH
+          value: "500"
+        - name: MODEL_CACHE_DIR
+          value: "/app/models"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: USE_GPU
+          value: "false"
+        - name: BATCH_SIZE
+          value: "1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: model-cache
+          mountPath: /app/models
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: model-cache
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: logs
+        emptyDir:
+          sizeLimit: 100Mi
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlai-backend-service
+  namespace: mlai-sentiment
+  labels:
+    app: mlai-backend
+spec:
+  selector:
+    app: mlai-backend
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP

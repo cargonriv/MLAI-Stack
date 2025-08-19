@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlai-sentiment
+  labels:
+    name: mlai-sentiment
+    app: mlai-stack

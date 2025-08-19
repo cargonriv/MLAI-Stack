@@ -1,6 +1,6 @@
 import ModelCard from "./ModelCard";
 import ImageClassificationDemo from "./demos/ImageClassificationDemo";
-import SentimentAnalysisDemoBackend from "./demos/SentimentAnalysisDemoBackend";
+import SentimentDemo from "./demos/SentimentDemo";
 import RecommendationDemo from "./demos/RecommendationDemo";
 import { Brain, Cpu, Zap } from "lucide-react";
 
@@ -24,7 +24,7 @@ const ModelsSection = () => {
       tags: ["BERT", "NLP", "Transformers", "Sentiment"],
       accuracy: "91.8%",
       dataset: "IMDB + Twitter",
-      demoComponent: <SentimentAnalysisDemoBackend />
+      demoComponent: <SentimentDemo />
     },
     {
       title: "Collaborative Filtering Engine",

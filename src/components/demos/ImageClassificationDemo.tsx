@@ -231,7 +231,10 @@ const ImageClassificationDemo = () => {
         announce("Demo encountered an error", "assertive");
       }}
     >
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-3 sm:space-y-4 max-h-[60vh] overflow-y-auto overflow-x-hidden pr-2 chrome-scrollbar-fix firefox-enhanced-fix" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'hsl(var(--accent-primary)) hsl(var(--background-secondary))'
+      }}>
         
         {/* Model Loading Status */}
         <AsyncState

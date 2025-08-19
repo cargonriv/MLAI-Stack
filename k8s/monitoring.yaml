@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: mlai-backend-monitor
+  namespace: mlai-sentiment
+  labels:
+    app: mlai-backend
+spec:
+  selector:
+    matchLabels:
+      app: mlai-backend
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: mlai-alerts
+  namespace: mlai-sentiment
+  labels:
+    app: mlai-backend
+spec:
+  groups:
+  - name: mlai-backend.rules
+    rules:
+    - alert: MLAIBackendDown
+      expr: up{job="mlai-backend-service"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "MLAI Backend is down"
+        description: "MLAI Backend has been down for more than 1 minute"
+    
+    - alert: MLAIHighErrorRate
+      expr: rate(sentiment_api_errors_total[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate in MLAI Backend"
+        description: "Error rate is {{ $value }} errors per second"
+    
+    - alert: MLAIHighResponseTime
+      expr: sentiment_api_request_duration_seconds_sum / sentiment_api_request_duration_seconds_count > 5
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High response time in MLAI Backend"
+        description: "Average response time is {{ $value }} seconds"
+    
+    - alert: MLAIHighMemoryUsage
+      expr: sentiment_api_memory_usage_bytes / (1024*1024*1024) > 1.5
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage in MLAI Backend"
+        description: "Memory usage is {{ $value }}GB"

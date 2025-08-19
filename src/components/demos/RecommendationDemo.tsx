@@ -628,7 +628,10 @@ const RecommendationDemoContent = () => {
 
   if (state.isModelLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto overflow-x-hidden pr-2 chrome-scrollbar-fix firefox-enhanced-fix" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'hsl(var(--accent-primary)) hsl(var(--background-secondary))'
+      }}>
         <div className="text-center">
           <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Loading recommendation engine...</p>
@@ -646,7 +649,10 @@ const RecommendationDemoContent = () => {
 
   if (!state.modelReady && !state.isModelLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto overflow-x-hidden pr-2 chrome-scrollbar-fix firefox-enhanced-fix" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'hsl(var(--accent-primary)) hsl(var(--background-secondary))'
+      }}>
         {/* Network Status */}
         {state.networkStatus !== 'online' && (
           <Alert variant="warning">
@@ -707,7 +713,10 @@ const RecommendationDemoContent = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[60vh] overflow-y-auto overflow-x-hidden pr-2 chrome-scrollbar-fix firefox-enhanced-fix" style={{
+      scrollbarWidth: 'thin',
+      scrollbarColor: 'hsl(var(--accent-primary)) hsl(var(--background-secondary))'
+    }}>
       {/* Network Status */}
       {state.networkStatus !== 'online' && (
         <Alert variant="warning">
@@ -868,7 +877,10 @@ const RecommendationDemoContent = () => {
         </div>
 
         {/* Movie List */}
-        <div className="max-h-48 overflow-y-auto space-y-2">
+        <div className="space-y-2 max-h-48 overflow-y-auto pr-2 chrome-scrollbar-fix firefox-enhanced-fix" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'hsl(var(--accent-primary)) hsl(var(--background-secondary))'
+        }}>
           {getFilteredMovies().map((movie) => {
             const userRating = getRatingForMovie(movie.id);
             return (
