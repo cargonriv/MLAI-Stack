@@ -13,7 +13,7 @@ const Showcase = () => {
   // Track mouse position for subtle parallax effects (disabled for reduced motion)
   useEffect(() => {
     if (prefersReducedMotion) return;
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: (e.clientX / window.innerWidth) * 100,
@@ -21,34 +21,40 @@ const Showcase = () => {
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [prefersReducedMotion]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Enhanced background elements */}
       <div className="absolute inset-0 pointer-events-none">
-        <div 
+        <div
           className="absolute top-1/4 left-10 w-32 h-32 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full blur-3xl"
           style={{
-            transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`,
+            transform: `translate(${mousePosition.x * 0.02}px, ${
+              mousePosition.y * 0.02
+            }px)`,
           }}
         ></div>
-        <div 
+        <div
           className="absolute bottom-1/4 right-10 w-40 h-40 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-full blur-3xl"
           style={{
-            transform: `translate(${mousePosition.x * -0.015}px, ${mousePosition.y * 0.025}px)`,
+            transform: `translate(${mousePosition.x * -0.015}px, ${
+              mousePosition.y * 0.025
+            }px)`,
           }}
         ></div>
-        <div 
+        <div
           className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-pink-500/5 to-purple-500/5 rounded-full blur-2xl"
           style={{
-            transform: `translate(${mousePosition.x * 0.01}px, ${mousePosition.y * -0.02}px)`,
+            transform: `translate(${mousePosition.x * 0.01}px, ${
+              mousePosition.y * -0.02
+            }px)`,
           }}
         ></div>
       </div>
-      
+
       <Header />
       <div className="pt-16 relative z-10">
         <Hero />
@@ -68,11 +74,13 @@ const Showcase = () => {
           }
           minHeight="600px"
         >
-          <Suspense fallback={
-            <div className="container mx-auto px-4 py-16">
-              <Skeleton className="h-96 w-full" />
-            </div>
-          }>
+          <Suspense
+            fallback={
+              <div className="container mx-auto px-4 py-16">
+                <Skeleton className="h-96 w-full" />
+              </div>
+            }
+          >
             <ModelsSection />
           </Suspense>
         </LazyComponent>
