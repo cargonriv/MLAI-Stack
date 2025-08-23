@@ -72,10 +72,13 @@ const Projects = () => {
       description:
         "Developed a machine learning model to predict Sudden Infant Death Syndrome (SIDS) using healthcare data. This project combined deep learning techniques with medical domain expertise to create a diagnostic tool.",
       technologies: [
-        "Python",
         "TensorFlow",
         "Healthcare Data",
         "Deep Learning",
+        "Fourier Transforms",
+        "Dimensionality Reduction",
+        "Time Series Analysis",
+        "Feature Engineering/Selection",
       ],
       status: "Completed",
       link: "/blog/automating-healthcare-diagnostics",
@@ -97,11 +100,12 @@ const Projects = () => {
     {
       title: "Linked Dictionary Learning with Accumulator Neurons",
       description:
-        "Research and implementation of Locally Competitive Algorithms (LCAs) for real-time object recognition.",
+        "Implementation of Linked Locally Competitive Algorithm (LCA) dictionaries for sparse coding. It allows for the flexible construction of single or multi-layer convolutional sparse coding networks to operate on linked datasets for behavior inference. The project currently supports 1D, 2D, and 3D convolutional LCA layers.",
       technologies: [
         "Neural Networks",
         "Neuromorphic Computing",
         "Sparse Approximation",
+        "PyTorch",
       ],
       status: "Completed",
       link: "/blog/cracking-the-minds-code",
@@ -135,7 +139,8 @@ const Projects = () => {
     },
     {
       title: "PacWarrior",
-      description: "A Pac-Man-like game developed using C and Python.",
+      description:
+        "A Pac-Man-like war game developed using C and interpreted in Python.",
       technologies: ["C", "Python", "Tcl", "Makefile", "C++"],
       status: "Completed",
       // link: "https://github.com/cargonriv/PacWarrior",
@@ -144,17 +149,20 @@ const Projects = () => {
     {
       title: "BoostGM",
       description:
-        "A Python project with a focus on machine learning predictions for pro athlete player performance.",
-      technologies: [
-        "Python",
-        "Scikit-learn",
-        "requests",
-        "BeautifulSoup",
-        "Shell",
-      ],
+        "Machine learning predictions for future performances of pro NBA players. Currently extending to NFL and MLB.",
+      technologies: ["Scikit-learn", "requests", "BeautifulSoup", "Shell"],
       status: "Ongoing",
       // link: "https://github.com/cargonriv/BoostGM",
       github: "https://github.com/cargonriv/BoostGM",
+    },
+    {
+      title: "Cardiac Imaging AI for Heart Failure",
+      description:
+        "Image-based medical diagnostics for Heart Failure using Machine Learning. This project is focused on using machine learning for medical diagnostics of cardiovascular diseases from images.",
+      technologies: ["Jupyter Notebook", "Scikit-image", "Pydicom"],
+      status: "Completed",
+      // link: "https://github.com/cargonriv/cardiac-imaging-AI",
+      github: "https://github.com/cargonriv/cardiac-imaging-AI",
     },
   ];
 
