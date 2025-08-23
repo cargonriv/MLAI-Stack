@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import DevTools from "@/components/DevTools";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -286,6 +287,7 @@ const Header = () => {
           </Sheet>
         </div>
       </div>
+      <DevTools showInProduction={false} />
     </header>
     </>
   );

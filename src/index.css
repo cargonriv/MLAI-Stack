@@ -5,6 +5,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.prose {
+  color: white;
+}
+
 /* Enhanced Design System Foundation
 All colors, gradients, typography, spacing, and animations are defined here.
 All colors MUST be HSL format for consistency and theming.
@@ -434,8 +438,7 @@ All colors MUST be HSL format for consistency and theming.
     border: 0;
   }
   
-  .sr-only-focusable:focus,
-  .sr-only-focusable:active {
+    .sr-only-focusable:active {
     position: static;
     width: auto;
     height: auto;
@@ -445,6 +448,20 @@ All colors MUST be HSL format for consistency and theming.
     clip: auto;
     white-space: normal;
   }
+
+  /* Explicitly re-add list styles for content within article */
+  article ul {
+    list-style: disc;
+    padding-left: 1.25em; /* Adjust as needed for spacing */
+  }
+
+  article ol {
+    list-style: decimal;
+    padding-left: 1.25em; /* Adjust as needed for spacing */
+  }
+
+/* Animati
+on Utility Classes */
 
   /* Skip Links */
   .skip-link {
@@ -1134,4 +1151,93 @@ on Utility Classes */
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
   }
+}
+
+/* Additional styles for prose content */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: hsl(var(--foreground-primary));
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.prose p,
+.prose li,
+.prose blockquote {
+  color: hsl(var(--foreground-secondary));
+  font-family: var(--font-body);
+}
+
+.prose a {
+  color: hsl(var(--accent-primary));
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out-quart);
+}
+
+.prose a:hover {
+  color: hsl(var(--accent-secondary));
+  text-decoration: underline;
+}
+
+.prose strong {
+  color: hsl(var(--foreground-primary));
+  font-weight: 600;
+}
+
+.prose code {
+  background-color: hsl(var(--background-secondary));
+  color: hsl(var(--foreground-primary));
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+}
+
+.prose pre {
+  background-color: hsl(var(--background-tertiary));
+  color: hsl(var(--foreground-primary));
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+.prose blockquote {
+  border-left: 4px solid hsl(var(--border));
+  padding-left: 1em;
+  font-style: italic;
+}
+
+.prose img {
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.prose hr {
+  border-color: hsl(var(--border));
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: white;
+}
+
+.prose h1,
+.prose h2 {
+  text-align: center;
 }

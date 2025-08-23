@@ -28,7 +28,7 @@ export const DevTools: React.FC<DevToolsProps> = ({
   return (
     <>
       {/* Dev Tools Toggle Button */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="absolute top-24 right-4 z-50">
         <div className="relative">
           <button
             onClick={() => setIsDevToolsOpen(!isDevToolsOpen)}

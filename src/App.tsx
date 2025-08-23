@@ -7,16 +7,22 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import AccessibilityStatus from "@/components/AccessibilityStatus";
 import { performanceMonitor } from "@/utils/performance";
-import { initializeBrowserDetection, loadPolyfills, needsPolyfills } from "@/utils/browser-detection";
+import {
+  initializeBrowserDetection,
+  loadPolyfills,
+  needsPolyfills,
+} from "@/utils/browser-detection";
 import { initializeCompatibilityTesting } from "@/utils/compatibility-testing";
 import BrowserCompatibility from "@/components/BrowserCompatibility";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
-import { ErrorBoundary, AsyncErrorBoundary } from "@/components/ui/error-boundary";
+import {
+  ErrorBoundary,
+  AsyncErrorBoundary,
+} from "@/components/ui/error-boundary";
 import { OfflineIndicator } from "@/hooks/use-offline";
 import { ErrorProvider } from "@/components/ui/global-error-handler";
-import DevTools from "@/components/DevTools";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -27,7 +33,9 @@ const Resume = lazy(() => import("./pages/Resume"));
 const Showcase = lazy(() => import("./pages/Showcase"));
 const Capstone = lazy(() => import("./pages/Capstone"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const AdvancedEffectsShowcase = lazy(() => import("@/components/AdvancedEffectsShowcase"));
+const AdvancedEffectsShowcase = lazy(
+  () => import("@/components/AdvancedEffectsShowcase")
+);
 // Page loading fallback component
 const PageSkeleton = () => (
   <div className="min-h-screen bg-background p-4">
@@ -64,31 +72,31 @@ const AppContent = () => {
   useEffect(() => {
     // Initialize browser detection and compatibility features
     initializeBrowserDetection();
-    
+
     // Load polyfills if needed
     if (needsPolyfills()) {
-      loadPolyfills().catch(error => {
-        console.warn('Failed to load some polyfills:', error);
+      loadPolyfills().catch((error) => {
+        console.warn("Failed to load some polyfills:", error);
       });
     }
-    
+
     // Run compatibility tests in development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       try {
         initializeCompatibilityTesting();
       } catch (error) {
-        console.warn('Compatibility testing failed:', error);
+        console.warn("Compatibility testing failed:", error);
       }
     }
 
     // Announce page changes for screen readers
     const handleHashChange = () => {
-      const path = window.location.hash.replace('#/', '');
-      const pageName = path || 'home';
-      announce(`Navigated to ${pageName} page`, 'polite');
+      const path = window.location.hash.replace("#/", "");
+      const pageName = path || "home";
+      announce(`Navigated to ${pageName} page`, "polite");
     };
 
-    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener("hashchange", handleHashChange);
 
     // Performance monitoring setup
     const handleWebVital = (event: CustomEvent) => {
@@ -96,25 +104,29 @@ const AppContent = () => {
       console.log(`[Web Vital] ${name}: ${value.toFixed(2)}ms (${rating})`);
     };
 
-    window.addEventListener('web-vital', handleWebVital as EventListener);
+    window.addEventListener("web-vital", handleWebVital as EventListener);
 
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-      window.removeEventListener('web-vital', handleWebVital as EventListener);
+      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("web-vital", handleWebVital as EventListener);
       performanceMonitor.dispose();
     };
   }, [announce]);
 
   return (
-    <div className={`min-h-screen ${preferences.highContrast ? 'high-contrast' : ''}`}>
+    <div
+      className={`min-h-screen ${
+        preferences.highContrast ? "high-contrast" : ""
+      }`}
+    >
       <OfflineIndicator />
       <ScrollProgress />
       <Toaster />
       <Sonner />
-      
+
       <ErrorBoundary
         onError={(error) => {
-          console.error('Page content error:', error);
+          console.error("Page content error:", error);
         }}
       >
         <PageTransition>
@@ -135,9 +147,8 @@ const AppContent = () => {
           </Suspense>
         </PageTransition>
       </ErrorBoundary>
-      
-      <AccessibilityStatus />
-      <DevTools showInProduction={false} />
+
+      {/* <AccessibilityStatus /> */}
     </div>
   );
 };
@@ -145,9 +156,9 @@ const AppContent = () => {
 const App = () => (
   <AsyncErrorBoundary
     onError={(error, errorInfo) => {
-      console.error('Global error caught:', error, errorInfo);
+      console.error("Global error caught:", error, errorInfo);
       // In production, send to error tracking service
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV === "production") {
         // Example: errorTrackingService.captureException(error, { extra: errorInfo });
       }
     }}
