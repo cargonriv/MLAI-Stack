@@ -21,6 +21,53 @@ const Projects = () => {
 
   const projects = [
     {
+      title: "Web3 Hackathon (1st Place)",
+      description:
+        "Fast, user-friendly tool built to explore Ethereum's vast NFT space by allowing users to enter an Ethereum-compatible address (whether an externally owned account or an NFT collection) to quickly retrieve transaction stats for ERC-721s and ETH with future support for ERC-20s.",
+      technologies: [
+        "Alchemy API",
+        "Chainlink",
+        "Firebase",
+        "HTML/CSS",
+        "React",
+        "Solidity",
+      ],
+      status: "Completed",
+      link: "https://www.devpost.com/software/spynft",
+      github: "https://www.github.com/cargonriv/spynft",
+    },
+    {
+      title: '"Metaverso" Hackathon (1st Place)',
+      description:
+        "Creative generative art project that transforms data from hundreds of individuals who died of COVID-19 in Puerto Rico into unique NFT artwork, serving as a poignant digital homage to their lives",
+      technologies: ["p5.js", "paper.js", "HTML/CSS", "JavaScript", "Solidity"],
+      status: "Completed",
+      link: "https://www.devpost.com/software/data-life-puerto-rico",
+      github: "https://www.github.com/germs/Data-Life-PR",
+      featured: true,
+    },
+    {
+      title: "Baby Boutique",
+      description:
+        "A modern, responsive e-commerce store for baby clothes and accessories. It includes features for both customers (browsing, search, cart, Stripe/Square checkout) and administrators (product and order management, role-based access).",
+      technologies: [
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "TanStack Query",
+        "React Router DOM",
+        "Vite",
+        "Supabase",
+        "Stripe",
+        "Square",
+        "PLpgSQL",
+        "JavaScript",
+      ],
+      status: "Completed",
+      // link: "https://github.com/cargonriv/baby-boutique",
+      github: "https://github.com/cargonriv/baby-boutique",
+    },
+    {
       title: "SIDS Prediction System",
       description:
         "Developed a machine learning model to predict Sudden Infant Death Syndrome (SIDS) using healthcare data. This project combined deep learning techniques with medical domain expertise to create a diagnostic tool.",
@@ -36,7 +83,7 @@ const Projects = () => {
     {
       title: "Grounded SAM Object Detection",
       description:
-        "Implemented and optimized the Grounded SAM model for enhanced object detection and segmentation tasks. This project focuses on combining vision transformers with grounding capabilities.",
+        "Implemented and optimized the Grounded SAM model for enhanced object detection and segmentation tasks, like colonies in multi-well plates. This project focuses on combining vision transformers with grounding capabilities.",
       technologies: [
         "PyTorch",
         "Computer Vision",
@@ -45,30 +92,38 @@ const Projects = () => {
       ],
       status: "Ongoing",
       featured: true,
+      link: "/blog/segmenting-the-invisible",
     },
     {
-      title: "LCA Neural Networks",
+      title: "Linked Dictionary Learning with Accumulator Neurons",
       description:
-        "Research and implementation of Locally Competitive Algorithms (LCAs) with accumulator neurons for sparse coding applications in neural networks.",
-      technologies: ["Neural Networks", "Sparse Coding", "MATLAB", "Research"],
-      status: "Research",
+        "Research and implementation of Locally Competitive Algorithms (LCAs) for real-time object recognition.",
+      technologies: [
+        "Neural Networks",
+        "Neuromorphic Computing",
+        "Sparse Approximation",
+      ],
+      status: "Completed",
       link: "/blog/cracking-the-minds-code",
+      github: "https://www.github.com/cargonriv/linked-lca",
     },
     {
-      title: "Biological Image Segmentation",
+      title: "IndurAITb: Tuberculosis Skin Test (TST) Interpretations with AI",
       description:
-        "Computer vision system for segmenting microscopic biological images, dealing with 'invisible' patterns in cellular and bacterial imaging.",
+        "Low-cost, AI-assisted diagnostic tool to help detect and monitor tuberculosis in underserved communities. It integrates machine learning with simple medical inputs to provide faster, more accessible TB screening outside traditional clinical settings.",
       technologies: ["OpenCV", "Image Processing", "Biology", "Segmentation"],
       status: "Completed",
-      link: "/blog/segmenting-the-invisible",
+      featured: true,
     },
     {
       title: "Wedding Website Platform",
       description:
         "Full-stack web application for couples to create and manage their wedding websites, featuring guest management and RSVP functionality.",
-      technologies: ["React", "Node.js", "Database", "Full-Stack"],
-      status: "Completed",
+      technologies: ["React", "Node.js", "MySQL Database", "Full-Stack"],
+      status: "Ongoing",
+      link: "https://www.boricua.wedding",
       github: "https://github.com/cargonriv/boricua.wedding",
+      featured: true,
     },
     {
       title: "Data Science Tutorials",
@@ -77,6 +132,29 @@ const Projects = () => {
       technologies: ["Python", "Education", "Data Science", "Tutorials"],
       status: "Ongoing",
       link: "/blog/data-science-tutorials",
+    },
+    {
+      title: "PacWarrior",
+      description: "A Pac-Man-like game developed using C and Python.",
+      technologies: ["C", "Python", "Tcl", "Makefile", "C++"],
+      status: "Completed",
+      // link: "https://github.com/cargonriv/PacWarrior",
+      github: "https://github.com/cargonriv/PacWarrior",
+    },
+    {
+      title: "BoostGM",
+      description:
+        "A Python project with a focus on machine learning predictions for pro athlete player performance.",
+      technologies: [
+        "Python",
+        "Scikit-learn",
+        "requests",
+        "BeautifulSoup",
+        "Shell",
+      ],
+      status: "Ongoing",
+      // link: "https://github.com/cargonriv/BoostGM",
+      github: "https://github.com/cargonriv/BoostGM",
     },
   ];
 
@@ -128,8 +206,8 @@ const Projects = () => {
               </h1>
               <p className="text-lg md:text-xl text-foreground/60 max-w-3xl mx-auto leading-relaxed">
                 A collection of my most impactful machine learning and
-                engineering projects, showcasing innovation across healthcare,
-                AI, and data science domains.
+                engineering projects, showcasing innovation across several
+                domains.
               </p>
             </div>
 
@@ -138,9 +216,7 @@ const Projects = () => {
                 {projects.map((project, index) => (
                   <div
                     key={index}
-                    className={`group relative overflow-hidden transition-all duration-500 hover:scale-105 ${
-                      project.featured ? "lg:col-span-2" : ""
-                    }`}
+                    className={`group relative overflow-hidden transition-all duration-500 hover:scale-105`}
                   >
                     {/* Card glow effect */}
                     <div
@@ -227,19 +303,18 @@ const Projects = () => {
                         </div>
 
                         <div className="flex gap-2">
-                          {project.link && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="group/btn relative overflow-hidden border-purple-500/30 hover:border-purple-400/50 bg-background/10 backdrop-blur-sm hover:bg-purple-500/10 transition-all duration-300"
-                              onClick={() =>
-                                (window.location.href = `#${project.link}`)
-                              }
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
-                              <ExternalLink className="w-4 h-4 relative z-10" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={
+                              () =>
+                                project.link.startsWith("http")
+                                  ? window.open(project.link, "_blank") // external link
+                                  : (window.location.href = project.link) // internal route
+                            }
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
                           {project.github && (
                             <Button
                               variant="outline"

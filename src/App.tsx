@@ -31,6 +31,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Resume = lazy(() => import("./pages/Resume"));
 const Showcase = lazy(() => import("./pages/Showcase"));
+const Projects = lazy(() => import("./pages/Projects"));
 const Capstone = lazy(() => import("./pages/Capstone"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdvancedEffectsShowcase = lazy(
@@ -137,7 +138,7 @@ const AppContent = () => {
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/resume" element={<Resume />} />
-              <Route path="/projects" element={<Showcase />} />
+              <Route path="/projects" element={<Projects />} />
               <Route path="/showcase" element={<Showcase />} />
               <Route path="/capstone" element={<Capstone />} />
               <Route path="/effects" element={<AdvancedEffectsShowcase />} />
