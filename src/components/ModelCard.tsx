@@ -13,6 +13,7 @@ interface ModelCardProps {
   githubUrl: string;
   tags: string[];
   demoComponent?: React.ReactNode;
+  demoUrl?: string;
   accuracy?: string;
   dataset?: string;
   confidence?: number; // For confidence meters (0-100)
@@ -26,6 +27,7 @@ const ModelCard = ({
   githubUrl, 
   tags, 
   demoComponent, 
+  demoUrl,
   accuracy, 
   dataset,
   confidence,
@@ -129,44 +131,62 @@ const ModelCard = ({
             </p>
           </div>
           
-          {/* Expandable demo section */}
-          {demoComponent && (
+          {/* Demo section - either expandable or link to separate page */}
+          {(demoComponent || demoUrl) && (
             <div className="space-y-2 sm:space-y-3">
-              <Button
-                variant="ghost"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full justify-between p-2.5 sm:p-3 h-auto bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-300 touch-manipulation"
-              >
-                <span className="font-semibold text-primary flex items-center text-sm sm:text-base">
-                  <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                  Interactive Demo
-                </span>
-                {isExpanded ? (
-                  <ChevronUp className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                )}
-              </Button>
-              
-              {/* Expandable demo content */}
-              <div 
-                className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                  isExpanded ? 'max-h-[500px] sm:max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                }`}
-              >
-                <div className="bg-muted/50 rounded-lg p-3 sm:p-4 border border-primary/10">
-                  {isExpanded ? (
-                    <LazyComponent
-                      fallback={<DemoSkeleton type="image-classification" />}
-                      minHeight="200px"
-                    >
-                      <Suspense fallback={<DemoSkeleton type="image-classification" />}>
-                        {demoComponent}
-                      </Suspense>
-                    </LazyComponent>
-                  ) : null}
-                </div>
-              </div>
+              {demoComponent ? (
+                // Expandable demo (legacy support)
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="w-full justify-between p-2.5 sm:p-3 h-auto bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-300 touch-manipulation"
+                  >
+                    <span className="font-semibold text-primary flex items-center text-sm sm:text-base">
+                      <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                      Interactive Demo
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                  
+                  {/* Expandable demo content */}
+                  <div 
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      isExpanded ? 'max-h-[500px] sm:max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="bg-muted/50 rounded-lg p-3 sm:p-4 border border-primary/10">
+                      {isExpanded ? (
+                        <LazyComponent
+                          fallback={<DemoSkeleton type="image-classification" />}
+                          minHeight="200px"
+                        >
+                          <Suspense fallback={<DemoSkeleton type="image-classification" />}>
+                            {demoComponent}
+                          </Suspense>
+                        </LazyComponent>
+                      ) : null}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                // Link to separate demo page
+                <Button
+                  variant="ghost"
+                  onClick={() => window.location.href = demoUrl!}
+                  className="w-full justify-center p-2.5 sm:p-3 h-auto bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-300 touch-manipulation"
+                >
+                  <span className="font-semibold text-primary flex items-center text-sm sm:text-base">
+                    <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Try Interactive Demo
+                  </span>
+                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 ml-2 text-muted-foreground" />
+                </Button>
+              )}
             </div>
           )}
           
@@ -180,14 +200,20 @@ const ModelCard = ({
               View Code
             </Button>
             
-            {demoComponent && (
+            {(demoComponent || demoUrl) && (
               <Button 
                 variant="outline"
                 className="flex-1 border-primary/30 hover:border-primary text-primary hover:bg-primary/10 transition-all duration-300 touch-manipulation text-sm sm:text-base py-2.5 sm:py-3"
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => {
+                  if (demoUrl) {
+                    window.location.href = demoUrl;
+                  } else {
+                    setIsExpanded(!isExpanded);
+                  }
+                }}
               >
                 <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                {isExpanded ? 'Hide Demo' : 'Try Demo'}
+                {demoUrl ? 'Try Demo' : (isExpanded ? 'Hide Demo' : 'Try Demo')}
               </Button>
             )}
           </div>

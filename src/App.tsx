@@ -37,6 +37,11 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AdvancedEffectsShowcase = lazy(
   () => import("@/components/AdvancedEffectsShowcase")
 );
+
+// Demo pages
+const ImageClassification = lazy(() => import("./pages/demos/ImageClassification"));
+const SentimentAnalysis = lazy(() => import("./pages/demos/SentimentAnalysis"));
+const MovieRecommendation = lazy(() => import("./pages/demos/MovieRecommendation"));
 // Page loading fallback component
 const PageSkeleton = () => (
   <div className="min-h-screen bg-background p-4">
@@ -142,6 +147,10 @@ const AppContent = () => {
               <Route path="/showcase" element={<Showcase />} />
               <Route path="/capstone" element={<Capstone />} />
               <Route path="/effects" element={<AdvancedEffectsShowcase />} />
+              {/* Demo pages */}
+              <Route path="/demos/image-classification" element={<ImageClassification />} />
+              <Route path="/demos/sentiment-analysis" element={<SentimentAnalysis />} />
+              <Route path="/demos/movie-recommendation" element={<MovieRecommendation />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

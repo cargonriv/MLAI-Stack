@@ -1,7 +1,4 @@
 import ModelCard from "./ModelCard";
-import ImageClassificationDemo from "./demos/ImageClassificationDemo";
-import SentimentDemo from "./demos/SentimentDemo";
-import RecommendationDemo from "./demos/RecommendationDemo";
 import { Brain, Cpu, Zap } from "lucide-react";
 
 const ModelsSection = () => {
@@ -14,7 +11,7 @@ const ModelsSection = () => {
       tags: ["SAM", "Object Detection", "Segmentation", "Zero-shot"],
       accuracy: "High Precision",
       dataset: "SA-1B + Custom",
-      demoComponent: <ImageClassificationDemo />
+      demoUrl: "#/demos/image-classification"
     },
     {
       title: "Transformer Sentiment Analysis",
@@ -24,7 +21,7 @@ const ModelsSection = () => {
       tags: ["BERT", "NLP", "Transformers", "Sentiment"],
       accuracy: "91.8%",
       dataset: "IMDB + Twitter",
-      demoComponent: <SentimentDemo />
+      demoUrl: "#/demos/sentiment-analysis"
     },
     {
       title: "Collaborative Filtering Engine",
@@ -34,7 +31,7 @@ const ModelsSection = () => {
       tags: ["Collaborative Filtering", "Embeddings", "TensorFlow", "Recommendation"],
       accuracy: "87.5%",
       dataset: "MovieLens 25M",
-      demoComponent: <RecommendationDemo />
+      demoUrl: "#/demos/movie-recommendation"
     },
     {
       title: "NBA Player Performance Predictor",
@@ -80,8 +77,8 @@ const ModelsSection = () => {
             ML Model Collection
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Explore my machine learning projects, each featuring detailed explanations, 
-            interactive demonstrations, and complete source code.
+            Explore my machine learning projects with interactive demonstrations. 
+            Click "Try Demo" to experience each model in a dedicated environment.
           </p>
         </div>
         

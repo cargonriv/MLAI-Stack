@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink } from "lucide-react";
+import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import DevTools from "@/components/DevTools";
 
@@ -28,6 +29,12 @@ const Header = () => {
     { name: "Projects", href: "#/projects", icon: Folder },
     { name: "Showcase", href: "#/showcase", icon: Brain },
     { name: "Capstone", href: "#/capstone", icon: GraduationCap },
+  ];
+
+  const demoItems = [
+    { name: "Image Classification", href: "#/demos/image-classification", icon: Camera },
+    { name: "Sentiment Analysis", href: "#/demos/sentiment-analysis", icon: MessageSquare },
+    { name: "Movie Recommendation", href: "#/demos/movie-recommendation", icon: Star },
   ];
 
   return (
@@ -137,6 +144,46 @@ const Header = () => {
                 </span>
               </a>
             ))}
+            
+            {/* Demos Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={`group relative text-fg-secondary hover:text-accent-primary transition-all ${
+                    preferences.reducedMotion ? '' : 'duration-normal ease-out-quart'
+                  } flex items-center space-x-2 py-2 px-2 xl:px-3 rounded-lg hover:bg-bg-secondary/50 hover:backdrop-blur-sm focus-gradient-ring touch-target`}
+                >
+                  <Brain 
+                    className={`w-4 h-4 transition-all ${
+                      preferences.reducedMotion ? '' : 'duration-normal ease-out-quart group-hover:scale-110 group-hover:text-accent-primary'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="relative text-sm xl:text-base">
+                    Demos
+                    <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-primary transition-all ${
+                      preferences.reducedMotion ? '' : 'duration-normal ease-out-quart group-hover:w-full'
+                    }`}></span>
+                  </span>
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {demoItems.map((demo) => (
+                  <DropdownMenuItem key={demo.name} asChild>
+                    <a
+                      href={demo.href}
+                      className="flex items-center space-x-2 w-full"
+                      onClick={() => announce(`Navigating to ${demo.name} demo`)}
+                    >
+                      <demo.icon className="w-4 h-4" />
+                      <span>{demo.name}</span>
+                    </a>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="secondary"
               size="sm"
@@ -252,6 +299,55 @@ const Header = () => {
                     <span className="text-base sm:text-lg font-medium">{item.name}</span>
                   </a>
                 ))}
+                
+                {/* Demo Section */}
+                <div className="mt-4 pt-4 border-t border-accent-primary/20">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">
+                    Interactive Demos
+                  </h3>
+                  {demoItems.map((demo, index) => (
+                    <a
+                      key={demo.name}
+                      href={demo.href}
+                      className={`group flex items-center space-x-3 sm:space-x-4 text-fg-secondary hover:text-accent-primary transition-all ${
+                        preferences.reducedMotion ? '' : 'duration-normal ease-out-quart animate-slide-right'
+                      } p-3 sm:p-4 rounded-xl hover:bg-bg-secondary/50 hover:backdrop-blur-sm hover:shadow-glow-sm touch-manipulation active:scale-95 focus-gradient-ring`}
+                      style={{ animationDelay: preferences.reducedMotion ? '0ms' : `${(navItems.length + index) * 50}ms` }}
+                      onClick={() => {
+                        setIsOpen(false);
+                        announce(`Navigating to ${demo.name} demo`);
+                      }}
+                      onKeyDown={(e) => handleKeyboardNavigation(e, {
+                        onEnter: () => {
+                          setIsOpen(false);
+                          window.location.hash = demo.href.replace('#', '');
+                          announce(`Navigating to ${demo.name} demo`);
+                        },
+                        onSpace: () => {
+                          setIsOpen(false);
+                          window.location.hash = demo.href.replace('#', '');
+                          announce(`Navigating to ${demo.name} demo`);
+                        }
+                      })}
+                      {...getAriaProps('link', { 
+                        label: `Navigate to ${demo.name} demo page`,
+                        current: window.location.hash === demo.href ? 'page' : undefined
+                      })}
+                    >
+                      <div className={`p-1.5 sm:p-2 rounded-lg bg-bg-secondary/50 border border-accent-primary/20 group-hover:border-accent-primary/40 group-hover:shadow-glow-sm transition-all ${
+                        preferences.reducedMotion ? '' : 'duration-normal ease-out-quart group-hover:scale-110'
+                      }`}>
+                        <demo.icon 
+                          className={`w-4 h-4 sm:w-5 sm:h-5 group-hover:text-accent-primary transition-colors ${
+                            preferences.reducedMotion ? '' : 'duration-normal'
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <span className="text-base sm:text-lg font-medium">{demo.name}</span>
+                    </a>
+                  ))}
+                </div>
                 <Button
                   variant="secondary"
                   className={`justify-start mt-4 sm:mt-6 mx-2 sm:mx-4 bg-gradient-primary text-bg-primary hover:shadow-glow-md transition-all ${
