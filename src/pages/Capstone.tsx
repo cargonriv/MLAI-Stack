@@ -329,6 +329,13 @@ const Capstone = () => {
                     healthcare, particularly for individuals who rely on LVADs
                     for long-term heart support.
                   </p>
+                  <div className="flex justify-center">
+                    <iframe
+                      height="200"
+                      width="100%"
+                      src="https://drive.google.com/embeddedfolderview?id=1uzsYczRbduECIDhSGNJzJLJum51aCtBw#grid"
+                    ></iframe>
+                  </div>
                   <p className="text-lg">
                     Below are the project presentations for this Biomedical
                     Engineering Capstone in chronological order:

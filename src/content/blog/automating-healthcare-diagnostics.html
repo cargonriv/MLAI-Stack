@@ -39,18 +39,18 @@
     <main class="doc" role="main">
       <h1>Automating Healthcare Diagnostics</h1>
       <h2 class="c12 subtitle" id="h.6x6u16m6167t">
-        <span>Lessons from the SIDS projec</span>
+        <span>Lessons from the SIDS project</span>
       </h2>
 
       <p>
         When I first dove into the project of predicting Sudden Infant Death
         Sydrome (SIDS), I had no idea how deeply personal it would become. Our
         capstone began in January 2024, the last full-time semester of my
-        master’s at Rice University. At the same time, my wife and I were
+        master's at Rice University. At the same time, my wife and I were
         preparing to welcome our first child — a baby girl, due right around
         mid-April, just as I was wrapping up the semester and transitioning from
         full-time student to full-time data scientist at my lab. The timing was
-        intentional. We had planned it carefully: I’d finish my graduate
+        intentional. We had planned it carefully: I'd finish my graduate
         coursework, deliver my final presentations, and step into fatherhood and
         a full-time role with no academic weight holding me back.
       </p>
@@ -69,9 +69,9 @@
 
       <p>
         That convergence made this project real. Not abstract. Not academic. It
-        was personal. I wasn’t just thinking about AI for hypothetical babies in
+        was personal. I wasn't just thinking about AI for hypothetical babies in
         the NICU. I was looking at mine, yearning to hold her in my arms. And
-        that experience sharpened my sense of responsibility in ways I can’t
+        that experience sharpened my sense of responsibility in ways I can't
         quite put into words.
       </p>
 
@@ -80,10 +80,10 @@
         Rice University) harnessed AI to predict cardio-respiratory failure in
         SIDS. More specifically, this post recounts our journey in building a
         machine-learning pipeline to identify cardio-respiratory signatures of
-        SIDS in a mouse model. It’s a story about data, yes — but also about
+        SIDS in a mouse model. It's a story about data, yes — but also about
         timing, leadership, life, and a different kind of early warning. Along
-        the way, I’ll share how we engineered features that capture a
-        heartbeat’s shape, trained neural networks on spectrogram “heatmaps,”
+        the way, I'll share how we engineered features that capture a
+        heartbeat's shape, trained neural networks on spectrogram “heatmaps,”
         and tried to help machines learn what parents and doctors struggle to
         catch in time.
       </p>
@@ -101,7 +101,7 @@
         an auto-resuscitation reflex: the brainstem sounds an internal alarm,
         making the baby gasp and “reset” breathing and heart rate. In SIDS, for
         reasons still unknown, this protective reflex fails, and the infant
-        simply doesn’t wake up.
+        simply doesn't wake up.
       </p>
 
       <p>
@@ -110,7 +110,7 @@
         higher risk. Some hypotheses focus on subtle abnormalities in the
         brainstem or the autonomic nervous system that impair breathing control.
         Others point to genetic predispositions or cardiac arrhythmias. However,
-        an exact cause remains elusive since it’s likely multi-factorial. What’s
+        an exact cause remains elusive since it's likely multi-factorial. What's
         clear is that we cannot yet predict which infant will succumb to SIDS.
         This unpredictability is what makes SIDS so terrifying and motivates
         work on early detection.
@@ -120,10 +120,10 @@
         Each year in the United States, over 1,300 infants die from SIDS. This
         number has plateaued despite public health campaigns about safe sleep.
         It would be invaluable if we could identify high-risk infants through
-        non-invasive monitoring (say, analyzing an infant’s heartbeat or
+        non-invasive monitoring (say, analyzing an infant's heartbeat or
         breathing patterns). This is the vision of predictive healthcare in this
-        context: rather than just reacting to an emergency, we’d love an AI
-        “smoke alarm” that alerts caregivers before a baby’s life is in danger.
+        context: rather than just reacting to an emergency, we'd love an AI
+        “smoke alarm” that alerts caregivers before a baby's life is in danger.
         Recent research is starting to move in this direction. For instance, a
         2024 study identified metabolic biomarkers in blood that might help flag
         infants at risk of SIDS. And in neonatal intensive care units (NICUs),
@@ -140,19 +140,19 @@
       <p>
         One big challenge in SIDS research is that you obviously cannot
         experiment on human infants. To study SIDS triggers in a controlled way,
-        our collaborators at Baylor’s Ray Lab turned to a mouse model. They
+        our collaborators at Baylor's Ray Lab turned to a mouse model. They
         created a simulation of SIDS in the lab using newborn mouse pups. Each
         mouse pup was placed in a chamber and fitted with tiny ECG leads to
         record its heart activity, plus a custom face mask. Through the mask,
         the system periodically gave the pup a gas mixture with no oxygen
         (typically a nitrogen/carbon dioxide mix) to challenge its breathing.
-        This low-oxygen, high-CO₂ environment would cause the pup’s heart rate
+        This low-oxygen, high-CO₂ environment would cause the pup's heart rate
         to drop and its breathing to cease, essentially inducing an apnea event
         as seen in SIDS. The moment the pup stopped breathing, the system
         returned normal air to the chamber, allowing it to gasp and recover if
         it could (this is the auto-resuscitation reflex in action). The cycle
         would repeat: challenge the pup with low oxygen, then rescue it, until,
-        eventually, in some unfortunate cases, the pup’s reflex failed, and it
+        eventually, in some unfortunate cases, the pup's reflex failed, and it
         did not recover. In other words, the mouse succumbed to a SIDS-like
         event.
       </p>
@@ -161,12 +161,12 @@
         Over several years, the Ray Lab conducted hundreds of these automated
         experiments on mouse pups. Each experiment produced a rich collection of
         data: continuous ECG waveforms (electrocardiogram signals) tracking the
-        heart’s electrical activity, respiratory signals (from a small airflow
+        heart's electrical activity, respiratory signals (from a small airflow
         sensor in the mask), and timestamps of each apnea episode and outcome
-        (recovery or death). The lab’s custom software, Breathe Easy, processed
+        (recovery or death). The lab's custom software, Breathe Easy, processed
         the raw waveforms into a set of numeric features for each mouse. For
         example, it extracted each “breath” and measured durations, and
-        similarly recorded each heartbeat’s timing. By the time we, the Rice
+        similarly recorded each heartbeat's timing. By the time we, the Rice
         capstone team, received the data, we had a database of 357 mice with
         about 3,584 apnea events in total, each event labeled as either a normal
         apnea (the mouse recovered) or a fatal apnea (the mouse died, e.g., SIDS
@@ -198,7 +198,7 @@
         significantly different in SIDS-versus-normal events? We applied ANOVA
         tests and Mann-Whitney U tests to compare groups. The result: no single
         feature popped out as a clear discriminator. This was deflating at first
-        since we didn’t find any simple “smoking gun”, like “heart rate drops by
+        since we didn't find any simple “smoking gun”, like “heart rate drops by
         X% only in the SIDS cases.”
       </p>
 
@@ -207,9 +207,9 @@
         features that our project sponsors (the Baylor doctors) suspected might
         be important. This was essentially our baseline machine-learning attempt
         on the raw feature set. Initially, the random forest just predicted the
-        majority class every time (e.g., “no SIDS event”), which isn’t
+        majority class every time (e.g., “no SIDS event”), which isn't
         surprising since there were far more recoveries than deaths (a heavy
-        class imbalance). We then adjusted the model’s class weights to penalize
+        class imbalance). We then adjusted the model's class weights to penalize
         SIDS errors more, hoping to coax it into catching the rare SIDS case.
         The outcome was still poor: the model would achieve a high overall
         accuracy (because most events are non-fatal, and it got those right),
@@ -264,7 +264,7 @@
           means a more erratic, less predictable pattern. The intuition is that
           a distressed or unstable physiological state might produce more
           complex, chaotic heart rate fluctuations. (Think of a calm, healthy
-          baby’s heart versus one that’s struggling; one might expect different
+          baby's heart versus one that's struggling; one might expect different
           patterns of variability.) We also considered entropy-based metrics
           (like fuzzy entropy) to quantify signal irregularity since these have
           been used in biomedical signal analysis to capture complexity in noisy
@@ -287,7 +287,7 @@
           rate and respiration (a phenomenon known as respiratory sinus
           arrhythmia). These are more exploratory, but the goal was to arm our
           models with as detailed a description of the pre-apnea state as
-          possible, since we didn’t know what subtle combination might be the
+          possible, since we didn't know what subtle combination might be the
           harbinger of collapse.
         </li>
       </ul>
@@ -299,8 +299,8 @@
         principled way grounded in cardio-respiratory physiology. I often
         toggled between two mindsets: the data scientist tweaking code to
         calculate features and the biomedical engineer asking, “Does this
-        feature make sense for what an infant’s body is doing?”. This dual
-        approach was crucial; it’s a lesson I carry forward: in healthcare AI,
+        feature make sense for what an infant's body is doing?”. This dual
+        approach was crucial; it's a lesson I carry forward: in healthcare AI,
         blending domain insight with data-driven methods amplifies the power of
         both.
       </p>
@@ -345,7 +345,7 @@
       </h3>
 
       <p>
-        In modern AI, there’s a bit of a dichotomy: feed the algorithm carefully
+        In modern AI, there's a bit of a dichotomy: feed the algorithm carefully
         curated features, or feed it raw data and let it figure out the features
         itself. We decided to try both.
       </p>
@@ -355,7 +355,7 @@
           <strong>Feature-Based Time-Series Model (1D CNN + LSTM):</strong> I
           built a neural network that could process a sequence of feature
           vectors over time for the tabular dataset of engineered features. Each
-          apnea event wasn’t just a single timestamp – we had a time series
+          apnea event wasn't just a single timestamp – we had a time series
           leading up to it (e.g., 10 seconds or 5 minutes of data, depending on
           the window, which we could break into smaller sub-intervals). To model
           temporal patterns in the features (like trends or oscillations in
@@ -377,7 +377,7 @@
           <strong
             >Image-Based Deep Learning Model (2D CNN on Spectrograms):</strong
           >
-          In parallel, we treated each event’s ECG (and potentially breathing)
+          In parallel, we treated each event's ECG (and potentially breathing)
           spectrogram as an image and trained a convolutional neural network to
           classify it. If a human can glance at the spectrogram and notice
           “smoother vs noisier” patterns, a CNN should also be able to learn the
@@ -388,22 +388,22 @@
           To augment the data (since 3,584 images is not a lot by deep learning
           standards), we did some basic augmentation like flipping or adding
           slight jitter to the images, and we were careful to filter frequencies
-          to the same range for all (0.5–50 Hz) to reduce noise. The CNN’s job
+          to the same range for all (0.5–50 Hz) to reduce noise. The CNN's job
           was to implicitly learn features like “lack of high-frequency
           variation” or “presence of certain oscillatory patterns” that might
           correlate with impending SIDS. This approach essentially lets the data
           speak with a less human preconception since the network might discover
-          a pattern we didn’t hypothesize.
+          a pattern we didn't hypothesize.
         </li>
       </ol>
 
       <p>
         Both approaches were implemented in Python (PyTorch for the CNN models),
-        and we managed our experiments in the project’s GitHub repository. As
+        and we managed our experiments in the project's GitHub repository. As
         the technical lead, I wrote most of this modeling code and spent long
         nights tuning hyperparameters, but team collaboration was key in
         interpreting results and deciding the next steps. For example, when one
-        model would make an incorrect prediction, we’d examine that case
+        model would make an incorrect prediction, we'd examine that case
         together to see if there was a biomedical reason or just noise.
       </p>
 
@@ -416,7 +416,7 @@
         feature-based CNN+LSTM achieved an overall accuracy of around 91%, which
         was initially a cause for celebration. Nevertheless, my heart sank when
         I dug into the confusion matrix: the model had effectively learned to
-        predict “no SIDS” for every case. It wasn’t truly 91% accuracy because
+        predict “no SIDS” for every case. It wasn't truly 91% accuracy because
         it was smart; it was just taking advantage of the class imbalance. It
         failed to catch any of the SIDS events. In other words, it had zero
         sensitivity (recall) for the positive class. We had seen this pattern
@@ -426,7 +426,7 @@
         focus on getting the majority right. This underscores how tricky
         imbalanced medical data can be. We did try techniques to mitigate this
         (e.g., class weight adjustments in the loss function, resampling), but
-        the bottom line was that this model was not viable if it wouldn’t raise
+        the bottom line was that this model was not viable if it wouldn't raise
         the alarm for an actual SIDS event. A 91% accuracy is meaningless if the
         9% it gets wrong are the only cases you care about.
       </p>
@@ -435,7 +435,7 @@
         On the other hand, the spectrogram CNN told a more promising story. Its
         accuracy was lower (about 86% on the test set), but importantly, it did
         catch some SIDS cases. In fact, its recall (sensitivity) for SIDS was
-        ~0.45 (45%). It wasn’t anywhere near perfect, but this was an ample
+        ~0.45 (45%). It wasn't anywhere near perfect, but this was an ample
         improvement from 0%. The precision (positive predictive value) was about
         50.6%, meaning roughly half of the events flagged as “SIDS likely” were
         actual SIDS cases. To put it plainly, the CNN would correctly identify
@@ -457,11 +457,11 @@
         false positives, whereas the feature model had essentially no true
         positives. This result validated our hypothesis that the
         frequency-domain patterns carried predictive signals that the
-        human-crafted features weren’t fully capturing. The CNN learned to
+        human-crafted features weren't fully capturing. The CNN learned to
         notice something in the spectrogram, perhaps a loss of high-frequency
         heart rate variability or a particular respiratory oscillation, that
-        correlates with failure to auto-resuscitate. It’s intriguing to think
-        what exactly it’s keying in on. Is it essentially measuring heart rate
+        correlates with failure to auto-resuscitate. It's intriguing to think
+        what exactly it's keying in on. Is it essentially measuring heart rate
         variability in its own convolutional way? Is it picking up on a slow
         drift or electrical stability in the heart prior to failure? Deep
         learning is often criticized as a “black box.” However, we plan to apply
@@ -474,7 +474,7 @@
 
       <p>
         In AI for healthcare, the success metric depends on context. Our two
-        models demonstrated this vividly. If you only looked at accuracy, you’d
+        models demonstrated this vividly. If you only looked at accuracy, you'd
         pick the 91% model and be utterly wrong in practice. You must consider
         what matters: here it was catching that one critical event. In fact, our
         final recommendation was to favor the spectrogram CNN despite its lower
@@ -483,9 +483,9 @@
         medical AI: you tune the system not for vanity metrics but for the
         outcome that saves lives. Sometimes, that means accepting more false
         alarms. A parallel can be found in NICUs with sepsis alarms built from
-        algorithms that monitor infants’ vital signs dramatically reduce
+        algorithms that monitor infants' vital signs dramatically reduce
         neonatal sepsis mortality by alerting staff earlier, even though they
-        aren’t perfectly accurate. We envisioned our SIDS predictor in a similar
+        aren't perfectly accurate. We envisioned our SIDS predictor in a similar
         light: a somewhat noisy alarm is far better than silence.
       </p>
 
@@ -499,7 +499,7 @@
         limited input window, etc.), but scaling up the dataset size is
         essential. One lesson here is that data is often the scarcest resource
         in biomedical projects. We were fortunate to have any SIDS examples at
-        all (since it’s hard to acquire). However, future studies will need to
+        all (since it's hard to acquire). However, future studies will need to
         gather more, possibly by running more mouse experiments or by collecting
         analogous physiological data from human infants who had apparent
         life-threatening events (ALTEs) or non-fatal apneas.
@@ -516,8 +516,8 @@
         machine learning scientist, and occasional domain translator. I guided
         the team through brainstorming features, taught newer members about
         concepts like Fourier transforms and neural networks, and kept us on a
-        rigorous schedule to meet deliverables. One day, I’d be debugging Python
-        code to fix an ECG signal preprocessing bug; the next day, I’d present
+        rigorous schedule to meet deliverables. One day, I'd be debugging Python
+        code to fix an ECG signal preprocessing bug; the next day, I'd present
         our latest findings to pediatricians and biologists, explaining what a
         “spectrogram CNN” is in lay terms. This taught me the importance of
         communication across disciplines. We had brilliant domain experts at
@@ -531,7 +531,7 @@
         A concrete example of this synergy was when the doctors suggested
         certain features (like specific breathing characteristics) based on
         their experience. Even though our initial inclusion of the entire
-        breathlist didn’t yield a silver bullet, those conversations sparked
+        breathlist didn't yield a silver bullet, those conversations sparked
         ideas for feature engineering (such as looking at variability in
         breathing patterns). In turn, when our models started working, I created
         visualizations of what the model was seeing, like overlaying the
@@ -543,9 +543,9 @@
 
       <p>
         From a leadership perspective, I learned how to balance innovation with
-        pragmatism. It’s easy to get excited about fancy deep learning models
+        pragmatism. It's easy to get excited about fancy deep learning models
         (guilty as charged), but part of my role was ensuring we also tried
-        simpler approaches and didn’t overlook simpler insights. We did, for
+        simpler approaches and didn't overlook simpler insights. We did, for
         instance, spend time on classical statistical tests and a baseline
         random forest, which isn't glamorous, but it established a point of
         comparison and justified the need for more complex modeling when those
@@ -553,7 +553,7 @@
         version control and coding standards in our GitHub repo. Enforcing good
         practices early (like clear documentation and unit tests for our data
         preprocessing functions) saved us from chaos later. These multifaceted
-        skills are the sorts of project management lessons that one doesn’t
+        skills are the sorts of project management lessons that one doesn't
         always learn in class but are critical in real-world tech teams.
       </p>
 
@@ -564,11 +564,11 @@
         confident can we be? What should the response be, wake the baby? Take it
         to a hospital? False positives have consequences (parent anxiety,
         over-treatment), but false negatives have the worst consequence of all.
-        This prediction isn’t just an academic exercise; it’s potentially life
+        This prediction isn't just an academic exercise; it's potentially life
         and death. That kept us intellectually honest and cautious in how we
         presented our findings. We were careful not to over-hype the results and
         emphasized that more validation is needed before anyone trusts an AI
-        with a baby’s life. I think this mindset is crucial for anyone looking
+        with a baby's life. I think this mindset is crucial for anyone looking
         to bring AI into healthcare: accuracy metrics are just the start of the
         conversation, not the end.
       </p>
@@ -581,7 +581,7 @@
         Our capstone project was a prototype and a proof of concept that AI can
         pick up patterns in physiological signals that might precede SIDS. But,
         turning this into a real-world diagnostic tool will require further
-        research and development. Here’s where we see it heading:
+        research and development. Here's where we see it heading:
       </p>
 
       <ul>
@@ -618,16 +618,16 @@
 
         <li>
           <strong>Better Algorithms for Imbalanced Data:</strong> We got a crash
-          course in dealing with class imbalance, but there’s room for more
+          course in dealing with class imbalance, but there's room for more
           advanced techniques. Future models could employ anomaly detection
           framing by treating SIDS events as anomalies to detect rather than as
-          one-half of a balanced classification. There’s promising research on
+          one-half of a balanced classification. There's promising research on
           training models to learn what “normal” looks like and then flagging
           deviations. In fact, one could imagine training on the abundant
           non-SIDS data (apneas where recovery occurred) to establish a baseline
           and using unsupervised or semi-supervised methods to spot the oddball
           cases. Recent advances in time-series anomaly detection (2023–2025)
-          could be applicable here, ensuring the model doesn’t just learn to be
+          could be applicable here, ensuring the model doesn't just learn to be
           a majority vote predictor.
         </li>
 
@@ -640,9 +640,9 @@
           would mean collecting data from infant monitors in hospitals. One idea
           is to retrospectively analyze monitor data from infants who had ALTEs
           (Apparent Life-Threatening Events) or who researchers monitored due to
-          being siblings of SIDS victims to see if our model’s patterns hold up.
+          being siblings of SIDS victims to see if our model's patterns hold up.
           These ideas are easier said than done due to privacy and data
-          availability, but it’s the direction to move before clinicians can
+          availability, but it's the direction to move before clinicians can
           deploy such a model.
         </li>
 
@@ -660,7 +660,7 @@
           see a startup opportunity here, but there is also a need for rigorous
           clinical testing and regulatory approval, given the stakes. Any such
           device would likely need FDA clearance and careful risk-benefit
-          analysis. It’s a challenging road, but the lives saved each year could
+          analysis. It's a challenging road, but the lives saved each year could
           be well worth it.
         </li>
       </ul>
@@ -679,14 +679,14 @@
       <ul>
         <li>
           <strong>Marry Domain Knowledge with AI Creativity:</strong> Neither
-          alone would have succeeded. Our project sponsors’ deep understanding
+          alone would have succeeded. Our project sponsors' deep understanding
           of neonatal physiology guided our feature engineering (e.g., focusing
           on heart rate variability and respiratory patterns) to improve our
-          models’ chances. Conversely, letting cutting-edge AI loose on
+          models' chances. Conversely, letting cutting-edge AI loose on
           spectrograms revealed patterns no one might have coded as a feature
           (smooth vs choppy signal textures). This marriage of approaches
-          yielded results where each alone had failed. I’ve come to appreciate
-          that in fields like healthcare, you can’t treat AI as a magic black
+          yielded results where each alone had failed. I've come to appreciate
+          that in fields like healthcare, you can't treat AI as a magic black
           box; you need to guide it with what you know about the science.
         </li>
 
@@ -711,9 +711,9 @@
           Working with limited data forced us to be clever with techniques and
           careful not to overfit. We augmented data, used transfer learning
           ideas from image recognition, and did extensive cross-validation.
-          Still, there’s no substitute for more data. This challenge is a lesson
+          Still, there's no substitute for more data. This challenge is a lesson
           for anyone working on a similar project: if you can collect more, do
-          it. If you can’t, acknowledge the limitations and design your model
+          it. If you can't, acknowledge the limitations and design your model
           evaluation accordingly (we reported confidence intervals and avoided
           over-claiming performance). Encouragingly, even small datasets can
           yield meaningful models in this age, especially if combined with
@@ -727,7 +727,7 @@
           learn a bit of mine. This mutual education meant that, for example,
           when our model found something, the physicians on the team could
           interpret it in terms of autonomic nervous function or hypoxia
-          tolerance. That’s when AI becomes more than numbers; it becomes
+          tolerance. That's when AI becomes more than numbers; it becomes
           insight. I suspect the future of AI in healthcare will see many of
           these partnerships, and success will depend on our ability as
           technologists to collaborate and communicate beyond our field.
@@ -735,12 +735,12 @@
       </ul>
 
       <p>
-        As I finish writing this, I’m struck by how far we’ve come and how much
+        As I finish writing this, I'm struck by how far we've come and how much
         there is to go. Automating healthcare diagnostics with AI is not an
         overnight revolution but a gradual integration, solving one problem at a
         time, one project at a time. Our SIDS project was one such step, turning
         raw signals into a hint of foresight. Standing at the interface of data
-        science and medicine, I’m optimistic. The future of predictive
+        science and medicine, I'm optimistic. The future of predictive
         healthcare is emerging now: from NICU algorithms that anticipate infant
         sepsis, to wearable ECG devices that warn of heart attacks before the
         patient feels anything, to perhaps one day a crib monitor that whispers
@@ -749,7 +749,7 @@
       </p>
 
       <p>
-        In the end, our AI didn’t solve SIDS (that day is still ahead, we hope),
+        In the end, our AI didn't solve SIDS (that day is still ahead, we hope),
         but it taught us lessons about what it will take. It reinforced my
         passion for this field: the chance to save even one life with code and
         ingenuity is a powerful motivator. On a personal level, leading this
