@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Sparkles, X, Search, AlertCircle, RefreshCw } from "lucide-react";
+import { Upload, Sparkles, X, Search, AlertCircle, RefreshCw, ZoomIn, Download, Maximize2 } from "lucide-react";
 import { GroundedSAMClassifier, loadImageFromFile, GroundedSAMResult } from "@/utils/onnxLCA";
 import { useAccessibility } from "@/hooks/use-accessibility";
 import { ProgressiveImage } from "@/components/ui/progressive-image";
@@ -21,15 +21,16 @@ const ImageClassificationDemo = () => {
   const [modelError, setModelError] = useState<string | null>(null);
   const [results, setResults] = useState<GroundedSAMResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [showZoomModal, setShowZoomModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { announce } = useAccessibility();
+  // Removed announce to prevent infinite loops
   const { isOnline } = useOffline();
   
   const { retry: retryModelLoad, isRetrying: isRetryingModel, attempt: modelAttempt } = useRetry({
     maxAttempts: 3,
     delay: 2000,
     onRetry: (attempt) => {
-      announce(`Retrying model load, attempt ${attempt + 1}`, "polite");
+      console.log(`Retrying model load, attempt ${attempt + 1}`);
     }
   });
 
@@ -48,22 +49,21 @@ const ImageClassificationDemo = () => {
 
       try {
         setModelError(null);
-        announce("Loading image classification model...", "polite");
+        console.log("Loading image classification model...");
         
         await retryModelLoad(async () => {
           const classifier = new GroundedSAMClassifier();
           await classifier.initialize();
           setGroundedSAM(classifier);
           setModelLoaded(true);
-          announce("Image classification model loaded successfully", "polite");
-          console.log('Grounded SAM models loaded successfully');
+          console.log("Image classification model loaded successfully");
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         console.error('Failed to load Grounded SAM models:', error);
         setModelError(errorMessage);
         setModelLoaded(false);
-        announce("Failed to load image classification model", "assertive");
+        console.error("Failed to load image classification model");
       }
     };
 
@@ -72,7 +72,7 @@ const ImageClassificationDemo = () => {
     return () => {
       groundedSAM?.dispose();
     };
-  }, [announce, retryModelLoad, isOnline]);
+  }, []); // Remove dependencies that cause infinite loop
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -81,35 +81,35 @@ const ImageClassificationDemo = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      announce("Please select a valid image file", "assertive");
+      console.log("Please select a valid image file");
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      announce("Image file is too large. Please select an image under 10MB", "assertive");
+      console.log("Image file is too large. Please select an image under 10MB");
       return;
     }
 
     try {
       setSelectedFile(file);
       setAnalysisError(null);
-      announce(`Selected image: ${file.name}`, "polite");
+      console.log(`Selected image: ${file.name}`);
       
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target?.result as string);
-        announce("Image loaded and ready for analysis", "polite");
+        console.log("Image loaded and ready for analysis");
       };
       reader.onerror = () => {
-        announce("Failed to load image file", "assertive");
+        console.error("Failed to load image file");
         setAnalysisError("Failed to read image file");
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error handling file selection:', error);
-      announce("Error processing selected file", "assertive");
+      console.error("Error processing selected file");
       setAnalysisError("Error processing selected file");
     }
   };
@@ -153,7 +153,7 @@ const ImageClassificationDemo = () => {
           
           console.log('Detection complete:', result);
           setResults(result);
-          announce(`Analysis complete. Found ${result.detections.length} objects.`, "polite");
+          console.log(`Analysis complete. Found ${result.detections.length} objects.`);
         } else {
           console.log('Models not loaded, using fallback data');
           // Fallback to mock data when models aren't available
@@ -164,14 +164,14 @@ const ImageClassificationDemo = () => {
             processingTime: 1.2
           };
           setResults(mockResult);
-          announce("Analysis complete using fallback mode", "polite");
+          console.log("Analysis complete using fallback mode");
         }
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
       console.error('Analysis error:', error);
       setAnalysisError(errorMessage);
-      announce(`Analysis failed: ${errorMessage}`, "assertive");
+      console.error(`Analysis failed: ${errorMessage}`);
       
       // Only show fallback data if it's a timeout or network error
       if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
@@ -192,10 +192,78 @@ const ImageClassificationDemo = () => {
     setSelectedFile(null);
     setResults(null);
     setAnalysisError(null);
+    setShowZoomModal(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    announce("Image cleared", "polite");
+    console.log("Image cleared");
+  };
+
+  const saveDetectionImage = () => {
+    if (!results?.segmentedImage) return;
+    
+    try {
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = results.segmentedImage;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `detection-result-${timestamp}.png`;
+      link.download = filename;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log(`Detection image saved as ${filename}`);
+    } catch (error) {
+      console.error('Failed to save detection image:', error);
+      setAnalysisError('Failed to save image. Please try again.');
+    }
+  };
+
+  const openImageInNewTab = () => {
+    if (!results?.segmentedImage) return;
+    
+    try {
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>Detection Results - Full Size</title>
+              <style>
+                body { 
+                  margin: 0; 
+                  padding: 20px; 
+                  background: #000; 
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  min-height: 100vh;
+                }
+                img { 
+                  max-width: 100%; 
+                  max-height: 100vh; 
+                  object-fit: contain;
+                  border-radius: 8px;
+                  box-shadow: 0 4px 20px rgba(255,255,255,0.1);
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${results.segmentedImage}" alt="Detection Results" />
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    } catch (error) {
+      console.error('Failed to open image in new tab:', error);
+      setAnalysisError('Failed to open image in new tab.');
+    }
   };
 
   const retryModelLoading = () => {
@@ -205,19 +273,19 @@ const ImageClassificationDemo = () => {
     const initializeModel = async () => {
       try {
         setModelError(null);
-        announce("Retrying model load...", "polite");
+        console.log("Retrying model load...");
         
         await retryModelLoad(async () => {
           const classifier = new GroundedSAMClassifier();
           await classifier.initialize();
           setGroundedSAM(classifier);
           setModelLoaded(true);
-          announce("Model loaded successfully", "polite");
+          console.log("Model loaded successfully");
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         setModelError(errorMessage);
-        announce("Model loading failed", "assertive");
+        console.error("Model loading failed");
       }
     };
     
@@ -228,7 +296,7 @@ const ImageClassificationDemo = () => {
     <ErrorBoundary
       onError={(error) => {
         console.error('ImageClassificationDemo error:', error);
-        announce("Demo encountered an error", "assertive");
+        console.error("Demo encountered an error");
       }}
     >
       <div className="space-y-3 sm:space-y-4 max-h-[60vh] overflow-y-auto overflow-x-hidden pr-2 chrome-scrollbar-fix firefox-enhanced-fix" style={{
@@ -314,21 +382,56 @@ const ImageClassificationDemo = () => {
       <div className="border-2 border-dashed border-border/50 rounded-lg p-4 sm:p-6 lg:p-8 text-center hover:border-primary/50 transition-colors touch-manipulation">
         {selectedImage ? (
           <div className="space-y-3 sm:space-y-4">
-            <div className="relative inline-block">
+            <div className="relative inline-block group">
               <ProgressiveImage
                 src={results?.segmentedImage || selectedImage}
                 alt="Selected for analysis"
-                className="max-w-full max-h-48 sm:max-h-56 lg:max-h-64 rounded-lg object-contain"
+                className="max-w-full max-h-48 sm:max-h-56 lg:max-h-64 rounded-lg object-contain cursor-pointer transition-all duration-200 hover:shadow-lg"
                 skeletonClassName="max-h-48 sm:max-h-56 lg:max-h-64 rounded-lg"
+                onClick={() => results?.segmentedImage && setShowZoomModal(true)}
               />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearImage}
-                className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 touch-manipulation active:scale-95"
-              >
-                <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-              </Button>
+              
+              {/* Image Controls */}
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                {results?.segmentedImage && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowZoomModal(true)}
+                      className="h-6 w-6 rounded-full p-0 bg-black/50 border-white/20 hover:bg-black/70 text-white"
+                      title="Zoom image"
+                    >
+                      <ZoomIn className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openImageInNewTab}
+                      className="h-6 w-6 rounded-full p-0 bg-black/50 border-white/20 hover:bg-black/70 text-white"
+                      title="Open in new tab"
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearImage}
+                  className="h-6 w-6 rounded-full p-0 bg-black/50 border-white/20 hover:bg-black/70 text-white"
+                  title="Clear image"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              {/* Zoom hint */}
+              {results?.segmentedImage && (
+                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  Click to zoom
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               {analysisError && (
@@ -342,38 +445,52 @@ const ImageClassificationDemo = () => {
                 </div>
               )}
               
-              <Button 
-                onClick={() => {
-                  console.log('Button clicked!', { 
-                    isAnalyzing, 
-                    textPrompt, 
-                    textPromptTrimmed: textPrompt.trim(),
-                    disabled: isAnalyzing || !textPrompt.trim(),
-                    selectedFile: !!selectedFile,
-                    groundedSAM: !!groundedSAM 
-                  });
-                  analyzeWithGroundedSAM();
-                }}
-                disabled={isAnalyzing || isRetryingAnalysis || !textPrompt.trim()}
-                className="bg-gradient-accent hover:shadow-glow-accent transition-all duration-300 w-full sm:w-auto touch-manipulation active:scale-95 text-sm sm:text-base py-2.5 sm:py-3"
-              >
-                {isAnalyzing || isRetryingAnalysis ? (
-                  <div className="flex items-center">
-                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />
-                    <span>{isRetryingAnalysis ? 'Retrying...' : 'Analyzing...'}</span>
-                    <div className="ml-2 flex space-x-1">
-                      <div className="w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  onClick={() => {
+                    console.log('Button clicked!', { 
+                      isAnalyzing, 
+                      textPrompt, 
+                      textPromptTrimmed: textPrompt.trim(),
+                      disabled: isAnalyzing || !textPrompt.trim(),
+                      selectedFile: !!selectedFile,
+                      groundedSAM: !!groundedSAM 
+                    });
+                    analyzeWithGroundedSAM();
+                  }}
+                  disabled={isAnalyzing || isRetryingAnalysis || !textPrompt.trim()}
+                  className="bg-gradient-accent hover:shadow-glow-accent transition-all duration-300 flex-1 sm:flex-none touch-manipulation active:scale-95 text-sm sm:text-base py-2.5 sm:py-3"
+                >
+                  {isAnalyzing || isRetryingAnalysis ? (
+                    <div className="flex items-center">
+                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" />
+                      <span>{isRetryingAnalysis ? 'Retrying...' : 'Analyzing...'}</span>
+                      <div className="ml-2 flex space-x-1">
+                        <div className="w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                    Detect & Segment
-                  </>
+                  ) : (
+                    <>
+                      <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                      Detect & Segment
+                    </>
+                  )}
+                </Button>
+                
+                {/* Save Detection Button - only show when results are available */}
+                {results?.segmentedImage && (
+                  <Button
+                    onClick={saveDetectionImage}
+                    variant="outline"
+                    className="flex-1 sm:flex-none touch-manipulation active:scale-95 text-sm sm:text-base py-2.5 sm:py-3 border-green-500/20 hover:bg-green-500/10 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  >
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Save Result
+                  </Button>
                 )}
-              </Button>
+              </div>
             </div>
           </div>
         ) : (
@@ -453,6 +570,78 @@ const ImageClassificationDemo = () => {
               <div>
                 <span className="text-muted-foreground">Model Status:</span>
                 <div className="font-medium">{modelLoaded ? "WebGPU" : "Fallback"}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Zoom Modal */}
+      {showZoomModal && results?.segmentedImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowZoomModal(false)}
+        >
+          <div className="relative max-w-[95vw] max-h-[95vh] bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="absolute top-0 left-0 right-0 bg-black/50 text-white p-3 flex justify-between items-center z-10">
+              <h3 className="text-sm font-medium">Detection Results - Full Size</h3>
+              <div className="flex gap-2">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    saveDetectionImage();
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/50 border-white/20 hover:bg-black/70 text-white h-8"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Save
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openImageInNewTab();
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/50 border-white/20 hover:bg-black/70 text-white h-8"
+                >
+                  <Maximize2 className="w-3 h-3 mr-1" />
+                  New Tab
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowZoomModal(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/50 border-white/20 hover:bg-black/70 text-white h-8"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Modal Image */}
+            <img
+              src={results.segmentedImage}
+              alt="Detection Results - Full Size"
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            {/* Modal Footer with Detection Info */}
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-3">
+              <div className="flex justify-between items-center text-sm">
+                <span>
+                  {results.detections.length} object{results.detections.length !== 1 ? 's' : ''} detected
+                </span>
+                <span>
+                  Processed in {results.processingTime.toFixed(2)}s
+                </span>
               </div>
             </div>
           </div>
