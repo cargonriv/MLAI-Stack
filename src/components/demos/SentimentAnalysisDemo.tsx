@@ -44,6 +44,7 @@ interface SentimentAnalysisState {
 }
 
 const SentimentAnalysisDemoContent = () => {
+  console.log('🎯 SentimentAnalysisDemo component loaded!');
   const [text, setText] = useState("");
   const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false);
   const [state, setState] = useState<SentimentAnalysisState>({
@@ -109,6 +110,7 @@ const SentimentAnalysisDemoContent = () => {
 
   // Initialize BERT model on component mount
   useEffect(() => {
+    console.log('🔄 useEffect called, starting initialization...');
     initializeWithErrorHandling();
 
     // Monitor network status
@@ -127,6 +129,7 @@ const SentimentAnalysisDemoContent = () => {
   }, []);
 
   const initializeWithErrorHandling = async () => {
+    console.log('🚀 initializeWithErrorHandling called!');
     // Check device compatibility first
     try {
       const compatibility = await deviceCompatibility.checkCompatibility();
@@ -150,22 +153,22 @@ const SentimentAnalysisDemoContent = () => {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`🚀 BERT model loading attempt ${attempt}/${maxRetries}`);
+        console.log(`🚀 Hugging Face model loading attempt ${attempt}/${maxRetries}`);
 
         await Promise.race([
           initializeModel(),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error(`BERT model loading timeout after 60 seconds (attempt ${attempt})`)), 60000)
+            setTimeout(() => reject(new Error(`Hugging Face model loading timeout after 60 seconds (attempt ${attempt})`)), 60000)
           )
         ]);
 
         // If we get here, the model loaded successfully
-        console.log('✅ BERT model loaded successfully!');
+        console.log('✅ Hugging Face model loaded successfully!');
         return;
 
       } catch (error) {
         lastError = error as Error;
-        console.error(`❌ BERT model loading attempt ${attempt} failed:`, error);
+        console.error(`❌ Hugging Face model loading attempt ${attempt} failed:`, error);
 
         if (attempt < maxRetries) {
           console.log(`⏳ Waiting 2 seconds before retry...`);
@@ -174,9 +177,9 @@ const SentimentAnalysisDemoContent = () => {
       }
     }
 
-    // Only fall back to rule-based after all BERT attempts failed
-    console.warn('🔄 All BERT model loading attempts failed, falling back to rule-based analysis');
-    await enableFallbackMode(`BERT model failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`);
+    // Only fall back to rule-based after all Hugging Face attempts failed
+    console.warn('🔄 All Hugging Face model loading attempts failed, falling back to rule-based analysis');
+    await enableFallbackMode(`Hugging Face model failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`);
   };
 
   const initializeModel = async () => {
@@ -203,13 +206,19 @@ const SentimentAnalysisDemoContent = () => {
       };
 
       // Check if device can handle the model
-      const estimatedModelSize = 67 * 1024 * 1024; // DistilBERT ~67MB
-      if (!canHandleModel(estimatedModelSize, 2000)) {
-        await enableFallbackMode('Device cannot handle full model - using fallback');
-        return;
-      }
+      const estimatedModelSize = 125 * 1024 * 1024; // RoBERTa ~125MB
+      console.log('🔍 Checking if device can handle model...', { estimatedModelSize, canHandle: canHandleModel(estimatedModelSize, 2000) });
 
-      console.log('🚀 Starting ONNX BERT model initialization...');
+      // Temporarily disable this check to test Hugging Face model
+      // if (!canHandleModel(estimatedModelSize, 2000)) {
+      //   console.log('❌ Device cannot handle model, falling back');
+      //   await enableFallbackMode('Device cannot handle full model - using fallback');
+      //   return;
+      // }
+
+      console.log('✅ Device can handle model, proceeding with initialization');
+
+      console.log('🚀 Starting Hugging Face RoBERTa model initialization...');
 
       // Initialize the ONNX sentiment model
       await onnxSentiment.initialize((progress) => {
@@ -218,7 +227,7 @@ const SentimentAnalysisDemoContent = () => {
 
       // Record performance metrics
       const loadTime = Date.now() - startTime;
-      recordModelLoad('onnx-bert-sentiment', loadTime, 110 * 1024 * 1024); // ~110MB
+      recordModelLoad('huggingface-roberta-sentiment', loadTime, 125 * 1024 * 1024); // ~125MB
 
       // Get model information
       const modelInfo = onnxSentiment.getModelInfo();
@@ -236,10 +245,10 @@ const SentimentAnalysisDemoContent = () => {
         }
       }));
 
-      console.log('✅ BERT model initialization complete!');
+      console.log('✅ Hugging Face RoBERTa model initialization complete!');
 
     } catch (error) {
-      console.error('Failed to initialize BERT model:', error);
+      console.error('Failed to initialize Hugging Face model:', error);
 
       // Try error handler for recovery, but don't let it block fallback mode
       try {
@@ -729,7 +738,7 @@ const SentimentAnalysisDemoContent = () => {
               {loadingProgress ?
                 `${loadingProgress.phase === 'downloading' ? 'Downloading' :
                   loadingProgress.phase === 'initializing' ? 'Initializing' : 'Loading'} Model...` :
-                'Loading BERT Model...'
+                'Loading Hugging Face Model...'
               }
             </span>
           </div>
@@ -760,7 +769,7 @@ const SentimentAnalysisDemoContent = () => {
           ) : (
             <div className="space-y-2">
               <p className="text-xs text-blue-600 dark:text-blue-300">
-                Loading BERT ONNX model (~110MB)
+                Loading Hugging Face RoBERTa model (~125MB)
                 {isMobile && networkBandwidth === 'low' && (
                   <span className="block mt-1">Using progressive loading for slow connection</span>
                 )}
@@ -1292,6 +1301,25 @@ const SentimentAnalysisDemoContent = () => {
 };
 
 const SentimentAnalysisDemo = () => {
+  console.log('🎯 SentimentAnalysisDemo main component rendering!');
+
+  // Temporary simple test component
+  return (
+    <div className="p-8 border-4 border-red-500 bg-red-100 text-center">
+      <h2 className="text-3xl font-bold text-red-800 mb-4">🚨 TEST: SentimentAnalysisDemo Loaded! 🚨</h2>
+      <p className="text-xl text-red-600 mb-4">If you see this RED BOX, the component is loading correctly.</p>
+      <p className="text-lg text-red-700 mb-4">This means the import is working and we can proceed with the Hugging Face integration.</p>
+      <button
+        onClick={() => console.log('🧪 Test button clicked!')}
+        className="mt-2 px-6 py-3 bg-red-500 text-white rounded text-xl font-bold"
+      >
+        🧪 Test Button - Click Me!
+      </button>
+    </div>
+  );
+
+  // Original component (commented out for testing)
+  /*
   return (
     <ErrorBoundary
       enableFallback={true}
@@ -1303,6 +1331,7 @@ const SentimentAnalysisDemo = () => {
       <SentimentAnalysisDemoContent />
     </ErrorBoundary>
   );
+  */
 };
 
 export default SentimentAnalysisDemo;

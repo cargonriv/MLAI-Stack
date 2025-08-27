@@ -27,11 +27,11 @@ const Header = () => {
     { name: "Blog", href: "#/blog", icon: BookOpen },
     { name: "Resume", href: "#/resume", icon: FileText },
     { name: "Projects", href: "#/projects", icon: Folder },
-    { name: "Showcase", href: "#/showcase", icon: Brain },
     { name: "Capstone", href: "#/capstone", icon: GraduationCap },
   ];
 
-  const demoItems = [
+  const showcaseItems = [
+    { name: "Showcase Overview", href: "#/showcase", icon: Brain },
     { name: "Image Classification", href: "#/demos/image-classification", icon: Camera },
     { name: "Sentiment Analysis", href: "#/demos/sentiment-analysis", icon: MessageSquare },
     { name: "Movie Recommendation", href: "#/demos/movie-recommendation", icon: Star },
@@ -145,7 +145,7 @@ const Header = () => {
               </a>
             ))}
             
-            {/* Demos Dropdown */}
+            {/* Showcase Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -161,7 +161,7 @@ const Header = () => {
                     aria-hidden="true"
                   />
                   <span className="relative text-sm xl:text-base">
-                    Demos
+                    Showcase
                     <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-primary transition-all ${
                       preferences.reducedMotion ? '' : 'duration-normal ease-out-quart group-hover:w-full'
                     }`}></span>
@@ -170,15 +170,15 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                {demoItems.map((demo) => (
-                  <DropdownMenuItem key={demo.name} asChild>
+                {showcaseItems.map((item) => (
+                  <DropdownMenuItem key={item.name} asChild>
                     <a
-                      href={demo.href}
+                      href={item.href}
                       className="flex items-center space-x-2 w-full"
-                      onClick={() => announce(`Navigating to ${demo.name} demo`)}
+                      onClick={() => announce(`Navigating to ${item.name}`)}
                     >
-                      <demo.icon className="w-4 h-4" />
-                      <span>{demo.name}</span>
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.name}</span>
                     </a>
                   </DropdownMenuItem>
                 ))}
@@ -300,51 +300,51 @@ const Header = () => {
                   </a>
                 ))}
                 
-                {/* Demo Section */}
+                {/* Showcase Section */}
                 <div className="mt-4 pt-4 border-t border-accent-primary/20">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">
-                    Interactive Demos
+                    Showcase & Demos
                   </h3>
-                  {demoItems.map((demo, index) => (
+                  {showcaseItems.map((item, index) => (
                     <a
-                      key={demo.name}
-                      href={demo.href}
+                      key={item.name}
+                      href={item.href}
                       className={`group flex items-center space-x-3 sm:space-x-4 text-fg-secondary hover:text-accent-primary transition-all ${
                         preferences.reducedMotion ? '' : 'duration-normal ease-out-quart animate-slide-right'
                       } p-3 sm:p-4 rounded-xl hover:bg-bg-secondary/50 hover:backdrop-blur-sm hover:shadow-glow-sm touch-manipulation active:scale-95 focus-gradient-ring`}
                       style={{ animationDelay: preferences.reducedMotion ? '0ms' : `${(navItems.length + index) * 50}ms` }}
                       onClick={() => {
                         setIsOpen(false);
-                        announce(`Navigating to ${demo.name} demo`);
+                        announce(`Navigating to ${item.name}`);
                       }}
                       onKeyDown={(e) => handleKeyboardNavigation(e, {
                         onEnter: () => {
                           setIsOpen(false);
-                          window.location.hash = demo.href.replace('#', '');
-                          announce(`Navigating to ${demo.name} demo`);
+                          window.location.hash = item.href.replace('#', '');
+                          announce(`Navigating to ${item.name}`);
                         },
                         onSpace: () => {
                           setIsOpen(false);
-                          window.location.hash = demo.href.replace('#', '');
-                          announce(`Navigating to ${demo.name} demo`);
+                          window.location.hash = item.href.replace('#', '');
+                          announce(`Navigating to ${item.name}`);
                         }
                       })}
                       {...getAriaProps('link', { 
-                        label: `Navigate to ${demo.name} demo page`,
-                        current: window.location.hash === demo.href ? 'page' : undefined
+                        label: `Navigate to ${item.name} page`,
+                        current: window.location.hash === item.href ? 'page' : undefined
                       })}
                     >
                       <div className={`p-1.5 sm:p-2 rounded-lg bg-bg-secondary/50 border border-accent-primary/20 group-hover:border-accent-primary/40 group-hover:shadow-glow-sm transition-all ${
                         preferences.reducedMotion ? '' : 'duration-normal ease-out-quart group-hover:scale-110'
                       }`}>
-                        <demo.icon 
+                        <item.icon 
                           className={`w-4 h-4 sm:w-5 sm:h-5 group-hover:text-accent-primary transition-colors ${
                             preferences.reducedMotion ? '' : 'duration-normal'
                           }`}
                           aria-hidden="true"
                         />
                       </div>
-                      <span className="text-base sm:text-lg font-medium">{demo.name}</span>
+                      <span className="text-base sm:text-lg font-medium">{item.name}</span>
                     </a>
                   ))}
                 </div>

@@ -22,12 +22,13 @@ export class GroundedSAMClassifier {
   async initialize(): Promise<void> {
     try {
       console.log('Loading Grounded SAM models...');
-      
+
       // Use WASM mode for reliable cross-platform support
       this.detector = await pipeline(
         'object-detection',
-        'Xenova/detr-resnet-50',
-        { 
+        // 'Xenova/detr-resnet-50',
+        'Xenova/detr-resnet-101',
+        {
           device: 'wasm',
           revision: 'main'
         }
@@ -57,7 +58,7 @@ export class GroundedSAMClassifier {
       // Convert image to canvas for processing
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
+
       if (!ctx) {
         throw new Error('Could not get canvas context');
       }
@@ -72,12 +73,12 @@ export class GroundedSAMClassifier {
       // Run object detection
       console.log('Running object detection...');
       const detectionResults = await this.detector(imageData);
-      
+
       // Filter detections by text prompt if provided
       let filteredDetections = detectionResults;
       if (textPrompt) {
         const keywords = textPrompt.toLowerCase().split(/[.,\s]+/).filter(k => k.length > 0);
-        filteredDetections = detectionResults.filter((detection: any) => 
+        filteredDetections = detectionResults.filter((detection: any) =>
           keywords.some(keyword => detection.label.toLowerCase().includes(keyword))
         );
       }
@@ -135,16 +136,16 @@ export class GroundedSAMClassifier {
 
     detections.forEach((detection, index) => {
       const [x1, y1, x2, y2] = detection.box;
-      
+
       // Draw bounding box
       overlayCtx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      
+
       // Draw label background
       const label = `${detection.label} (${detection.confidence}%)`;
       const textWidth = overlayCtx.measureText(label).width;
       overlayCtx.fillStyle = 'rgba(0, 255, 0, 0.8)';
       overlayCtx.fillRect(x1, y1 - 20, textWidth + 8, 20);
-      
+
       // Draw label text
       overlayCtx.fillStyle = '#000';
       overlayCtx.fillText(label, x1 + 4, y1 - 4);

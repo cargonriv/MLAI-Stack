@@ -1,9 +1,10 @@
 import Header from "@/components/Header";
-import SentimentDemo from "@/components/demos/SentimentDemo";
+import TestSentimentDemo from "@/components/demos/TestSentimentDemo";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SentimentAnalysisPage = () => {
+  console.log('🔥 SentimentAnalysisPage component loaded!');
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -29,7 +30,7 @@ const SentimentAnalysisPage = () => {
               </div>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-              Sentiment Analysis Demo
+              🔥 UPDATED Sentiment Analysis Demo 🔥
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               BERT-based model for understanding emotions and opinions in text
@@ -39,7 +40,7 @@ const SentimentAnalysisPage = () => {
           {/* Demo Component */}
           <div className="max-w-4xl mx-auto">
             <div className="bg-card border border-border rounded-lg p-6">
-              <SentimentDemo />
+              <TestSentimentDemo />
             </div>
           </div>
 

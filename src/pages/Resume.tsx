@@ -164,11 +164,12 @@ const Resume = () => {
                         <li>SQL</li>
                         <li>NoSQL</li>
                         <li>Shell</li>
-                        <li>JavaScript</li>
+                        <li>JavaScript/TypeScript</li>
                         <li>HTML/CSS</li>
                         <li>PHP</li>
                         <li>C++</li>
                         <li>MATLAB</li>
+                        <li>Solidity</li>
                       </ul>
                     </div>
                     <div>
@@ -176,17 +177,25 @@ const Resume = () => {
                         Frameworks & Tools
                       </h4>
                       <ul className="list-disc list-inside space-y-1">
-                        <li>
-                          TensorFlow, PyTorch, Keras, PySpark, Huggingface
-                        </li>
-                        <li>FastAPI, Django, Flask, Requests</li>
-                        <li>Jupyter, Matplotlib, Seaborn</li>
-                        <li>OpenCV, ONNX, scikit-learn</li>
-                        <li>Pandas, NumPy, SciPy, PyLint</li>
-                        <li>Docker, Git, SSH, SLURM</li>
-                        <li>MySQL, MongoDB, Supabase</li>
-                        <li>Vite, Next.js, Express.js</li>
-                        <li>Plotly, p5.js, paper.js, D3.js, Tableau</li>
+                      <li>PyTorch, TorchVision, TorchAudio, TensorFlow, Keras</li>
+                      <li>HuggingFace, LangChain, SAM, CLIP, GLIP, Grounding DINO</li>
+
+                      <li>scikit-learn, scikit-image, OpenCV, ONNX</li>
+                      <li>Pandas, NumPy, SciPy, PyWavelets, NeuroKit2, PyDICOM</li>
+
+                      <li>Jupyter, Matplotlib, Seaborn, Plotly</li>
+
+                      <li>FastAPI, Django, Flask, Requests, BeautifulSoup</li>
+                      <li>React, Next.js, Vite, Express.js</li>
+                      <li>p5.js, paper.js, D3.js</li>
+
+                      <li>MySQL, PostgreSQL, MongoDB, Mongoose</li>
+                      <li>Supabase, Firebase</li>
+
+                      <li>Docker, Git, SSH, SLURM</li>
+                      <li>PyLint, Flake8, Black, isort, mypy</li>
+
+                        {/* <li>Tableau, PowerBI</li> */}
                         {/* <li>AWS, GCP</li> */}
                       </ul>
                     </div>

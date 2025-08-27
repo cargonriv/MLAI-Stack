@@ -34,6 +34,16 @@ const ModelsSection = () => {
       demoUrl: "#/demos/movie-recommendation"
     },
     {
+      title: "AI Chat Assistant",
+      description: "Intelligent conversational AI powered by GPT-4o tokenization and advanced NLP",
+      explanation: "An interactive chat assistant that uses the GPT-4o tokenizer for advanced text processing and understanding. The system provides real-time responses about this portfolio, machine learning concepts, and technical details. Features context-aware conversations, token counting, and smooth user interactions.",
+      githubUrl: "https://github.com/yourusername/ai-chat-assistant",
+      tags: ["GPT-4o", "Tokenizer", "NLP", "Chat AI", "Transformers"],
+      accuracy: "Context-Aware",
+      dataset: "Portfolio Knowledge Base",
+      demoUrl: "#/demos/chatbot"
+    },
+    {
       title: "NBA Player Performance Predictor",
       description: "AdaBoost Regressor that computes performance scores for NBA players using real-time statistics",
       explanation: "This machine learning model uses an AdaBoost Regressor to analyze and score NBA players based on their latest performance statistics pulled from the internet. The ensemble method combines multiple weak learners to create a robust predictor that evaluates player effectiveness across various game metrics.",
@@ -95,7 +105,7 @@ const ModelsSection = () => {
             <div className="flex justify-center mb-4">
               <Zap className="w-8 h-8 text-accent" />
             </div>
-            <h3 className="text-2xl font-bold text-accent mb-2">3</h3>
+            <h3 className="text-2xl font-bold text-accent mb-2">4</h3>
             <p className="text-muted-foreground">Live Demos</p>
           </div>
           <div className="text-center p-6 bg-gradient-card rounded-xl border border-border/50">

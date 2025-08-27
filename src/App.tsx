@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/error-boundary";
 import { OfflineIndicator } from "@/hooks/use-offline";
 import { ErrorProvider } from "@/components/ui/global-error-handler";
+import NoTokenizerChatWidget from "@/components/NoTokenizerChatWidget";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -40,8 +41,11 @@ const AdvancedEffectsShowcase = lazy(
 
 // Demo pages
 const ImageClassification = lazy(() => import("./pages/demos/ImageClassification"));
-const SentimentAnalysis = lazy(() => import("./pages/demos/SentimentAnalysis"));
+// Temporarily disable lazy loading for debugging
+import SentimentAnalysisPage from "./pages/demos/SentimentAnalysis";
+const SentimentAnalysis = () => <SentimentAnalysisPage />;
 const MovieRecommendation = lazy(() => import("./pages/demos/MovieRecommendation"));
+const ChatBot = lazy(() => import("./pages/demos/ChatBot"));
 // Page loading fallback component
 const PageSkeleton = () => (
   <div className="min-h-screen bg-background p-4">
@@ -74,6 +78,7 @@ const queryClient = new QueryClient({
 
 const AppContent = () => {
   const { preferences, announce } = useAccessibility();
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     // Initialize browser detection and compatibility features
@@ -151,11 +156,21 @@ const AppContent = () => {
               <Route path="/demos/image-classification" element={<ImageClassification />} />
               <Route path="/demos/sentiment-analysis" element={<SentimentAnalysis />} />
               <Route path="/demos/movie-recommendation" element={<MovieRecommendation />} />
+              <Route path="/demos/chatbot" element={<ChatBot />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </PageTransition>
+      </ErrorBoundary>
+
+      {/* Global Chat Widget */}
+      <ErrorBoundary
+        onError={(error) => {
+          console.error("Chat widget error:", error);
+        }}
+      >
+        <NoTokenizerChatWidget isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
       </ErrorBoundary>
 
       {/* <AccessibilityStatus /> */}
