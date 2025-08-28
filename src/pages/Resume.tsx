@@ -177,23 +177,25 @@ const Resume = () => {
                         Frameworks & Tools
                       </h4>
                       <ul className="list-disc list-inside space-y-1">
-                      <li>PyTorch, TorchVision, TorchAudio, TensorFlow, Keras</li>
-                      <li>HuggingFace, LangChain, SAM, CLIP, GLIP, Grounding DINO</li>
+                        <li>PyTorch, TorchVision, TorchAudio, TensorFlow, Keras</li>
+                        <li>HuggingFace, LangChain, Transformers.js</li>
+                        <li>SAM, CLIP, GLIP, DETR, Grounding DINO</li>
+                        <li>BERT, RoBERTa, DistilBERT</li>
 
-                      <li>scikit-learn, scikit-image, OpenCV, ONNX</li>
-                      <li>Pandas, NumPy, SciPy, PyWavelets, NeuroKit2, PyDICOM</li>
+                        <li>scikit-learn, scikit-image, OpenCV, ONNX</li>
+                        <li>Pandas, NumPy, SciPy, PyWavelets, NeuroKit2, PyDICOM</li>
 
-                      <li>Jupyter, Matplotlib, Seaborn, Plotly</li>
+                        <li>Jupyter, Matplotlib, Seaborn, Plotly</li>
 
-                      <li>FastAPI, Django, Flask, Requests, BeautifulSoup</li>
-                      <li>React, Next.js, Vite, Express.js</li>
-                      <li>p5.js, paper.js, D3.js</li>
+                        <li>FastAPI, Django, Flask, Requests, BeautifulSoup</li>
+                        <li>React, Next.js, Vite, Express.js</li>
+                        <li>p5.js, paper.js, D3.js</li>
 
-                      <li>MySQL, PostgreSQL, MongoDB, Mongoose</li>
-                      <li>Supabase, Firebase</li>
+                        <li>MySQL, PostgreSQL, MongoDB, Mongoose</li>
+                        <li>Supabase, Firebase</li>
 
-                      <li>Docker, Git, SSH, SLURM</li>
-                      <li>PyLint, Flake8, Black, isort, mypy</li>
+                        <li>Docker, Git, SSH, SLURM</li>
+                        <li>PyLint, Flake8, Black, isort, mypy</li>
 
                         {/* <li>Tableau, PowerBI</li> */}
                         {/* <li>AWS, GCP</li> */}

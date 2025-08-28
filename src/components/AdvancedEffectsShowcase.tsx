@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-export const AdvancedEffectsShowcase: React.FC = () => {
+const AdvancedEffectsShowcase: React.FC = () => {
   const [celebrationTrigger, setCelebrationTrigger] = useState(false);
   const [selectedEffect, setSelectedEffect] = useState<string>('mesh');
 
@@ -222,3 +222,5 @@ export const AdvancedEffectsShowcase: React.FC = () => {
     </ThemeTransition>
   );
 };
+
+export default AdvancedEffectsShowcase;

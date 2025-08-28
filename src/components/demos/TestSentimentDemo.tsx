@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 const TestSentimentDemo = () => {
   console.log('🚨 TestSentimentDemo component loaded successfully!');
-  
+
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isModelReady, setIsModelReady] = useState(false);
@@ -18,11 +18,11 @@ const TestSentimentDemo = () => {
       try {
         console.log('🚀 Initializing Hugging Face model...');
         setIsLoading(true);
-        
+
         await onnxSentiment.initialize((progress) => {
           console.log(`📊 Loading progress: ${progress}%`);
         });
-        
+
         setIsModelReady(true);
         setIsLoading(false);
         console.log('✅ Hugging Face model ready!');
@@ -43,10 +43,10 @@ const TestSentimentDemo = () => {
       setIsLoading(true);
       setError(null);
       console.log('🤖 Analyzing sentiment with Hugging Face...');
-      
+
       const sentimentResult = await onnxSentiment.analyze(text);
       console.log('📊 Sentiment result:', sentimentResult);
-      
+
       setResult(sentimentResult);
       setIsLoading(false);
     } catch (err) {
@@ -96,7 +96,7 @@ const TestSentimentDemo = () => {
             disabled={!isModelReady}
           />
         </div>
-        
+
         <Button
           onClick={analyzeSentiment}
           disabled={!text.trim() || !isModelReady || isLoading}
@@ -111,9 +111,8 @@ const TestSentimentDemo = () => {
         <div className="p-4 border rounded-lg bg-gray-50">
           <h3 className="font-semibold mb-3">Results:</h3>
           <div className="space-y-2">
-            <div className={`text-lg font-bold ${
-              result.label === 'POSITIVE' ? 'text-green-600' : 'text-red-600'
-            }`}>
+            <div className={`text-lg font-bold ${result.label === 'POSITIVE' ? 'text-green-600' : 'text-red-600'
+              }`}>
               Sentiment: {result.label}
             </div>
             <div>Confidence: {(result.confidence * 100).toFixed(1)}%</div>

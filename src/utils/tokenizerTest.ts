@@ -3,7 +3,8 @@ import { AutoTokenizer } from '@huggingface/transformers';
 export const testTokenizer = async () => {
   try {
     console.log('Loading GPT-4o tokenizer...');
-    const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4o');
+    const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4');
+    // const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4o');
     
     const testText = 'hello world';
     const tokens = tokenizer.encode(testText);

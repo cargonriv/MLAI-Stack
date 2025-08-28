@@ -60,7 +60,7 @@ const NoTokenizerChatWidget = ({ isOpen, onToggle }: NoTokenizerChatWidgetProps)
       // Add welcome message immediately without waiting for tokenizer
       setMessages([{
         id: Date.now().toString(),
-        content: "Hi! I'm your AI assistant. I'm loading the GPT-4o tokenizer for advanced text processing. I can help you learn about this portfolio, discuss machine learning projects, or answer questions about Carlos's experience. What would you like to know?",
+        content: "Hi! I'm your AI assistant. I'm loading the GPT-4 tokenizer for advanced text processing. I can help you learn about this portfolio, discuss machine learning projects, or answer questions about Carlos's experience. What would you like to know?",
         sender: 'bot',
         timestamp: new Date()
       }]);
@@ -71,12 +71,12 @@ const NoTokenizerChatWidget = ({ isOpen, onToggle }: NoTokenizerChatWidgetProps)
         
         if (!mountedRef.current) return;
 
-        console.log('Loading GPT-4o tokenizer...');
+        console.log('Loading GPT-4 tokenizer...');
         const { AutoTokenizer } = await import('@huggingface/transformers');
         
         if (!mountedRef.current) return;
         
-        const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4o');
+        const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4');
         
         if (!mountedRef.current) return;
         
@@ -90,7 +90,7 @@ const NoTokenizerChatWidget = ({ isOpen, onToggle }: NoTokenizerChatWidgetProps)
         // Update welcome message to show tokenizer is ready
         setMessages(prev => [{
           ...prev[0],
-          content: "Hi! I'm your AI assistant powered by GPT-4o tokenization. I can help you learn about this portfolio, discuss machine learning projects, or answer questions about Carlos's experience. What would you like to know?",
+          content: "Hi! I'm your AI assistant powered by GPT-4 tokenization. I can help you learn about this portfolio, discuss machine learning projects, or answer questions about Carlos's experience. What would you like to know?",
         }]);
         
       } catch (error) {

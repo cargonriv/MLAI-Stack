@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Bot, Zap, Brain, Code, Sparkles } from "lucide-react";
-import NoTokenizerChatWidget from "@/components/NoTokenizerChatWidget";
+import AdvancedTokenizedChat from "@/components/AdvancedTokenizedChat";
 
 const ChatBotDemo = () => {
   const [showChat, setShowChat] = useState(false);
@@ -26,14 +26,14 @@ const ChatBotDemo = () => {
             </div>
             
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Experience intelligent conversation powered by GPT-4o tokenization and advanced NLP. 
+              Experience intelligent conversation powered by GPT-4 tokenization and advanced NLP. 
               Ask questions about this portfolio, machine learning, or anything else!
             </p>
 
             <div className="flex flex-wrap justify-center gap-2 mb-8">
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Brain className="w-3 h-3" />
-                GPT-4o Tokenizer
+                GPT-4 Tokenizer
               </Badge>
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Zap className="w-3 h-3" />
@@ -73,7 +73,7 @@ const ChatBotDemo = () => {
                     Smart Tokenization
                   </CardTitle>
                   <CardDescription>
-                    Uses GPT-4o tokenizer for accurate text processing and understanding
+                    Uses GPT-4 tokenizer for accurate text processing and understanding
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -169,7 +169,7 @@ const ChatBotDemo = () => {
       </div>
 
       {/* Chat Widget */}
-      <NoTokenizerChatWidget isOpen={showChat} onToggle={() => setShowChat(!showChat)} />
+      <AdvancedTokenizedChat isOpen={showChat} onToggle={() => setShowChat(!showChat)} />
     </div>
   );
 };

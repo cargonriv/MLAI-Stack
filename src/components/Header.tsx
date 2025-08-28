@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star } from "lucide-react";
+import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star, Hash } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAccessibility } from "@/hooks/use-accessibility";
@@ -35,6 +35,7 @@ const Header = () => {
     { name: "Image Classification", href: "#/demos/image-classification", icon: Camera },
     { name: "Sentiment Analysis", href: "#/demos/sentiment-analysis", icon: MessageSquare },
     { name: "Movie Recommendation", href: "#/demos/movie-recommendation", icon: Star },
+    { name: "Tokenized Chat", href: "#/demos/tokenized-chat", icon: Hash },
   ];
 
   return (

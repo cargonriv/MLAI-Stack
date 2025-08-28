@@ -35,7 +35,8 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
-    "docker:prod": "docker-compose --profile production up -d"
+    "docker:prod": "docker-compose --profile production up -d",
+    "demo:tokenizer": "node scripts/chatbot-demo.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { useAccessibility } from "@/hooks/use-accessibility";
-import AccessibilityStatus from "@/components/AccessibilityStatus";
+// import AccessibilityStatus from "@/components/AccessibilityStatus";
 import { performanceMonitor } from "@/utils/performance";
 import {
   initializeBrowserDetection,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/error-boundary";
 import { OfflineIndicator } from "@/hooks/use-offline";
 import { ErrorProvider } from "@/components/ui/global-error-handler";
-import NoTokenizerChatWidget from "@/components/NoTokenizerChatWidget";
+import AdvancedTokenizedChat from "@/components/AdvancedTokenizedChat";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -46,6 +46,7 @@ import SentimentAnalysisPage from "./pages/demos/SentimentAnalysis";
 const SentimentAnalysis = () => <SentimentAnalysisPage />;
 const MovieRecommendation = lazy(() => import("./pages/demos/MovieRecommendation"));
 const ChatBot = lazy(() => import("./pages/demos/ChatBot"));
+const TokenizedChatPage = lazy(() => import("./pages/demos/TokenizedChat"));
 // Page loading fallback component
 const PageSkeleton = () => (
   <div className="min-h-screen bg-background p-4">
@@ -126,9 +127,8 @@ const AppContent = () => {
 
   return (
     <div
-      className={`min-h-screen ${
-        preferences.highContrast ? "high-contrast" : ""
-      }`}
+      className={`min-h-screen ${preferences.highContrast ? "high-contrast" : ""
+        }`}
     >
       <OfflineIndicator />
       <ScrollProgress />
@@ -157,6 +157,7 @@ const AppContent = () => {
               <Route path="/demos/sentiment-analysis" element={<SentimentAnalysis />} />
               <Route path="/demos/movie-recommendation" element={<MovieRecommendation />} />
               <Route path="/demos/chatbot" element={<ChatBot />} />
+              <Route path="/demos/tokenized-chat" element={<TokenizedChatPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -170,7 +171,7 @@ const AppContent = () => {
           console.error("Chat widget error:", error);
         }}
       >
-        <NoTokenizerChatWidget isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
+        <AdvancedTokenizedChat isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
       </ErrorBoundary>
 
       {/* <AccessibilityStatus /> */}
