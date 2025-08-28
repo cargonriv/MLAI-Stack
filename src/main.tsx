@@ -5,8 +5,7 @@ import './index.css'
 // Performance and optimization utilities
 import { optimizeCSSDelivery } from './utils/criticalCss'
 import { performanceMonitor } from './utils/performanceMonitoring'
-import { preloadCriticalImages, globalLazyLoader } from './utils/imageOptimization'
-import { globalCSSOptimizer } from './utils/cssOptimization'
+import { preloadCriticalImages } from './utils/imageOptimization'
 
 // Initialize critical CSS optimization
 optimizeCSSDelivery()
@@ -14,7 +13,7 @@ optimizeCSSDelivery()
 // Preload critical images
 preloadCriticalImages([
   '/avatar.png',
-  '/placeholder.svg',
+  // '/placeholder.svg',
 ])
 
 // Register enhanced service worker for offline functionality

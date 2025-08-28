@@ -14,7 +14,7 @@ const SentimentAnalysisPage = () => {
           <div className="mb-6">
             <Button
               variant="ghost"
-              onClick={() => window.history.back()}
+              onClick={() => window.location.href = '/#/showcase'}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -30,10 +30,10 @@ const SentimentAnalysisPage = () => {
               </div>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-              🔥 UPDATED Sentiment Analysis Demo 🔥
+              Sentiment Analysis Demo
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              BERT-based model for understanding emotions and opinions in text
+              BERT-based model for understanding text
             </p>
           </div>
 
@@ -54,15 +54,15 @@ const SentimentAnalysisPage = () => {
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• BERT (Bidirectional Encoder Representations)</li>
                     <li>• Transformer-based architecture</li>
-                    <li>• Fine-tuned on sentiment datasets</li>
                     <li>• Contextual understanding</li>
+                    <li>• Fine-tuned on sentiment datasets</li>
                   </ul>
                 </div>
                 <div>
                   <h3 className="font-medium mb-2">Performance</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• 91.8% accuracy on test data</li>
-                    <li>• Trained on IMDB + Twitter data</li>
+                    {/* <li>• 88.9% accuracy on test data</li> */}
+                    <li>• Trained on ~124MB of Tweets (X/Twitter)</li>
                     <li>• Handles negations effectively</li>
                     <li>• Real-time inference</li>
                   </ul>

@@ -423,9 +423,9 @@ const Projects = () => {
                             size="sm"
                             onClick={
                               () =>
-                                project.link.startsWith("http")
+                                project.link?.startsWith("http")
                                   ? window.open(project.link, "_blank") // external link
-                                  : (window.location.href = project.link) // internal route
+                                  : project.link && (window.location.href = project.link) // internal route
                             }
                           >
                             <ExternalLink className="w-4 h-4" />

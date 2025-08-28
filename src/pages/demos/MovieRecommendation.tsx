@@ -13,7 +13,7 @@ const MovieRecommendationPage = () => {
           <div className="mb-6">
             <Button
               variant="ghost"
-              onClick={() => window.history.back()}
+              onClick={() => window.location.href = '/#/showcase'}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4" />

@@ -82,25 +82,25 @@ const Home = () => {
               <div className="bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-border/50 p-4 sm:p-6 md:p-8 lg:p-12 shadow-xl">
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-foreground/80 mb-6 sm:mb-8 leading-relaxed text-center">
                   I'm a dynamic and versatile{" "}
-                  <span class="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                     Data Scientist
                   </span>{" "}
                   and{" "}
-                  <span class="font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  <span className="font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                     Biomedical Engineer
                   </span>{" "}
                   bridging the gap between healthcare innovation and artificial
                   intelligence. My expertise lies in developing robust machine
                   learning models, from{" "}
-                  <span class="font-semibold text-cyan-400">
+                  <span className="font-semibold text-cyan-400">
                     multimodal neuromorphic computing
                   </span>{" "}
                   and{" "}
-                  <span class="font-semibold text-purple-400">
+                  <span className="font-semibold text-purple-400">
                     remote sensing foundation models
                   </span>{" "}
                   to{" "}
-                  <span class="font-semibold text-pink-400">
+                  <span className="font-semibold text-pink-400">
                     full-stack web applications
                   </span>{" "}
                   and data-driven solutions that enhance human performance while

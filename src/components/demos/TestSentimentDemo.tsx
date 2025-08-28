@@ -59,14 +59,14 @@ const TestSentimentDemo = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-6 border-4 border-green-500 bg-green-100 text-center rounded-lg">
+      {/* <div className="p-6 border-4 border-green-500 bg-green-100 text-center rounded-lg">
         <h1 className="text-3xl font-bold text-green-800 mb-2">
           🤖 Hugging Face Sentiment Analysis
         </h1>
         <p className="text-lg text-green-700">
           Using Twitter RoBERTa model via Transformers.js
         </p>
-      </div>
+      </div> */}
 
       {/* Model Status */}
       <div className="p-4 border rounded-lg">

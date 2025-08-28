@@ -143,7 +143,7 @@ const ImageClassificationDemo = () => {
           
           // Add timeout to prevent infinite loading
           const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error('Analysis timeout after 30 seconds')), 30000);
+            setTimeout(() => reject(new Error('Analysis timeout after 60 seconds')), 60000);
           });
           
           const result = await Promise.race([
@@ -569,7 +569,7 @@ const ImageClassificationDemo = () => {
               </div>
               <div>
                 <span className="text-muted-foreground">Model Status:</span>
-                <div className="font-medium">{modelLoaded ? "WebGPU" : "Fallback"}</div>
+                <div className="font-medium">{modelLoaded ? "DETR-ResNet" : "Fallback"}</div>
               </div>
             </div>
           </div>

@@ -10,17 +10,28 @@ export class ONNXSentiment {
   private classifier: any = null;
   private isInitialized = false;
   private initializationPromise: Promise<void> | null = null;
+  private currentModel: {
+    name: string;
+    architecture: string;
+    size: string;
+    source: string;
+    quantized: boolean;
+    backend: string;
+  } | null = null;
 
-  async initialize(progressCallback?: (progress: number) => void): Promise<void> {
+  async initialize(progressCallback?: (progress: number) => void, modelName?: string): Promise<void> {
     if (this.initializationPromise) {
       return this.initializationPromise;
     }
 
-    this.initializationPromise = this.performInitialization(progressCallback);
+    this.initializationPromise = this.performInitialization(progressCallback, modelName);
     return this.initializationPromise;
   }
 
-  private async performInitialization(progressCallback?: (progress: number) => void): Promise<void> {
+  private async performInitialization(
+    progressCallback?: (progress: number) => void,
+    modelName?: string
+  ): Promise<void> {
     if (this.isInitialized) {
       return;
     }
@@ -30,14 +41,24 @@ export class ONNXSentiment {
 
       if (progressCallback) progressCallback(10);
 
-      console.log('📥 Loading DistilBERT sentiment model (Xenova)...');
+      // Allow dynamic model selection
+      const modelToLoad = modelName || 'Xenova/twitter-roberta-base-sentiment-latest';
+      console.log(`📥 Loading sentiment model: ${modelToLoad} (Xenova)...`);
 
       if (progressCallback) progressCallback(50);
 
       // Initialize the pipeline with the specified model
-      // Using a working sentiment analysis model
-      // this.classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
-      this.classifier = await pipeline('text-classification', 'Xenova/twitter-roberta-base-sentiment-latest');
+      this.classifier = await pipeline('text-classification', modelToLoad);
+
+      // Dynamically update model info
+      this.currentModel = {
+        name: modelToLoad,
+        architecture: modelToLoad.includes('distilbert') ? 'DistilBERT-base' : 'RoBERTa-base',
+        size: '~67MB', // You can adjust if you want to dynamically fetch size
+        source: 'Hugging Face Transformers.js',
+        quantized: false,
+        backend: 'WebAssembly/WebGL'
+      };
 
       if (progressCallback) progressCallback(90);
 
@@ -52,15 +73,12 @@ export class ONNXSentiment {
       if (progressCallback) progressCallback(100);
 
       console.log('✅ Hugging Face sentiment model ready!');
-
     } catch (error) {
       this.initializationPromise = null;
       console.error('❌ Failed to initialize Hugging Face model:', error);
       throw error;
     }
   }
-
-
 
   async analyze(text: string): Promise<SentimentResult> {
     if (!this.isInitialized || !this.classifier) {
@@ -88,10 +106,10 @@ export class ONNXSentiment {
           negative: result.label.toUpperCase() === 'NEGATIVE' ? result.score : 1 - result.score
         },
         processingTime,
-        modelInfo: {
-          name: 'DistilBERT Sentiment',
-          size: '~67MB',
-          architecture: 'DistilBERT-base'
+        modelInfo: this.currentModel || {
+          name: 'Unknown Model',
+          size: 'Unknown',
+          architecture: 'Unknown'
         }
       };
 
@@ -109,10 +127,10 @@ export class ONNXSentiment {
   }
 
   getModelInfo() {
-    return {
-      name: 'DistilBERT Base Sentiment Classifier',
-      architecture: 'DistilBERT-base',
-      size: '~67MB',
+    return this.currentModel || {
+      name: 'No model loaded',
+      architecture: 'Unknown',
+      size: 'Unknown',
       source: 'Hugging Face Transformers.js',
       quantized: false,
       backend: 'WebAssembly/WebGL'
@@ -126,6 +144,7 @@ export class ONNXSentiment {
     }
     this.isInitialized = false;
     this.initializationPromise = null;
+    this.currentModel = null;
   }
 }
 

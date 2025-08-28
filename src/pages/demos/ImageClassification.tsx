@@ -13,7 +13,7 @@ const ImageClassificationPage = () => {
                     <div className="mb-6">
                         <Button
                             variant="ghost"
-                            onClick={() => window.history.back()}
+                            onClick={() => window.location.href = '/#/showcase'}
                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                         >
                             <ArrowLeft className="w-4 h-4" />
@@ -32,7 +32,7 @@ const ImageClassificationPage = () => {
                             Image Classification Demo
                         </h1>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                            Advanced object detection and segmentation using Grounded SAM (Segment Anything Model)
+                            Advanced object detection and segmentation using a Detection Transformer (DETR) with a Residual Neural Network as its backbone (ResNet-101)
                         </p>
                     </div>
 
@@ -51,10 +51,10 @@ const ImageClassificationPage = () => {
                                 <div>
                                     <h3 className="font-medium mb-2">Model Architecture</h3>
                                     <ul className="text-sm text-muted-foreground space-y-1">
-                                        <li>• Grounding DINO for object detection</li>
-                                        <li>• Meta's Segment Anything Model (SAM)</li>
+                                        <li>• Meta's Detection Transformers (DETR)</li>
+                                        <li>• ResNet-101 base for feature extraction</li>
                                         <li>• Zero-shot text-prompted detection</li>
-                                        <li>• Pixel-perfect segmentation masks</li>
+                                        <li>• Predicts set of bounding boxes and category labels for each object of interest</li>
                                     </ul>
                                 </div>
                                 <div>
@@ -62,8 +62,8 @@ const ImageClassificationPage = () => {
                                     <ul className="text-sm text-muted-foreground space-y-1">
                                         <li>• Natural language object queries</li>
                                         <li>• Real-time processing</li>
-                                        <li>• High precision segmentation</li>
                                         <li>• Multiple object detection</li>
+                                        <li>• Bipartite matching</li>
                                     </ul>
                                 </div>
                             </div>

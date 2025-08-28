@@ -152,14 +152,6 @@ export class CollaborativeFilteringEngine {
   }
 
   /**
-   * Generate unique user IDs based on their ratings
-   */
-  private generateUserKey(userRatings: MovieRating[]): string {
-    // If you have real user IDs, use them. Otherwise hash the movie IDs for simplicity
-    return userRatings.map(r => r.movieId + ':' + r.rating).sort().join('|');
-}
-
-  /**
    * Generate sample ratings for model training
    */
   private generateSampleRatings(): Array<{userId: number, movieId: number, rating: number}> {
@@ -276,54 +268,57 @@ export class CollaborativeFilteringEngine {
    * Generate recommendations for a user based on their ratings
    */
   async generateRecommendations(
-      userRatings: MovieRating[], 
-      numRecommendations: number = 10
+    userRatings: MovieRating[], 
+    numRecommendations: number = 10
   ): Promise<RecommendationResult[]> {
-      if (!this.isInitialized) await this.initialize();
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
 
-      const userKey = this.generateUserKey(userRatings);
+    if (!this.svdModel) {
+      throw new Error('SVD model not trained');
+    }
 
-      // Check if we already have this user profile
-      let userProfile = this.userProfiles.get(userKey);
-      if (!userProfile) {
-          userProfile = this.createUserProfile(userRatings);
-          console.log(`[DEBUG] No existing profile, creating new one: ${userKey}`);
-      } else {
-          console.log(`[DEBUG] Reusing existing user profile: ${userKey}`);
+    // Handle cold-start problem
+    if (userRatings.length < this.options.minRatings) {
+      return this.handleColdStart(userRatings, numRecommendations);
+    }
+
+    // Create user profile
+    const userProfile = this.createUserProfile(userRatings);
+    
+    // Generate predictions for all unrated movies
+    const predictions: RecommendationResult[] = [];
+    const ratedMovieIds = new Set(userRatings.map(r => r.movieId));
+
+    for (const [movieId, movie] of this.movieDatabase) {
+      if (!ratedMovieIds.has(movieId)) {
+        const prediction = this.predictRating(userProfile, movieId);
+        if (prediction.predictedRating > 3.0) { // Only recommend movies with rating > 3
+          predictions.push({
+            movieId,
+            title: movie.title,
+            predictedRating: prediction.predictedRating,
+            confidence: prediction.confidence,
+            genres: movie.genres,
+            explanation: this.generateExplanation(userProfile, movie, prediction.predictedRating),
+            similarUsers: prediction.similarUsers
+          });
+        }
       }
+    }
 
-      // Handle cold-start for users with few ratings
-      if (userRatings.length < this.options.minRatings) {
-          return this.handleColdStart(userRatings, numRecommendations);
-      }
-
-      const ratedMovieIds = new Set(userRatings.map(r => r.movieId));
-      const predictions: RecommendationResult[] = [];
-
-      for (const [movieId, movie] of this.movieDatabase) {
-          if (!ratedMovieIds.has(movieId)) {
-              const { predictedRating, confidence } = this.predictRating(userProfile, movieId);
-
-              if (predictedRating > 3) {
-                  predictions.push({
-                      movieId,
-                      title: movie.title,
-                      predictedRating,
-                      confidence,
-                      genres: movie.genres,
-                      explanation: this.generateExplanation(userProfile, movie, predictedRating)
-                  });
-              }
-          }
-      }
-
-      return predictions
-          .sort((a, b) => {
-              const diff = b.predictedRating - a.predictedRating;
-              if (Math.abs(diff) < 0.001) return b.confidence - a.confidence;
-              return diff;
-          })
-          .slice(0, numRecommendations);
+    // Sort by predicted rating (descending) and return top N
+    return predictions
+      .sort((a, b) => {
+        const diff = b.predictedRating - a.predictedRating;
+        // If ratings are very close, sort by confidence as tiebreaker
+        if (Math.abs(diff) < 0.001) {
+          return b.confidence - a.confidence;
+        }
+        return diff;
+      })
+      .slice(0, numRecommendations);
   }
 
   /**
@@ -370,22 +365,14 @@ export class CollaborativeFilteringEngine {
    * Create user profile from ratings
    */
   private createUserProfile(userRatings: MovieRating[]): UserProfile {
-      const ratings = new Map(userRatings.map(r => [r.movieId, r.rating]));
-      const preferences = this.calculateGenrePreferences(userRatings);
+    const ratings = new Map(userRatings.map(r => [r.movieId, r.rating]));
+    const preferences = this.calculateGenrePreferences(userRatings);
 
-      const userProfile: UserProfile = {
-          ratings,
-          preferences
-      };
-
-      // Persist the profile keyed by a hash of rated movie IDs (or a user ID if available)
-      const userKey = this.generateUserKey(userRatings);
-      this.userProfiles.set(userKey, userProfile);
-      console.log(`[DEBUG] User profile created and stored: ${userKey}`, userProfile);
-
-      return userProfile;
+    return {
+      ratings,
+      preferences
+    };
   }
-
 
   /**
    * Calculate genre preferences based on user ratings
@@ -415,58 +402,35 @@ export class CollaborativeFilteringEngine {
    * Predict rating for a specific movie using collaborative filtering
    */
   private predictRating(userProfile: UserProfile, movieId: number): {
-      predictedRating: number;
-      confidence: number;
-      similarUsers?: number[];
+    predictedRating: number;
+    confidence: number;
+    similarUsers?: number[];
   } {
-      if (!this.svdModel) {
-          throw new Error('SVD model not available');
-      }
+    if (!this.svdModel) {
+      throw new Error('SVD model not available');
+    }
 
-      const svd = this.svdModel;
-      const movieIdx = [...this.movieDatabase.keys()].indexOf(movieId);
-      if (movieIdx === -1) throw new Error(`Movie ${movieId} not found`);
+    const movie = this.movieDatabase.get(movieId);
+    if (!movie) {
+      throw new Error(`Movie ${movieId} not found`);
+    }
 
-      // Map user to an index in the SVD model
-      // If user exists in training, use index; otherwise, add as new (cold-start handled later)
-      let userIdx: number | null = null;
-      const trainedUserIds = Array.from(this.userProfiles.keys());
-      if (this.userProfiles.has(userProfile.ratings)) {
-          userIdx = trainedUserIds.indexOf(userProfile.ratings as any); // Simplified mapping
-      }
+    // Use content-based approach as fallback
+    const genreScore = this.calculateGenreScore(userProfile.preferences, movie.genres);
+    const baseRating = movie.averageRating / 2; // Convert from 10-scale to 5-scale
+    
+    // Combine genre preference with movie popularity
+    const contentBasedRating = (genreScore * 0.7) + (baseRating * 0.3);
+    
+    // Calculate confidence based on number of user ratings and genre match
+    const genreMatch = movie.genres.some(genre => userProfile.preferences[genre] > 3.5);
+    const confidence = Math.min(0.9, 0.4 + (userProfile.ratings.size * 0.05) + (genreMatch ? 0.2 : 0));
 
-      // If user not in SVD training, fallback to content-based (cold-start)
-      if (userIdx === null || userIdx >= svd.numUsers) {
-          const genreScore = this.calculateGenreScore(userProfile.preferences, this.movieDatabase.get(movieId)!.genres);
-          const baseRating = this.movieDatabase.get(movieId)!.averageRating / 2;
-          const contentBasedRating = (genreScore * 0.7) + (baseRating * 0.3);
-          const genreMatch = this.movieDatabase.get(movieId)!.genres.some(genre => userProfile.preferences[genre] > 3.5);
-          const confidence = Math.min(0.9, 0.4 + (userProfile.ratings.size * 0.05) + (genreMatch ? 0.2 : 0));
-
-          return {
-              predictedRating: Math.max(1, Math.min(5, contentBasedRating)),
-              confidence
-          };
-      }
-
-      // Predict using SVD features
-      let prediction = svd.globalMean + svd.userBias[userIdx] + svd.itemBias[movieIdx];
-      for (let f = 0; f < svd.numFactors; f++) {
-          prediction += svd.userFeatures[userIdx][f] * svd.itemFeatures[movieIdx][f];
-      }
-
-      // Confidence as inverse of expected error (simplified)
-      const confidence = Math.min(1, 1 - Math.exp(-userProfile.ratings.size / 10));
-
-      // Clip predicted rating to 1-5 scale
-      const clippedRating = Math.max(1, Math.min(5, prediction));
-
-      return {
-          predictedRating: clippedRating,
-          confidence
-      };
+    return {
+      predictedRating: Math.max(1, Math.min(5, contentBasedRating)),
+      confidence
+    };
   }
-
 
   /**
    * Calculate genre score based on user preferences
@@ -578,7 +542,6 @@ export class CollaborativeFilteringEngine {
    * Reset user profile and recommendations
    */
   reset(): void {
-    console.log('[DEBUG] All stored user profiles:', this.userProfiles);
     this.userProfiles.clear();
   }
 }

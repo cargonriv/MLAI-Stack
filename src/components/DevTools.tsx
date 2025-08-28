@@ -85,7 +85,7 @@ export const DevTools: React.FC<DevToolsProps> = ({
       {showPerformanceMonitor && (
         <PerformanceMonitor
           defaultOpen={true}
-          position="bottom-right"
+          position="top-left"
           updateInterval={2000}
         />
       )}
@@ -94,7 +94,7 @@ export const DevTools: React.FC<DevToolsProps> = ({
       {showBrowserCompatibility && (
         <BrowserCompatibility
           defaultOpen={true}
-          position="bottom-left"
+          position="top-left"
           showTestResults={true}
           autoRunTests={false}
         />
