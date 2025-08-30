@@ -24,6 +24,16 @@ import {
     Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AutoTokenizer } from "@huggingface/transformers";
+
+// Define a type for the document chunks
+interface DocumentChunk {
+    id: string;
+    filePath: string;
+    chunkIndex: number;
+    content: string;
+    embedding: number[];
+}
 
 interface AdvancedTokenizedMessage {
     id: string;
@@ -49,17 +59,16 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     const [isMinimized, setIsMinimized] = useState(false);
     const [welcomeAdded, setWelcomeAdded] = useState(false);
     const [tokenizerStatus, setTokenizerStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-    const [generatorStatus, setGeneratorStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [workspaceDocuments, setWorkspaceDocuments] = useState<DocumentChunk[]>([]);
     const [showTokenDetails, setShowTokenDetails] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const tokenizerRef = useRef<unknown>(null);
-    const generatorRef = useRef<unknown>(null);
+    const tokenizerRef = useRef<AutoTokenizer | null>(null);
     const mountedRef = useRef(false);
 
-    // ---------------------------
+    // --------------------------- 
     // Component mounted/unmounted
-    // ---------------------------
+    // --------------------------- 
     useEffect(() => {
         mountedRef.current = true;
         return () => {
@@ -68,17 +77,14 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     }, []);
 
     // -----------------------------------------
-    // Initialize tokenizer and text generator
+    // Initialize tokenizer
     // -----------------------------------------
     useEffect(() => {
         if (!isOpen || !mountedRef.current) return;
 
         const initializeModels = async () => {
             try {
-                console.log('🤖 Loading tokenizer and generator...');
-                const { AutoTokenizer, pipeline } = await import('@huggingface/transformers');
-
-                if (!mountedRef.current) return;
+                console.log('🤖 Loading tokenizer...');
 
                 // Load tokenizer
                 const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4');
@@ -92,77 +98,21 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 tokenizerRef.current = tokenizer;
                 setTokenizerStatus('ready');
 
-                // Load text generator
-                try {
-                    console.log('🧠 Loading text generation models...');
-                    const modelConfigs = [
-                        { name: 'GPT-2', id: 'Xenova/gpt2', type: 'gpt2' },
-                        { name: 'DistilGPT-2', id: 'Xenova/distilgpt2', type: 'gpt2' }
-                    ];
-
-                    let generator = null;
-                    let modelInfo = null;
-
-                    for (const config of modelConfigs) {
-                        try {
-                            console.log(`🔄 Trying ${config.name}...`);
-                            generator = await Promise.race([
-                                pipeline('text-generation', config.id, { dtype: 'fp32', device: 'wasm' }),
-                                new Promise((_, reject) => setTimeout(() => reject(new Error('Model loading timeout')), 15000))
-                            ]);
-                            modelInfo = config;
-                            console.log(`✅ ${config.name} loaded successfully!`);
-                            break;
-                        } catch (err) {
-                            console.warn(`⚠️ ${config.name} failed:`, err);
-                            continue;
-                        }
-                    }
-
-                    if (!mountedRef.current) return;
-
-                    if (generator && modelInfo) {
-                        generatorRef.current = { model: generator, type: modelInfo.type, name: modelInfo.name };
-                        setGeneratorStatus('ready');
-                        console.log(`✅ Text generator ready: ${modelInfo.name}`);
-                    } else {
-                        throw new Error('All models failed to load');
-                    }
-                } catch (modelError) {
-                    console.warn('⚠️ Text generation models failed to load:', modelError);
-
-                    // Attempt to clear cache
-                    try {
-                        if ('caches' in window) {
-                            const cacheNames = await caches.keys();
-                            for (const cacheName of cacheNames) {
-                                if (cacheName.includes('transformers') || cacheName.includes('huggingface')) {
-                                    console.log(`🧹 Clearing cache: ${cacheName}`);
-                                    await caches.delete(cacheName);
-                                }
-                            }
-                        }
-                    } catch (cacheError) {
-                        console.warn('Cache cleanup failed:', cacheError);
-                    }
-
-                    setGeneratorStatus('error');
-                    console.log('📝 Will use fallback responses instead of AI generation');
-                }
             } catch (error) {
-                console.error('❌ Failed to load models:', error);
+                console.error('❌ Failed to load tokenizer:', error);
                 if (mountedRef.current) {
                     setTokenizerStatus('error');
-                    setGeneratorStatus('error');
-                    setMessages([{
-                        id: Date.now().toString(),
-                        content: "I encountered an error loading the AI models. I'll use fallback responses, but the full tokenization and generation features won't be available.",
-                        sender: 'bot',
-                        timestamp: new Date(),
-                        tokens: [],
-                        tokenCount: 0,
-                        generationMethod: 'error'
-                    }]);
+                    setMessages([
+                        {
+                            id: Date.now().toString(),
+                            content: "I encountered an error loading the AI models. I'll use fallback responses, but the full tokenization and generation features won't be available.",
+                            sender: 'bot',
+                            timestamp: new Date(),
+                            tokens: [],
+                            tokenCount: 0,
+                            generationMethod: 'error'
+                        }
+                    ]);
                 }
             }
         };
@@ -179,16 +129,11 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         if (!isOpen || !tokenizerRef.current) return;
 
         // Check if welcome message exists
-        let existingIndex = messages.findIndex(msg => msg.id === 'welcome-message');
+        const existingIndex = messages.findIndex(msg => msg.id === 'welcome-message');
 
-        const hasAI = generatorStatus === "ready";
-        const modelName = hasAI ? (generatorRef.current as any)?.name || "AI" : "Fallback";
+        const welcomeText = `Hi! I'm your advanced AI assistant with GPT-4 tokenization capabilities. Ask me about his projects!`;
 
-        const welcomeText = hasAI
-            ? `Hi! I'm your advanced AI assistant powered by ${modelName} with GPT-4 tokenization. I can demonstrate the complete NLP pipeline: tokenization → AI generation → detokenization. Ask me about Carlos's ML portfolio, projects, or anything else!`
-            : `Hi! I'm your AI assistant with GPT-4 tokenization capabilities. While AI text generation is currently unavailable, I can still help you learn about Carlos's ML portfolio and demonstrate tokenization. Ask me about his projects!`;
-
-        const tokenizer = tokenizerRef.current as any;
+        const tokenizer = tokenizerRef.current;
         const welcomeTokens = tokenizer.encode(welcomeText);
         const welcomeDecodedTokens = welcomeTokens.map((t: number) => tokenizer.decode([t]));
 
@@ -200,7 +145,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             tokens: welcomeTokens,
             tokenCount: welcomeTokens.length,
             decodedTokens: welcomeDecodedTokens,
-            generationMethod: hasAI ? "ai-generated" : "fallback",
+            generationMethod: "ai-generated",
             processingTime: 0,
         };
 
@@ -218,7 +163,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
         setWelcomeAdded(true);
 
-    }, [isOpen, tokenizerStatus, generatorStatus]);
+    }, [isOpen, tokenizerStatus, messages]);
 
 
 
@@ -246,8 +191,8 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }
 
         try {
-            const tokens = (tokenizerRef.current as any).encode(text);
-            const decodedTokens = tokens.map((token: number) => (tokenizerRef.current as any).decode([token]));
+            const tokens = tokenizerRef.current.encode(text);
+            const decodedTokens = tokens.map((token: number) => tokenizerRef.current!.decode([token]));
             return { tokens, decodedTokens, tokenCount: tokens.length };
         } catch (error) {
             console.error('Tokenization error:', error);
@@ -255,117 +200,94 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }
     };
 
-    const generateResponse = async (userMessage: string, userTokens: number[]): Promise<{
-        content: string;
-        method: 'ai-generated' | 'fallback' | 'error';
-        processingTime: number;
-    }> => {
+    const generateResponse = async (userMessage: string, onNewToken: (token: string) => void): Promise<{ method: 'ai-generated' | 'fallback' | 'error'; processingTime: number; }> => {
         const startTime = Date.now();
-
-        if (generatorStatus !== 'ready' || !generatorRef.current) {
-            return {
-                content: getFallbackResponse(userMessage, userTokens),
-                method: 'fallback',
-                processingTime: Date.now() - startTime
-            };
-        }
 
         try {
             console.log('🧠 Generating AI response...');
 
-            const generatorInfo = generatorRef.current as any;
-            const generator = generatorInfo.model;
-            const modelType = generatorInfo.type;
-
-            let result;
-            let generatedText;
-
-            // Use GPT-2 or DistilGPT-2 with optimized prompt
-            const prompt = `AI Assistant: I help users learn about Carlos Gonzalez Rivera's ML portfolio.\nUser: ${userMessage}\nAI Assistant:`;
-
-            console.log(`🎯 Using ${generatorInfo.name} generation...`);
-            result = await generator(prompt, {
-                max_new_tokens: 80,
-                do_sample: true,
-                top_k: 40,
-                top_p: 0.9,
-                temperature: 0.7,
-                pad_token_id: 50256,
-                repetition_penalty: 1.2,
-                no_repeat_ngram_size: 3,
+            const response = await fetch('http://localhost:8000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: userMessage }),
             });
 
-            generatedText = result[0].generated_text.replace(prompt, '').trim();
-
-            // Clean up the response
-            if (generatedText.length < 10) {
-                throw new Error('Generated text too short');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Backend error:", errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Clean up incomplete sentences for GPT-2 models
-            const sentences = generatedText.split(/[.!?]+/);
-            const cleanSentences = sentences.filter(s => s.trim().length > 10 && s.trim().length < 200);
+            const reader = response.body?.getReader();
+            if (!reader) {
+                throw new Error('Failed to get reader from response body');
+            }
 
-            if (cleanSentences.length > 0) {
-                generatedText = cleanSentences.slice(0, 2).join('. ').trim();
-                if (!generatedText.endsWith('.') && !generatedText.endsWith('!') && !generatedText.endsWith('?')) {
-                    generatedText += '.';
+            const decoder = new TextDecoder();
+            let buffer = ''; // This buffer holds incomplete data
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                // Append new data to the buffer
+                buffer += decoder.decode(value, { stream: true });
+                
+                let lastIndex = 0;
+                let match;
+                // Regex to find 'data: ' followed by content, until the next 'data: ' or end of string
+                const regex = /data: (.*?)(?=data: |$)/g;
+
+                while ((match = regex.exec(buffer)) !== null) {
+                    const jsonString = match[1].trim();
+                    if (jsonString) {
+                        try {
+                            const token = JSON.parse(jsonString);
+                            onNewToken(token);
+                        } catch (e) {
+                            console.error("Error parsing JSON from SSE stream:", e, "Original string:", jsonString);
+                        }
+                    }
+                    lastIndex = regex.lastIndex;
+                }
+                // Keep the unprocessed part of the buffer for the next iteration
+                buffer = buffer.substring(lastIndex);
+            }
+
+            // After the loop, process any remaining data in the buffer.
+            if (buffer.trim()) {
+                try {
+                    const token = JSON.parse(buffer.trim());
+                    onNewToken(token);
+                } catch (e) {
+                    console.error("Error parsing final JSON from SSE stream:", e, "Original string:", buffer.trim());
                 }
             }
 
-            // Add token and model context
-            const modelName = generatorInfo.name || 'GPT-2';
-            const tokenInfo = `[${modelName} Generated • ${userTokens.length} input tokens • ${Date.now() - startTime}ms] `;
-
             return {
-                content: tokenInfo + generatedText,
                 method: 'ai-generated',
                 processingTime: Date.now() - startTime
             };
 
         } catch (error) {
             console.error('AI generation failed:', error);
-            console.log('📝 Falling back to curated responses...');
             return {
-                content: getFallbackResponse(userMessage, userTokens),
-                method: 'fallback',
+                method: 'error',
                 processingTime: Date.now() - startTime
             };
         }
     };
 
-    // Enhanced fallback responses
-    const getFallbackResponse = (userMessage: string, userTokens: number[]): string => {
-        const lowerMessage = userMessage.toLowerCase();
-
-        if (lowerMessage.includes('generate') || lowerMessage.includes('ai') || lowerMessage.includes('model')) {
-            return `[Fallback Response • ${userTokens.length} tokens] I'm demonstrating both tokenization and text generation! Your message was processed through: 1) GPT-4 tokenization (${userTokens.length} tokens), 2) Qwen1.5-0.5B/GPT-2 generation attempt, 3) Fallback to curated response. This shows the complete NLP pipeline in action!`;
-        }
-
-        if (lowerMessage.includes('token') || lowerMessage.includes('encode')) {
-            return `[Tokenization Demo • ${userTokens.length} tokens] Your message "${userMessage}" was encoded into ${userTokens.length} tokens using GPT-4's tokenizer. Each token represents a semantic unit that AI models can process. This is the foundation of how language models understand and generate text!`;
-        }
-
-        if (lowerMessage.includes('how') || lowerMessage.includes('work')) {
-            return `[Pipeline Demo • ${userTokens.length} tokens] Here's my complete processing pipeline: 1) Tokenize input (${userTokens.length} tokens), 2) Generate response with Qwen1.5-0.5B or GPT-2, 3) Tokenize output, 4) Display with breakdown. This demonstrates the full cycle of modern NLP systems!`;
-        }
-
-        const responses = [
-            `[Advanced NLP • ${userTokens.length} tokens] I'm showcasing the complete AI pipeline: tokenization, generation, and analysis. Your ${userTokens.length}-token input demonstrates how modern language models process text. What would you like to explore?`,
-            `[Full Stack AI • ${userTokens.length} tokens] This chat demonstrates real AI capabilities: GPT-4 tokenization + Qwen1.5-0.5B/GPT-2 generation. Your message went through the complete NLP pipeline. Ask me about tokenization, generation, or Carlos's ML projects!`,
-            `[Token Analysis • ${userTokens.length} tokens] Your input was processed through advanced tokenization and AI generation. This showcases the same techniques used in production language models. What aspect of NLP interests you most?`
-        ];
-
-        return responses[Math.floor(Math.random() * responses.length)];
-    };
-
     const handleSendMessage = async () => {
         const trimmedInput = inputValue?.trim() || '';
+        console.log("Sending message!!!", trimmedInput)
         if (!trimmedInput) return;
 
         // Tokenize user input
         const { tokens, decodedTokens, tokenCount } = tokenizeText(trimmedInput);
-
+        console.log("tokenized text", tokens)
         // Create user message with tokenization details
         const userMessage: AdvancedTokenizedMessage = {
             id: Date.now().toString(),
@@ -379,26 +301,57 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         };
 
         setMessages(prev => [...prev, userMessage]);
-        setInputValue("");
+        console.log("Set the message!")
+        // setInputValue("");
         setIsTyping(true);
 
+        const botMessageId = (Date.now() + 1).toString();
+        const initialBotMessage: AdvancedTokenizedMessage = {
+            id: botMessageId,
+            content: '', // Start with empty content
+            sender: 'bot',
+            timestamp: new Date(),
+            tokens: [],
+            tokenCount: 0,
+            generationMethod: 'ai-generated',
+        };
+        setMessages(prev => [...prev, initialBotMessage]);
+        console.log("Set the inital bot message...")
+
+        const onNewToken = (token: string) => {
+            console.log("DEBUG: onNewToken received token:", token);
+            setMessages(prevMessages => prevMessages.map(msg => {
+                if (msg.id === botMessageId) {
+                    const newContent = msg.content + token;
+                    console.log("DEBUG: newContent in onNewToken:", newContent);
+                    const { tokens, decodedTokens, tokenCount } = tokenizeText(newContent);
+                    return {
+                        ...msg,
+                        content: newContent,
+                        tokens,
+                        decodedTokens,
+                        tokenCount,
+                    };
+                }
+                console.log("DEBUG: msg not matching botMessageId:", msg);
+                return msg;
+            }));
+        };
+
         try {
-            const { content, method, processingTime } = await generateResponse(userMessage.content, userMessage.tokens);
-            const { tokens: responseTokens, decodedTokens: responseDecodedTokens, tokenCount: responseTokenCount } = tokenizeText(content);
+            const { method, processingTime } = await generateResponse(userMessage.content, onNewToken);
 
-            const botMessage: AdvancedTokenizedMessage = {
-                id: (Date.now() + 1).toString(),
-                content,
-                sender: 'bot',
-                timestamp: new Date(),
-                tokens: responseTokens,
-                tokenCount: responseTokenCount,
-                decodedTokens: responseDecodedTokens,
-                generationMethod: method,
-                processingTime
-            };
-
-            setMessages(prev => [...prev, botMessage]);
+            // After generation is complete, update the final message details
+            setMessages(prevMessages => prevMessages.map(msg => {
+                if (msg.id === botMessageId) {
+                    return {
+                        ...msg,
+                        generationMethod: method,
+                        processingTime,
+                    };
+                }
+                return msg;
+            }));
         } catch (error) {
             console.error('Error generating response:', error);
             const errorResponse = "I apologize, but I encountered an error processing your message. Please try again!";
@@ -452,7 +405,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Cpu className="w-5 h-5" />
                         Advanced AI Chat
-                        {(tokenizerStatus === 'loading' || generatorStatus === 'loading') && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {(tokenizerStatus === 'loading') && <Loader2 className="w-4 h-4 animate-spin" />}
                     </CardTitle>
                     <div className="flex items-center gap-1">
                         <Button
@@ -491,9 +444,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                         </Badge>
                         <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                             <Cpu className="w-3 h-3 mr-1" />
-                            {generatorStatus === 'ready' ?
-                                `${(generatorRef.current as any)?.name || 'AI'} Ready` :
-                                generatorStatus === 'loading' ? 'Loading Generator...' : 'Generator Error'}
+                            AI Ready
                         </Badge>
                         <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                             <Zap className="w-3 h-3 mr-1" />
@@ -505,13 +456,13 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
             {!isMinimized && (
                 <CardContent className="p-0 flex flex-col h-[calc(100%-120px)]">
-                    {/* Status Alert */}
-                    {(tokenizerStatus !== 'ready' || generatorStatus !== 'ready') && (
+                    {
+                        (tokenizerStatus !== 'ready') && (
                         <Alert className="m-4 mb-2">
                             <Info className="h-4 w-4" />
                             <AlertDescription>
-                                {tokenizerStatus === 'loading' || generatorStatus === 'loading'
-                                    ? "Loading AI models... This may take a moment for the first time."
+                                {tokenizerStatus === 'loading'
+                                    ? "Loading AI models and workspace data... This may take a moment for the first time."
                                     : "Some AI features are unavailable. Using fallback responses."}
                             </AlertDescription>
                         </Alert>
@@ -640,7 +591,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                                     </span>
                                 )}
                                 <Badge variant="outline" className="text-xs">
-                                    {generatorStatus === 'ready' ? '🤖 AI Ready' : '📝 Fallback Mode'}
+                                    AI Ready
                                 </Badge>
                             </div>
                         )}

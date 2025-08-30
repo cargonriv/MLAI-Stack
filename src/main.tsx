@@ -2,6 +2,9 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+// Preload AI models
+// import '@/lib/preloaded-models';
+
 // Performance and optimization utilities
 import { optimizeCSSDelivery } from './utils/criticalCss'
 import { performanceMonitor } from './utils/performanceMonitoring'

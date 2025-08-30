@@ -99,10 +99,10 @@ const RecommendationDemo = () => {
   };
 
   const getFilteredMovies = () => {
-    if (!searchQuery) return availableMovies.slice(0, 20);
+    if (!searchQuery) return availableMovies;
     return availableMovies.filter(movie => 
         movie.title.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 20);
+      );
   };
 
   const getRatingForMovie = (movieId) => {

@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+llama-cpp-python
+sse-starlette
+numpy<2.0

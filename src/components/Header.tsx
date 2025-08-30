@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star, Hash } from "lucide-react";
+import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star, Hash, Bot } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAccessibility } from "@/hooks/use-accessibility";
@@ -28,10 +28,12 @@ const Header = () => {
     { name: "Resume", href: "#/resume", icon: FileText },
     { name: "Projects", href: "#/projects", icon: Folder },
     { name: "Capstone", href: "#/capstone", icon: GraduationCap },
+    // { name: "Showcase", href: "#/showcase", icon: Brain },
   ];
 
   const showcaseItems = [
     { name: "Showcase Overview", href: "#/showcase", icon: Brain },
+    { name: "Smart Chat Bot", href: "#/demos/chatbot", icon: Bot },
     { name: "Image Classification", href: "#/demos/image-classification", icon: Camera },
     { name: "Sentiment Analysis", href: "#/demos/sentiment-analysis", icon: MessageSquare },
     { name: "Movie Recommendation", href: "#/demos/movie-recommendation", icon: Star },

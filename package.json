@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run generate:embeddings && vite build",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build --mode production",
     "build:analyze": "npm run build && npm run analyze:bundle",
@@ -36,7 +36,9 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "docker:prod": "docker-compose --profile production up -d",
-    "demo:tokenizer": "node scripts/chatbot-demo.js"
+    "demo:tokenizer": "node scripts/chatbot-demo.js",
+    "generate:embeddings": "node scripts/generate-embeddings.js",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -115,7 +117,9 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "gh-pages": "^6.3.0",
+    "glob": "^10.4.5",
     "globals": "^15.9.0",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",

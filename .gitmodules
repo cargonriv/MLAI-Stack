@@ -1,0 +1,3 @@
+[submodule "public/models/Qwen1.5-0.5B-Chat"]
+	path = public/models/Qwen1.5-0.5B-Chat
+	url = https://huggingface.co/Xenova/Qwen1.5-0.5B-Chat

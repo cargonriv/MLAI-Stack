@@ -4,23 +4,23 @@ import { Brain, Cpu, Zap } from "lucide-react";
 const ModelsSection = () => {
   const models = [
     {
-      title: "DETR Object Detection",
+      title: "DETR for Object Detection",
       description: "End-to-end object detection using Detection Transformer (DETR) with ResNet-101 backbone",
       explanation: "Implements Facebook's DETR (Detection Transformer) model with ResNet-101 backbone for real-time object detection in the browser. This transformer-based approach eliminates the need for hand-crafted components like NMS, running entirely client-side with WebAssembly for fast inference and bounding box visualization.",
       githubUrl: "https://github.com/facebookresearch/detr",
       tags: ["DETR", "Object Detection", "Transformers", "ResNet-101", "WebAssembly"],
-      accuracy: "High Precision",
-      dataset: "COCO Dataset",
+      accuracy: "~ 44 AP (Average Precision)",
+      dataset: "COCO 2017 Object Detection Dataset",
       demoUrl: "#/demos/image-classification"
     },
     {
       title: "RoBERTa Sentiment Analysis",
       description: "Twitter-optimized RoBERTa model for robust sentiment classification",
       explanation: "Uses a RoBERTa-based transformer fine-tuned specifically on Twitter data for sentiment analysis. This model excels at understanding social media language, slang, and informal text patterns, running entirely in the browser with Hugging Face Transformers.js for real-time sentiment analysis.",
-      githubUrl: "https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest",
+      githubUrl: "https://github.com/cardiffnlp/tweeteval",
       tags: ["RoBERTa", "NLP", "Transformers", "Sentiment", "Twitter", "Client-side"],
-      accuracy: "92.8%",
-      dataset: "Twitter Sentiment Data",
+      accuracy: "73% Macro-Averaged Recall",
+      dataset: "128 GBs of X's tweets",
       demoUrl: "#/demos/sentiment-analysis"
     },
     {
@@ -29,16 +29,16 @@ const ModelsSection = () => {
       explanation: "Implements multiple recommendation algorithms including SVD matrix factorization, neural collaborative filtering, and hybrid approaches. The system learns user-item interaction patterns to generate personalized recommendations with confidence scores and explanations.",
       githubUrl: "https://github.com/cargonriv/recommendation-engine",
       tags: ["SVD", "Neural CF", "Matrix Factorization", "Recommendation"],
-      accuracy: "87.5%",
-      dataset: "MovieLens Dataset",
+      accuracy: "~ 85.5%",
+      dataset: "100+ Movie Selection Samples with Real User Ratings",
       demoUrl: "#/demos/movie-recommendation"
     },
     {
-      title: "GPT-4o Tokenizer Assistant",
-      description: "Interactive chat assistant powered by GPT-4o tokenization for text processing",
-      explanation: "Features the GPT-4o tokenizer for advanced text processing and token analysis. This chat assistant demonstrates real-time tokenization, provides portfolio information, and showcases how modern tokenizers handle text preprocessing for large language models, all running client-side in the browser.",
-      githubUrl: "https://huggingface.co/openai-community/gpt-4o",
-      tags: ["GPT-4o", "Tokenizer", "NLP", "Chat AI", "Text Processing", "Client-side"],
+      title: "GPT Assistant",
+      description: "Interactive chat assistant powered by GPT tokenization for text processing and text generation, while implementing RAG for this workspace's content space",
+      explanation: "Features the GPT tokenizer for advanced text processing and token analysis. This chat assistant demonstrates real-time tokenization, provides portfolio information, and showcases how modern tokenizers handle text preprocessing for large language models, all running client-side in the browser.",
+      githubUrl: "https://github.com/QwenLM/Qwen",
+      tags: ["GPT", "Tokenizer", "NLP", "AI Chat", "Text Generation", "Client-side"],
       accuracy: "Context-Aware",
       dataset: "Portfolio Knowledge Base",
       demoUrl: "#/demos/chatbot"
@@ -49,7 +49,7 @@ const ModelsSection = () => {
       explanation: "This machine learning model uses an AdaBoost Regressor to analyze and score NBA players based on their latest performance statistics pulled from the internet. The ensemble method combines multiple weak learners to create a robust predictor that evaluates player effectiveness across various game metrics.",
       githubUrl: "https://github.com/cargonriv/BoostGM",
       tags: ["AdaBoost", "Regression", "Sports Analytics", "Python"],
-      accuracy: "88.7%",
+      // accuracy: "88.7%",
       dataset: "NBA Player Stats"
     },
     {
@@ -58,15 +58,15 @@ const ModelsSection = () => {
       explanation: "Implements the Locally Competitive Algorithm (LCA), a neuroscientific model that performs sparse coding by modeling lateral competition observed in the visual cortex. This network builds convolutional sparse coding layers that compete to represent shared input portions, mimicking brain functionality for efficient feature representation.",
       githubUrl: "https://github.com/cargonriv/linked-lca",
       tags: ["LCA", "Sparse Coding", "Neuroscience", "PyTorch"],
-      dataset: "ImageNet + Allen Institute Data"
+      dataset: "ImageNet + Allen Institute's Optical Physiology Data"
     },
     {
       title: "PacWarrior Genetic Algorithm Agent",
       description: "Genetic algorithm-based reinforcement learning agent designed for Pac-Man style environments",
       explanation: "A sophisticated AI agent that uses genetic algorithms to evolve optimal strategies for navigating Pac-Man environments. The system employs evolutionary computation principles with selection, crossover, and mutation operators to develop increasingly effective game-playing behaviors through generations of iterative improvement.",
       githubUrl: "https://github.com/cargonriv/PacWarrior",
-      tags: ["Genetic Algorithm", "Game AI", "Evolution", "C/Python"],
-      dataset: "Pac-Man Game States"
+      tags: ["Genetic Algorithm", "AI Game", "Evolution", "C/Python"],
+      dataset: "Real-Time Pac-War Game States"
     }
   ];
 
@@ -87,7 +87,7 @@ const ModelsSection = () => {
             ML Model Collection
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Explore my machine learning projects with interactive demonstrations. 
+            Explore my machine learning (ML) projects with interactive demonstrations. 
             Click "Try Demo" to experience each model in a dedicated environment.
           </p>
         </div>

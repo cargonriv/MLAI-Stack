@@ -91,7 +91,7 @@ const TokenizedChatDemo = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg font-mono text-sm">
+                  <div className="bg-blue-400 dark:bg-blue-950/20 p-3 rounded-lg font-mono text-sm">
                     "Hello world!"
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
@@ -111,7 +111,7 @@ const TokenizedChatDemo = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-lg font-mono text-sm">
+                  <div className="bg-purple-400 dark:bg-purple-950/20 p-3 rounded-lg font-mono text-sm">
                     [9906, 1917, 0]
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
@@ -131,7 +131,7 @@ const TokenizedChatDemo = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg font-mono text-sm">
+                  <div className="bg-green-500 dark:bg-green-950/20 p-3 rounded-lg font-mono text-sm">
                     ["Hello", " world", "!"]
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
@@ -299,13 +299,13 @@ const TokenizedChatDemo = () => {
 
                 <div className="space-y-2 text-xs text-muted-foreground mb-4">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">✅ GPT-4 Tokenizer</Badge>
+                    <Badge variant="outline" className="text-xs text-gray-500">✅ GPT-4 Tokenizer</Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">✅ Real-time Token Counting</Badge>
+                    <Badge variant="outline" className="text-xs text-gray-500">✅ Real-time Token Counting</Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">📝 Curated Responses</Badge>
+                    <Badge variant="outline" className="text-xs text-gray-500">📝 Curated Responses</Badge>
                   </div>
                 </div>
 
@@ -335,13 +335,13 @@ const TokenizedChatDemo = () => {
 
                 <div className="space-y-2 text-xs text-muted-foreground mb-4">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">✅ GPT-4 Tokenizer</Badge>
+                    <Badge variant="outline" className="text-xs text-gray-500">✅ GPT-4 Tokenizer</Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">🤖 DistilGPT-2 Generation</Badge>
+                    <Badge variant="outline" className="text-xs text-gray-500">🤖 DistilGPT-2 Generation</Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">⚡ Full NLP Pipeline</Badge>
+                    <Badge variant="outline" className="text-xs text-gray-500">⚡ Full NLP Pipeline</Badge>
                   </div>
                 </div>
 

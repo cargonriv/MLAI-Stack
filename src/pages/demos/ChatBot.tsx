@@ -150,9 +150,9 @@ const ChatBotDemo = () => {
               <div className="space-y-3 text-sm text-muted-foreground mb-6">
                 <p>Try asking:</p>
                 <div className="flex flex-wrap justify-center gap-2">
-                  <Badge variant="outline">"Tell me about your projects"</Badge>
-                  <Badge variant="outline">"What's your ML experience?"</Badge>
-                  <Badge variant="outline">"Explain the SIDS prediction model"</Badge>
+                  <Badge variant="outline" className="text-gray-500">"Tell me about your projects"</Badge>
+                  <Badge variant="outline" className="text-gray-500">"What's your ML experience?"</Badge>
+                  <Badge variant="outline" className="text-gray-500">"Explain the SIDS prediction model"</Badge>
                 </div>
               </div>
 
