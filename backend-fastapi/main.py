@@ -1,11 +1,14 @@
 import os
-import random
-from typing import List
-from fastapi import FastAPI, HTTPException
+import json
+import numpy as np
+from typing import List, Optional
+from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from sentence_transformers import SentenceTransformer
+import random
 
-app = FastAPI(title="ML Portfolio API", version="1.0.0")
+app = FastAPI(title="ML Portfolio RAG API", version="1.0.0")
 
 # Add CORS middleware
 allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:8080,https://cargonriv.com").split(",")
@@ -16,6 +19,32 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Global variables for models and data
+embedding_model = None
+workspace_embeddings = []
+
+def load_models():
+    """Load embedding model and workspace embeddings"""
+    global embedding_model, workspace_embeddings
+    
+    print("🚀 Loading models and embeddings...")
+    
+    # Load embedding model
+    try:
+        print("📊 Loading embedding model...")
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        print("✅ Embedding model loaded successfully!")
+    except Exception as e:
+        print(f"❌ Failed to load embedding model: {e}")
+        embedding_model = None
+    
+    # For production, we'll use a fallback response system
+    # since the full LLM and embeddings are too large for Railway
+    print("✅ Production mode: Using fallback response system")
+
+# Load models on startup
+load_models()
 
 class ChatRequest(BaseModel):
     prompt: str
@@ -31,101 +60,93 @@ class ChatResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "ML Portfolio API", "status": "running"}
+    return {"message": "ML Portfolio RAG API", "status": "running"}
 
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
-        "version": "1.0.0",
-        "message": "API is running successfully"
+        "embedding_model_loaded": embedding_model is not None,
+        "version": "1.0.0"
     }
 
-def get_contextual_response(prompt: str) -> str:
-    """Generate contextual responses based on the prompt"""
+def get_fallback_response(prompt: str) -> str:
+    """Generate contextual fallback responses based on the prompt"""
     prompt_lower = prompt.lower()
     
     # ML/AI related responses
     if any(word in prompt_lower for word in ['machine learning', 'ml', 'ai', 'artificial intelligence', 'model', 'algorithm']):
         responses = [
-            "I'm Carlos Gonzalez Rivera, a Machine Learning Engineer with expertise in computer vision, NLP, and recommendation systems. I work with TensorFlow, PyTorch, and Hugging Face Transformers to build production-ready ML solutions.",
-            "My ML experience includes developing end-to-end solutions from research to deployment. I've worked on projects ranging from medical prediction models to real-time image processing applications.",
-            "I specialize in practical ML applications including image classification, sentiment analysis, and recommendation engines. This portfolio itself demonstrates client-side ML inference using Transformers.js."
+            "I specialize in machine learning engineering with experience in computer vision, NLP, and recommendation systems. I've worked with frameworks like TensorFlow, PyTorch, and Hugging Face Transformers.",
+            "My ML expertise includes developing production-ready models for image classification, sentiment analysis, and recommendation engines. I focus on both model performance and deployment efficiency.",
+            "I have hands-on experience with various ML techniques including deep learning, ensemble methods, and feature engineering. My projects range from SIDS prediction models to real-time image segmentation."
         ]
     
     # Experience/background related
-    elif any(word in prompt_lower for word in ['experience', 'background', 'work', 'career', 'job', 'about']):
+    elif any(word in prompt_lower for word in ['experience', 'background', 'work', 'career', 'job']):
         responses = [
-            "I'm a Machine Learning Engineer passionate about bridging the gap between ML research and production applications. My background spans computer vision, NLP, and scalable ML infrastructure.",
-            "My professional journey includes developing ML models for healthcare (SIDS prediction), computer vision (image segmentation), and web applications (this interactive portfolio).",
-            "I have experience in both the technical and practical aspects of ML - from model development and optimization to deployment and user experience design."
+            "I'm a Machine Learning Engineer with experience in developing end-to-end ML solutions. My background includes both research and production deployment of ML models.",
+            "My professional experience spans computer vision, natural language processing, and recommendation systems. I've worked on projects ranging from medical prediction models to real-time image processing.",
+            "I have a strong background in ML engineering with focus on production deployment, model optimization, and scalable ML infrastructure."
         ]
     
     # Technical skills
-    elif any(word in prompt_lower for word in ['python', 'tensorflow', 'pytorch', 'react', 'javascript', 'programming', 'skills', 'technology']):
+    elif any(word in prompt_lower for word in ['python', 'tensorflow', 'pytorch', 'react', 'javascript', 'programming']):
         responses = [
-            "My technical stack includes Python for ML development, JavaScript/TypeScript for web applications, and frameworks like TensorFlow, PyTorch, and React. I focus on creating efficient, scalable solutions.",
-            "I work with modern ML tools including Hugging Face Transformers, ONNX Runtime for optimization, and cloud platforms for deployment. I also build web interfaces using React and TypeScript.",
-            "My programming expertise spans ML frameworks (TensorFlow, PyTorch), web technologies (React, Node.js), and deployment tools (Docker, cloud platforms). I believe in using the right tool for each job."
+            "I'm proficient in Python, JavaScript/TypeScript, and various ML frameworks including TensorFlow, PyTorch, and Hugging Face. I also work with React for building ML-powered web applications.",
+            "My technical stack includes Python for ML development, React/TypeScript for frontend, and cloud platforms for deployment. I'm experienced with both model development and web integration.",
+            "I work with modern ML tools and frameworks, focusing on creating efficient, scalable solutions that bridge the gap between research and production."
         ]
     
     # Projects
-    elif any(word in prompt_lower for word in ['project', 'portfolio', 'built', 'developed', 'showcase']):
+    elif any(word in prompt_lower for word in ['project', 'portfolio', 'work', 'built', 'developed']):
         responses = [
-            "Some key projects include: a SIDS prediction model using ensemble methods, real-time image segmentation with Grounded SAM, and this interactive ML portfolio with client-side inference capabilities.",
-            "My portfolio showcases practical ML applications: sentiment analysis tools, recommendation systems, computer vision models, and web-based ML demonstrations that run entirely in the browser.",
-            "I've built end-to-end ML solutions including medical prediction models, image processing applications, and this portfolio website that demonstrates real-time ML inference without server dependencies."
+            "Some of my key projects include a SIDS prediction model using ensemble methods, real-time image segmentation with Grounded SAM, and this interactive ML portfolio website with client-side inference.",
+            "I've built various ML applications including sentiment analysis tools, recommendation systems, and computer vision models. This portfolio itself demonstrates client-side ML inference using Transformers.js.",
+            "My projects showcase end-to-end ML development from data preprocessing to deployment. I focus on creating practical, user-friendly applications that demonstrate real ML capabilities."
         ]
     
     # Education/learning
-    elif any(word in prompt_lower for word in ['learn', 'education', 'study', 'university', 'degree', 'research']):
+    elif any(word in prompt_lower for word in ['learn', 'education', 'study', 'university', 'degree']):
         responses = [
-            "I have a strong foundation in computer science and machine learning, with continuous learning through hands-on projects. I believe in learning by building practical applications.",
-            "My approach combines formal education with project-based learning. I stay current with ML research while focusing on practical implementations that solve real problems.",
-            "I'm committed to continuous learning in the rapidly evolving ML field. This portfolio itself is a learning project that explores client-side ML inference and modern web technologies."
+            "I have a strong educational foundation in computer science and machine learning, with continuous learning through hands-on projects and staying current with the latest ML research and techniques.",
+            "My learning approach combines formal education with practical project experience. I believe in learning by building, which is why I create projects like this interactive ML portfolio.",
+            "I'm committed to continuous learning in the rapidly evolving ML field, regularly exploring new techniques and frameworks to stay at the forefront of ML engineering."
         ]
     
     # Contact/collaboration
-    elif any(word in prompt_lower for word in ['contact', 'hire', 'collaborate', 'work together', 'email', 'connect']):
+    elif any(word in prompt_lower for word in ['contact', 'hire', 'collaborate', 'work together', 'email']):
         responses = [
-            "I'm always interested in discussing ML projects and opportunities. You can find my contact information in the portfolio or connect with me through professional networks.",
-            "I enjoy collaborating on challenging ML problems and am open to new opportunities. Feel free to reach out if you have a project that could benefit from ML engineering expertise.",
-            "I'm passionate about working on impactful ML applications. Don't hesitate to get in touch if you'd like to discuss potential collaborations or opportunities."
-        ]
-    
-    # Specific technologies
-    elif any(word in prompt_lower for word in ['transformers', 'hugging face', 'onnx', 'computer vision', 'nlp']):
-        responses = [
-            "I work extensively with Hugging Face Transformers for NLP tasks and have experience optimizing models with ONNX Runtime. This portfolio demonstrates client-side inference using Transformers.js.",
-            "My computer vision work includes image classification, segmentation, and object detection. I've implemented solutions using both traditional CV techniques and modern deep learning approaches.",
-            "For NLP, I work with transformer models for tasks like sentiment analysis, text classification, and embeddings. I focus on both model performance and deployment efficiency."
+            "I'm always interested in discussing ML projects and opportunities. You can reach out through my portfolio contact information or connect with me on professional networks.",
+            "I'm open to collaboration on interesting ML projects. Feel free to get in touch if you have a project that could benefit from ML engineering expertise.",
+            "I enjoy working on challenging ML problems and am always open to new opportunities. Don't hesitate to reach out if you'd like to discuss potential collaborations."
         ]
     
     # Default responses
     else:
         responses = [
-            "Hello! I'm Carlos, a Machine Learning Engineer passionate about creating practical AI solutions. This portfolio showcases my work in ML engineering, from model development to deployment. What would you like to know?",
-            "Thanks for visiting my ML portfolio! I specialize in computer vision, NLP, and building production-ready ML applications. Feel free to explore my projects or ask about any specific areas that interest you.",
-            "Welcome! I'm excited to share my ML engineering journey with you. My work spans healthcare AI, computer vision, and web-based ML applications. What aspect would you like to learn more about?"
+            "Thanks for your question! I'm Carlos, a Machine Learning Engineer passionate about building practical AI solutions. This portfolio showcases my work in ML engineering, from model development to deployment.",
+            "I appreciate your interest! I specialize in machine learning engineering with a focus on computer vision, NLP, and creating production-ready ML applications. Feel free to explore my projects and ask about any specific areas.",
+            "Hello! I'm excited to share my ML engineering journey with you. My work spans various domains including medical AI, computer vision, and web-based ML applications. What specific aspect interests you most?"
         ]
     
     return random.choice(responses)
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    """Handle chat requests with contextual responses"""
+    """Handle chat requests with fallback responses"""
     import time
     start_time = time.time()
     
     try:
-        # Generate contextual response
-        response_text = get_contextual_response(request.prompt)
+        # Generate fallback response
+        response_text = get_fallback_response(request.prompt)
         
         processing_time = time.time() - start_time
         
         return ChatResponse(
             response=response_text,
-            method="contextual_fallback",
+            method="fallback",
             processing_time=processing_time,
             context_used=[]
         )

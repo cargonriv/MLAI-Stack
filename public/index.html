@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full Development, Inc.</title>
+    <meta name="description" content="Project Portfolio" />
+    <meta name="author" content="Carlos Gonzalez Rivera" />
+
+    <meta property="og:title" content="full-development-inc" />
+    <meta property="og:description" content="Project Portfolio" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/MLAI-Stack/favicon.ico" />
+
+    <!-- <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" /> -->
+
+    <!-- GitHub Pages SPA support -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      (function (l) {
+        if (l.search[1] === "/") {
+          var decoded = l.search
+            .slice(1)
+            .split("&")
+            .map(function (s) {
+              return s.replace(/~and~/g, "&");
+            })
+            .join("?");
+          window.history.replaceState(
+            null,
+            null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      })(window.location);
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <link rel="stylesheet" href="/index.css" />
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
