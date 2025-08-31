@@ -211,7 +211,12 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: userMessage }),
+                body: JSON.stringify({ 
+                    prompt: userMessage,
+                    use_rag: true,
+                    max_context_chunks: 5,
+                    similarity_threshold: 0.3
+                }),
             });
 
             if (!response.ok) {
