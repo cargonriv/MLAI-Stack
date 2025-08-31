@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebLLM Storage Test</title>
+</head>
+<body>
+    <h1>WebLLM Storage Compatibility Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        async function checkStorageQuota() {
+            const results = document.getElementById('results');
+            
+            try {
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    const estimate = await navigator.storage.estimate();
+                    const quota = estimate.quota || 0;
+                    const used = estimate.usage || 0;
+                    const available = quota - used;
+                    
+                    const quotaGB = (quota / 1024 / 1024 / 1024).toFixed(2);
+                    const usedGB = (used / 1024 / 1024 / 1024).toFixed(2);
+                    const availableGB = (available / 1024 / 1024 / 1024).toFixed(2);
+                    
+                    results.innerHTML = `
+                        <h2>Storage Information:</h2>
+                        <p><strong>Total Quota:</strong> ${quotaGB} GB</p>
+                        <p><strong>Used:</strong> ${usedGB} GB</p>
+                        <p><strong>Available:</strong> ${availableGB} GB</p>
+                        
+                        <h2>Model Compatibility:</h2>
+                        <p><strong>Llama 3.2 1B (~1.2GB):</strong> ${available > 1.2 * 1024 * 1024 * 1024 ? '✅ Compatible' : '❌ Insufficient space'}</p>
+                        <p><strong>Gemma 2 2B (~1.8GB):</strong> ${available > 1.8 * 1024 * 1024 * 1024 ? '✅ Compatible' : '❌ Insufficient space'}</p>
+                        <p><strong>Phi-3.5 Mini (~2.4GB):</strong> ${available > 2.4 * 1024 * 1024 * 1024 ? '✅ Compatible' : '❌ Insufficient space'}</p>
+                        
+                        <h2>Browser Support:</h2>
+                        <p><strong>WebGPU:</strong> ${'gpu' in navigator ? '✅ Supported' : '❌ Not supported'}</p>
+                        <p><strong>WebAssembly:</strong> ${typeof WebAssembly !== 'undefined' ? '✅ Supported' : '❌ Not supported'}</p>
+                    `;
+                } else {
+                    results.innerHTML = '<p>❌ Storage API not supported</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p>❌ Error checking storage: ${error.message}</p>`;
+            }
+        }
+        
+        checkStorageQuota();
+    </script>
+</body>
+</html>

@@ -9,6 +9,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    headers: {
+      // Enable SharedArrayBuffer for WebLLM
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:5001',
@@ -39,6 +44,8 @@ export default defineConfig(({ mode }) => ({
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
           // ML utilities chunk
           ml: ['@huggingface/transformers'],
+          // WebLLM chunk (separate due to size)
+          webllm: ['@mlc-ai/web-llm'],
           // Supabase chunk
           supabase: ['@supabase/supabase-js', '@tanstack/react-query'],
         },
@@ -99,6 +106,7 @@ export default defineConfig(({ mode }) => ({
     ],
     exclude: [
       '@huggingface/transformers', // Large ML library - load on demand
+      '@mlc-ai/web-llm', // WebLLM - load on demand
     ],
   },
   // CSS optimization
