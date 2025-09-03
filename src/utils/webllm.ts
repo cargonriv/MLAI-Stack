@@ -1,4 +1,5 @@
 import * as webllm from "@mlc-ai/web-llm";
+import { analyzeInputComplexity } from './complexityAnalysis';
 
 // Extend Navigator interface for Device Memory API (experimental)
 declare global {
@@ -30,6 +31,7 @@ export interface WebLLMConfig {
   temperature?: number;
   max_tokens?: number;
   top_p?: number;
+  adaptive_tokens?: boolean;
 }
 
 export interface ChatMessage {
@@ -166,12 +168,24 @@ export async function generateResponse(
   }
 
   try {
+    // Analyze input complexity and adjust token allocation
+    let maxTokens = config.max_tokens || 512;
+    
+    if (config.adaptive_tokens !== false) { // Default to enabled
+      const userMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
+      const complexityInfo = analyzeInputComplexity(userMessage);
+      maxTokens = complexityInfo.suggestedTokens;
+      
+      console.log(`🧠 Input complexity: ${complexityInfo.complexity} (${complexityInfo.reasoning})`);
+      console.log(`📊 Allocated tokens: ${maxTokens}`);
+    }
+
     if (onToken) {
       // Handle streaming response
       const completion = await engine.chat.completions.create({
         messages,
         temperature: config.temperature ?? 0.7,
-        max_tokens: config.max_tokens ?? 512,
+        max_tokens: maxTokens,
         top_p: config.top_p ?? 0.9,
         stream: true,
       });
@@ -192,7 +206,7 @@ export async function generateResponse(
       const completion = await engine.chat.completions.create({
         messages,
         temperature: config.temperature ?? 0.7,
-        max_tokens: config.max_tokens ?? 512,
+        max_tokens: maxTokens,
         top_p: config.top_p ?? 0.9,
         stream: false,
       });

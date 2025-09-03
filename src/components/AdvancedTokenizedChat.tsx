@@ -26,14 +26,18 @@ import {
     Settings,
     Download,
     CheckCircle,
-    AlertCircle
+    AlertCircle,
+    Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AutoTokenizer } from "@huggingface/transformers";
 import { generateRAGResponse, getAvailableRAGModels, getModelInfo, RAGConfig, checkModelCompatibility } from "@/utils/rag";
+import { analyzeInputComplexity, getComplexityDescription } from "@/utils/complexityAnalysis";
 import { isWebLLMSupported, clearWebLLMCache } from "@/utils/webllm";
 import { isTransformersLLMSupported, getAvailableTransformersModels, getTransformersModelInfo } from "@/utils/transformersLLM";
 import { getEmbeddingModelStatus, getWorkspaceEmbeddingsStatus } from "@/utils/embeddings";
+import { autoCompleteOutput, CompletionConfig } from "@/utils/outputCompletion";
+import { chatPreloader } from "@/utils/chatPreloader";
 import type { InitProgressReport } from "@mlc-ai/web-llm";
 
 interface AdvancedTokenizedMessage {
@@ -47,6 +51,17 @@ interface AdvancedTokenizedMessage {
     generationMethod: 'webllm-rag' | 'webllm-direct' | 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error';
     processingTime?: number;
     contextUsed?: string[];
+    complexityAnalysis?: {
+        complexity: 'simple' | 'moderate' | 'complex' | 'detailed';
+        allocatedTokens: number;
+        reasoning: string;
+    };
+    completionInfo?: {
+        wasCompleted: boolean;
+        additionalTokensUsed: number;
+        completionReason: string;
+        processingTimeMs: number;
+    };
 }
 
 interface AdvancedTokenizedChatProps {
@@ -63,12 +78,13 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     const [tokenizerStatus, setTokenizerStatus] = useState<'loading' | 'ready' | 'error'>('loading');
     const [showTokenDetails, setShowTokenDetails] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [preloaderStatus, setPreloaderStatus] = useState(chatPreloader.getStatus());
 
     // LLM engine state
     const [webllmSupported, setWebllmSupported] = useState(false);
     const [transformersSupported, setTransformersSupported] = useState(false);
     const [modelStatus, setModelStatus] = useState<'not-loaded' | 'loading' | 'ready' | 'error'>('not-loaded');
-    const [selectedEngine, setSelectedEngine] = useState<'auto' | 'webllm' | 'transformers'>('auto');
+    const [selectedEngine, setSelectedEngine] = useState<'auto' | 'webllm' | 'transformers'>('transformers');
     const [selectedModel, setSelectedModel] = useState<string>("SmolLM-360M-Instruct-q4f16_1-MLC");
     const [selectedTransformersModel, setSelectedTransformersModel] = useState<string>("HuggingFaceTB/SmolLM3-3B-ONNX");
     const [useRAG, setUseRAG] = useState(true);
@@ -78,6 +94,11 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         available: string;
         used: string;
         warning?: string;
+    } | null>(null);
+    const [lastComplexityAnalysis, setLastComplexityAnalysis] = useState<{
+        complexity: string;
+        tokens: number;
+        reasoning: string;
     } | null>(null);
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -126,20 +147,39 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                     return;
                 }
 
-                console.log('🤖 Loading tokenizer...');
-                setInitializationStatus("Loading tokenizer...");
+                // Check if tokenizer is already pre-loaded
+                const preloadedTokenizer = chatPreloader.getTokenizer();
+                if (preloadedTokenizer && chatPreloader.getStatus().tokenizer === 'ready') {
+                    console.log('✅ Using pre-loaded tokenizer!');
+                    tokenizerRef.current = preloadedTokenizer;
+                    setTokenizerStatus('ready');
+                    setInitializationStatus("Using pre-loaded models - Ready for AI chat!");
+                } else {
+                    console.log('🤖 Loading tokenizer...');
+                    setInitializationStatus("Loading tokenizer...");
 
-                // Load tokenizer
-                const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4');
-                if (!mountedRef.current) return;
+                    // Load tokenizer
+                    const tokenizer = await AutoTokenizer.from_pretrained('Xenova/gpt-4');
+                    if (!mountedRef.current) return;
 
-                const testText = 'Hello! I can encode, decode, and generate text.';
-                const testTokens = tokenizer.encode(testText);
-                console.log('✅ Tokenizer loaded successfully!');
+                    const testText = 'Hello! I can encode, decode, and generate text.';
+                    const testTokens = tokenizer.encode(testText);
+                    console.log('✅ Tokenizer loaded successfully!');
 
-                tokenizerRef.current = tokenizer;
-                setTokenizerStatus('ready');
-                setInitializationStatus("Ready for AI chat!");
+                    tokenizerRef.current = tokenizer;
+                    setTokenizerStatus('ready');
+                    setInitializationStatus("Ready for AI chat!");
+                }
+
+                // Update model status based on pre-loader
+                const preloaderStatus = chatPreloader.getStatus();
+                if (preloaderStatus.textGenerator === 'ready') {
+                    setModelStatus('ready');
+                    console.log(`✅ Using pre-loaded ${preloaderStatus.engine} text generator!`);
+                } else if (preloaderStatus.textGenerator === 'loading') {
+                    setModelStatus('loading');
+                    setInitializationStatus(`Pre-loading ${preloaderStatus.engine}... ${preloaderStatus.progress}`);
+                }
 
             } catch (error) {
                 console.error('❌ Failed to initialize system:', error);
@@ -166,14 +206,39 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
     }, [isOpen]);
 
+    // Listen to pre-loader status updates
+    useEffect(() => {
+        const unsubscribe = chatPreloader.onStatusChange((status) => {
+            setPreloaderStatus(status);
+
+            if (isOpen) {
+                if (status.textGenerator === 'ready' && modelStatus !== 'ready') {
+                    setModelStatus('ready');
+                    setInitializationStatus(`${status.engine} ready - Chat optimized!`);
+                    console.log(`✅ Pre-loaded ${status.engine} is now ready!`);
+                } else if (status.textGenerator === 'loading') {
+                    setModelStatus('loading');
+                    setInitializationStatus(status.progress);
+                } else if (status.textGenerator === 'error') {
+                    setModelStatus('error');
+                    setInitializationStatus('Text generator failed to load');
+                }
+            }
+        });
+
+        return unsubscribe;
+    }, [isOpen, modelStatus]);
+
     // ---------------------------
     // Add/update welcome message
     // ---------------------------
     useEffect(() => {
         if (!isOpen || !tokenizerRef.current || welcomeAdded) return;
 
+        const isPreloaded = preloaderStatus.textGenerator === 'ready';
+
         const welcomeText = webllmSupported || transformersSupported
-            ? `Hi! I'm Carlos's AI assistant powered by ${webllmSupported ? 'WebLLM' : 'Transformers.js'} running entirely in your browser. I can help you learn about his ML engineering expertise and projects. Ask me anything!`
+            ? `Hi! I'm Carlos's AI assistant powered by ${webllmSupported ? 'WebLLM' : 'Transformers.js'} running entirely in your browser${isPreloaded ? ' (pre-loaded for faster responses)' : ''}. I can help you learn about his ML engineering expertise and projects. Ask me anything!`
             : `Hi! I'm Carlos's AI assistant. Your browser has limited AI support, but I can still help you learn about his ML engineering expertise using intelligent responses.`;
 
         const tokenizer = tokenizerRef.current;
@@ -232,11 +297,13 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }
     };
 
+
+
     const generateResponse = async (
         userMessage: string,
         onNewToken: (token: string) => void,
         onProgress: (status: string) => void
-    ): Promise<{ method: 'webllm-rag' | 'webllm-direct' | 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error'; processingTime: number; contextUsed: string[] }> => {
+    ): Promise<{ method: 'webllm-rag' | 'webllm-direct' | 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error'; processingTime: number; contextUsed: string[]; complexityAnalysis?: any }> => {
 
         if (!webllmSupported && !transformersSupported) {
             // Use fallback response for unsupported browsers
@@ -250,13 +317,21 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             }
 
             return {
-                method: 'fallback',
+                method: 'simple-fallback',
                 processingTime: Date.now() - startTime,
                 contextUsed: []
             };
         }
 
         try {
+            // Analyze input complexity for UI feedback
+            const complexityAnalysis = analyzeInputComplexity(userMessage);
+            setLastComplexityAnalysis({
+                complexity: complexityAnalysis.complexity,
+                tokens: complexityAnalysis.suggestedTokens,
+                reasoning: complexityAnalysis.reasoning
+            });
+
             const config: RAGConfig = {
                 model: selectedModel as any,
                 transformersModel: selectedTransformersModel as any,
@@ -265,8 +340,9 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 maxContextChunks: 5,
                 similarityThreshold: 0.3,
                 temperature: 0.7,
-                max_tokens: 512,
-                max_new_tokens: 150
+                max_tokens: 1024,
+                max_new_tokens: 250, // Base token count (will be adjusted by complexity analysis)
+                adaptive_tokens: true // Enable adaptive token allocation
             };
 
             const ragResponse = await generateRAGResponse(
@@ -279,7 +355,12 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             return {
                 method: ragResponse.method,
                 processingTime: ragResponse.processingTime,
-                contextUsed: ragResponse.contextUsed
+                contextUsed: ragResponse.contextUsed,
+                complexityAnalysis: {
+                    complexity: complexityAnalysis.complexity,
+                    allocatedTokens: complexityAnalysis.suggestedTokens,
+                    reasoning: complexityAnalysis.reasoning
+                }
             };
 
         } catch (error) {
@@ -315,6 +396,72 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }
 
         return "Thanks for your question! I'm Carlos's AI assistant. Feel free to ask about his machine learning engineering expertise, projects, or explore the interactive demos to see his work in action!";
+    };
+
+    // Perform output completion asynchronously
+    const performOutputCompletion = async (
+        botMessage: AdvancedTokenizedMessage,
+        generationMethod: string,
+        userMessage: string
+    ) => {
+        try {
+            // Configure completion based on content type and complexity
+            const completionConfig: CompletionConfig = {
+                maxAdditionalTokens: 100,
+                timeoutMs: 10000,
+                minCompletionLength: 10,
+                contentType: 'conversational',
+                languageCode: 'en',
+                ensureCompleteThought: true,
+                adaptiveTokens: true,
+                complexityLevel: botMessage.complexityAnalysis?.complexity
+            };
+
+            // Create message context for completion
+            const messages = [
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: botMessage.content }
+            ];
+
+            // Attempt completion
+            const completionResult = await autoCompleteOutput(
+                botMessage.content,
+                messages,
+                generationMethod,
+                completionConfig
+            );
+
+            // If completion was successful and added meaningful content
+            if (completionResult.wasCompleted && completionResult.completedText !== botMessage.content) {
+                console.log(`✅ Output completed: ${completionResult.completionReason}`);
+
+                // Update the message with completed text
+                setMessages(prevMessages => prevMessages.map(msg => {
+                    if (msg.id === botMessage.id) {
+                        const { tokens, decodedTokens, tokenCount } = tokenizeText(completionResult.completedText);
+                        return {
+                            ...msg,
+                            content: completionResult.completedText,
+                            tokens,
+                            decodedTokens,
+                            tokenCount,
+                            completionInfo: {
+                                wasCompleted: true,
+                                additionalTokensUsed: completionResult.additionalTokensUsed,
+                                completionReason: completionResult.completionReason,
+                                processingTimeMs: completionResult.processingTimeMs
+                            }
+                        };
+                    }
+                    return msg;
+                }));
+            } else {
+                console.log(`ℹ️ No completion needed: ${completionResult.completionReason}`);
+            }
+        } catch (error) {
+            console.warn('Output completion failed:', error);
+            // Completion failure is not critical, so we don't show error to user
+        }
     };
 
     // Storage management functions
@@ -404,12 +551,12 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             tokens,
             tokenCount,
             decodedTokens,
-            generationMethod: 'ai-generated' // User input doesn't need generation
+            generationMethod: 'webllm-direct' // User input doesn't need generation, just mark as processed
         };
 
         setMessages(prev => [...prev, userMessage]);
         console.log("Set the message!")
-        // setInputValue("");
+        setInputValue(""); // Clear input immediately after sending
         setIsTyping(true);
 
         const botMessageId = (Date.now() + 1).toString();
@@ -420,26 +567,48 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             timestamp: new Date(),
             tokens: [],
             tokenCount: 0,
-            generationMethod: 'ai-generated',
+            generationMethod: 'webllm-direct', // Start with a valid method to avoid error display
         };
-        setMessages(prev => [...prev, initialBotMessage]);
-        console.log("Set the inital bot message...")
+        // Don't add empty bot message immediately - let typing indicator handle the loading state
+        console.log("Starting bot response generation...")
 
         const onNewToken = (token: string) => {
-            setMessages(prevMessages => prevMessages.map(msg => {
-                if (msg.id === botMessageId) {
-                    const newContent = msg.content + token;
-                    const { tokens, decodedTokens, tokenCount } = tokenizeText(newContent);
-                    return {
-                        ...msg,
-                        content: newContent,
+            setMessages(prevMessages => {
+                // Find existing bot message or create new one
+                const existingBotIndex = prevMessages.findIndex(msg => msg.id === botMessageId);
+
+                if (existingBotIndex >= 0) {
+                    // Update existing message
+                    return prevMessages.map(msg => {
+                        if (msg.id === botMessageId) {
+                            const newContent = msg.content + token;
+                            const { tokens, decodedTokens, tokenCount } = tokenizeText(newContent);
+                            return {
+                                ...msg,
+                                content: newContent,
+                                tokens,
+                                decodedTokens,
+                                tokenCount,
+                            };
+                        }
+                        return msg;
+                    });
+                } else {
+                    // Create new bot message with first token
+                    const { tokens, decodedTokens, tokenCount } = tokenizeText(token);
+                    const newBotMessage: AdvancedTokenizedMessage = {
+                        id: botMessageId,
+                        content: token,
+                        sender: 'bot',
+                        timestamp: new Date(),
                         tokens,
                         decodedTokens,
                         tokenCount,
+                        generationMethod: 'webllm-direct',
                     };
+                    return [...prevMessages, newBotMessage];
                 }
-                return msg;
-            }));
+            });
         };
 
         const onProgress = (status: string) => {
@@ -447,24 +616,40 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         };
 
         try {
-            const { method, processingTime, contextUsed } = await generateResponse(
+            const { method, processingTime, contextUsed, complexityAnalysis } = await generateResponse(
                 userMessage.content,
                 onNewToken,
                 onProgress
             );
 
-            // After generation is complete, update the final message details
-            setMessages(prevMessages => prevMessages.map(msg => {
-                if (msg.id === botMessageId) {
-                    return {
-                        ...msg,
-                        generationMethod: method,
-                        processingTime,
-                        contextUsed
-                    };
+            // After generation is complete, check if output completion is needed
+            setMessages(prevMessages => {
+                const updatedMessages = prevMessages.map(msg => {
+                    if (msg.id === botMessageId) {
+                        return {
+                            ...msg,
+                            generationMethod: method,
+                            processingTime,
+                            contextUsed,
+                            complexityAnalysis: complexityAnalysis ? {
+                                complexity: complexityAnalysis.complexity,
+                                allocatedTokens: complexityAnalysis.allocatedTokens,
+                                reasoning: complexityAnalysis.reasoning
+                            } : undefined
+                        };
+                    }
+                    return msg;
+                });
+
+                // Find the bot message to check for completion
+                const botMessage = updatedMessages.find(msg => msg.id === botMessageId);
+                if (botMessage && botMessage.content) {
+                    // Perform output completion asynchronously
+                    performOutputCompletion(botMessage, method, userMessage.content);
                 }
-                return msg;
-            }));
+
+                return updatedMessages;
+            });
         } catch (error) {
             console.error('Error generating response:', error);
             const errorResponse = "I apologize, but I encountered an error processing your message. Please try again!";
@@ -498,14 +683,41 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     const currentInputTokens = tokenizeText(inputValue);
 
     if (!isOpen) {
+        const isPreloading = preloaderStatus.tokenizer === 'loading' || preloaderStatus.textGenerator === 'loading';
+        const isPreloaded = preloaderStatus.tokenizer === 'ready' && preloaderStatus.textGenerator === 'ready';
+
         return (
-            <Button
-                onClick={onToggle}
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 z-50"
-                size="icon"
-            >
-                <Cpu className="w-6 h-6" />
-            </Button>
+            <div className="fixed bottom-6 right-6 z-50">
+                <Button
+                    onClick={onToggle}
+                    className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative"
+                    size="icon"
+                    title={isPreloaded ? "AI Chat Ready (Pre-loaded)" : isPreloading ? "AI Chat Loading..." : "AI Chat"}
+                >
+                    {isPreloading ? (
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                        <Cpu className="w-6 h-6" />
+                    )}
+
+                    {/* Status indicator */}
+                    {isPreloaded && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                            <CheckCircle className="w-2 h-2 text-white" />
+                        </div>
+                    )}
+                    {isPreloading && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white animate-pulse" />
+                    )}
+                </Button>
+
+                {/* Loading tooltip */}
+                {isPreloading && (
+                    <div className="absolute bottom-16 right-0 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                        Pre-loading AI models...
+                    </div>
+                )}
+            </div>
         );
     }
 
@@ -559,7 +771,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                     </div>
                 </div>
                 {!isMinimized && (
-                    <div className="flex items-center gap-2 text-sm opacity-90">
+                    <div className="flex items-center gap-2 text-sm opacity-90 flex-wrap">
                         <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                             <Brain className="w-3 h-3 mr-1" />
                             {tokenizerStatus === 'ready' ? 'GPT-4 Tokenizer' :
@@ -569,6 +781,27 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                             {webllmSupported ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
                             {webllmSupported ? 'WebLLM Ready' : 'WebLLM Unsupported'}
                         </Badge>
+                        {(() => {
+                            const isPreloaded = preloaderStatus.textGenerator === 'ready';
+                            const isPreloading = preloaderStatus.textGenerator === 'loading';
+
+                            if (isPreloaded) {
+                                return (
+                                    <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-100 border-green-300/30">
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        Pre-loaded
+                                    </Badge>
+                                );
+                            } else if (isPreloading) {
+                                return (
+                                    <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-100 border-yellow-300/30">
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                        Pre-loading...
+                                    </Badge>
+                                );
+                            }
+                            return null;
+                        })()}
                         {useRAG && (
                             <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                                 <Zap className="w-3 h-3 mr-1" />
@@ -583,9 +816,9 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 <CardContent className="p-0 flex flex-col h-[calc(100%-120px)]">
                     {/* Settings Panel */}
                     {showSettings && (
-                        <div className="p-4 border-b bg-muted/50 space-y-3">
+                        <div className="p-4 border-b bg-muted/50 space-y-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="font-medium">AI Configuration</h4>
+                                <h4 className="font-medium">AI Model Selection</h4>
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -595,150 +828,80 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                                 </Button>
                             </div>
 
-                            {(webllmSupported || transformersSupported) && (
-                                <>
+                            {transformersSupported ? (
+                                <div className="space-y-3">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">AI Engine</label>
-                                        <Select value={selectedEngine} onValueChange={(value: any) => setSelectedEngine(value)}>
+                                        <label className="text-sm font-medium">Choose AI Model</label>
+                                        <Select value={selectedTransformersModel} onValueChange={setSelectedTransformersModel}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="auto">
-                                                    <div className="flex flex-col">
-                                                        <span>Auto (Recommended)</span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            Automatically choose best available engine
-                                                        </span>
-                                                    </div>
-                                                </SelectItem>
-                                                {transformersSupported && (
-                                                    <SelectItem value="transformers">
-                                                        <div className="flex flex-col">
-                                                            <span>Transformers.js</span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                Lightweight, works with limited storage
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                )}
-                                                {webllmSupported && (
-                                                    <SelectItem value="webllm">
-                                                        <div className="flex flex-col">
-                                                            <span>WebLLM</span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                Advanced, requires more storage
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                )}
+                                                {getAvailableTransformersModels().map(model => {
+                                                    const info = getTransformersModelInfo(model);
+                                                    return (
+                                                        <SelectItem key={model} value={model}>
+                                                            <div className="flex flex-col">
+                                                                <span>{info.name}</span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {info.size} - {info.description}
+                                                                </span>
+                                                            </div>
+                                                        </SelectItem>
+                                                    );
+                                                })}
                                             </SelectContent>
                                         </Select>
                                     </div>
 
-                                    {(selectedEngine === 'transformers' || (selectedEngine === 'auto' && transformersSupported)) && (
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">Transformers.js Model</label>
-                                            <Select value={selectedTransformersModel} onValueChange={setSelectedTransformersModel}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {getAvailableTransformersModels().map(model => {
-                                                        const info = getTransformersModelInfo(model);
-                                                        return (
-                                                            <SelectItem key={model} value={model}>
-                                                                <div className="flex flex-col">
-                                                                    <span>{info.name}</span>
-                                                                    <span className="text-xs text-muted-foreground">
-                                                                        {info.size} - {info.description}
-                                                                    </span>
-                                                                </div>
-                                                            </SelectItem>
-                                                        );
-                                                    })}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    )}
-
-                                    {(selectedEngine === 'webllm' || (selectedEngine === 'auto' && webllmSupported && !transformersSupported)) && (
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium">WebLLM Model</label>
-                                            <Select value={selectedModel} onValueChange={setSelectedModel}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {getAvailableRAGModels().map(model => {
-                                                        const info = getModelInfo(model);
-                                                        return (
-                                                            <SelectItem key={model} value={model}>
-                                                                <div className="flex flex-col">
-                                                                    <span>{info.name}</span>
-                                                                    <span className="text-xs text-muted-foreground">
-                                                                        {info.size} - {info.description}
-                                                                    </span>
-                                                                </div>
-                                                            </SelectItem>
-                                                        );
-                                                    })}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-sm font-medium">Use RAG (Retrieval-Augmented Generation)</label>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">RAG (Retrieval-Augmented Generation)</label>
                                         <Button
-                                            variant={useRAG ? "default" : "outline"}
+                                            variant="outline"
                                             size="sm"
                                             onClick={() => setUseRAG(!useRAG)}
+                                            className="w-full justify-between"
                                         >
-                                            {useRAG ? "Enabled" : "Disabled"}
+                                            <span>Use portfolio context</span>
+                                            <Badge variant={useRAG ? "default" : "secondary"}>
+                                                {useRAG ? "Enabled" : "Disabled"}
+                                            </Badge>
                                         </Button>
+                                        <p className="text-xs text-muted-foreground">
+                                            When enabled, the AI uses Carlos's portfolio content to provide more accurate responses.
+                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Storage Management</label>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={checkStorageStatus}
-                                                className="flex-1"
-                                            >
-                                                <Info className="w-4 h-4 mr-1" />
-                                                Check Storage
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={clearModelCache}
-                                                className="flex-1"
-                                            >
-                                                <Download className="w-4 h-4 mr-1" />
-                                                Clear Cache
-                                            </Button>
-                                        </div>
-                                        {storageInfo && (
-                                            <div className="text-xs text-muted-foreground space-y-1">
-                                                <div>Available: {storageInfo.available}</div>
-                                                <div>Used: {storageInfo.used}</div>
-                                                {storageInfo.warning && (
-                                                    <div className="text-amber-600 font-medium">{storageInfo.warning}</div>
-                                                )}
+                                        <label className="text-sm font-medium">Adaptive Token Allocation</label>
+                                        <div className="p-3 bg-muted/30 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Brain className="w-4 h-4 text-blue-500" />
+                                                <span className="text-sm font-medium">Smart Response Length</span>
+                                                <Badge variant="secondary" className="text-xs">
+                                                    Auto
+                                                </Badge>
                                             </div>
-                                        )}
+                                            <p className="text-xs text-muted-foreground">
+                                                The AI automatically adjusts response length based on your question's complexity:
+                                            </p>
+                                            <ul className="text-xs text-muted-foreground mt-1 space-y-1">
+                                                <li>• <strong>Simple</strong> (150 tokens): Basic questions, greetings, definitions</li>
+                                                <li>• <strong>Moderate</strong> (250 tokens): Standard explanations with context</li>
+                                                <li>• <strong>Complex</strong> (400 tokens): Technical topics, code explanations</li>
+                                                <li>• <strong>Detailed</strong> (600 tokens): Multi-part questions, comparisons, guides</li>
+                                            </ul>
+                                            <p className="text-xs text-muted-foreground mt-2 italic">
+                                                Factors: question length, technical terms, explanation keywords, multiple topics
+                                            </p>
+                                        </div>
                                     </div>
-                                </>
-                            )}
-
-                            {!webllmSupported && (
+                                </div>
+                            ) : (
                                 <Alert>
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription>
-                                        WebLLM requires WebGPU support. Try Chrome/Edge with WebGPU enabled.
+                                        Your browser doesn't support the required AI features. The chat will use fallback responses.
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -822,6 +985,11 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                                                 {message.processingTime && (
                                                     <span>{message.processingTime}ms</span>
                                                 )}
+                                                {message.complexityAnalysis && (
+                                                    <Badge variant="outline" className="text-xs">
+                                                        🧠 {message.complexityAnalysis.complexity} ({message.complexityAnalysis.allocatedTokens}t)
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </div>
 
@@ -897,19 +1065,36 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                             </Button>
                         </div>
 
-                        {/* Live tokenization preview */}
+                        {/* Live tokenization and complexity preview */}
                         {tokenizerStatus === 'ready' && inputValue?.trim() && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                <Hash className="w-3 h-3" />
-                                <span>{currentInputTokens.tokenCount} tokens</span>
-                                {showTokenDetails && currentInputTokens.tokens.length > 0 && (
-                                    <span className="font-mono">
-                                        [{currentInputTokens.tokens.slice(0, 5).join(', ')}{currentInputTokens.tokens.length > 5 ? '...' : ''}]
-                                    </span>
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                    {webllmSupported ? 'WebLLM Ready' : 'Fallback Mode'}
-                                </Badge>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <Hash className="w-3 h-3" />
+                                    <span>{currentInputTokens.tokenCount} input tokens</span>
+                                    {showTokenDetails && currentInputTokens.tokens.length > 0 && (
+                                        <span className="font-mono">
+                                            [{currentInputTokens.tokens.slice(0, 5).join(', ')}{currentInputTokens.tokens.length > 5 ? '...' : ''}]
+                                        </span>
+                                    )}
+                                    <Badge variant="outline" className="text-xs">
+                                        {webllmSupported || transformersSupported ? 'AI Ready' : 'Fallback Mode'}
+                                    </Badge>
+                                </div>
+                                {(() => {
+                                    const liveComplexity = analyzeInputComplexity(inputValue);
+                                    return (
+                                        <div className="flex items-center gap-2">
+                                            <Brain className="w-3 h-3" />
+                                            <span>Complexity: {liveComplexity.complexity}</span>
+                                            <Badge variant="secondary" className="text-xs">
+                                                ~{liveComplexity.suggestedTokens} response tokens
+                                            </Badge>
+                                            {liveComplexity.reasoning && (
+                                                <span className="opacity-70">({liveComplexity.reasoning})</span>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>

@@ -20,6 +20,7 @@ import {
   buildContext,
   DocumentChunk
 } from "./embeddings";
+import { chatPreloader } from "./chatPreloader";
 
 export interface RAGConfig extends Partial<WebLLMConfig>, Partial<TransformersLLMConfig> {
   useRAG?: boolean;
@@ -27,6 +28,7 @@ export interface RAGConfig extends Partial<WebLLMConfig>, Partial<TransformersLL
   similarityThreshold?: number;
   preferredEngine?: 'webllm' | 'transformers' | 'auto';
   transformersModel?: TransformersModelName;
+  adaptive_tokens?: boolean;
 }
 
 export interface RAGResponse {
@@ -41,14 +43,14 @@ export interface RAGResponse {
 /**
  * System prompt for the AI assistant
  */
-const SYSTEM_PROMPT = `You are Carlos Gonzalez Rivera's AI assistant, an expert in machine learning engineering. You help visitors learn about Carlos's background, projects, and expertise.
+const SYSTEM_PROMPT = `You are the AI assistant of Carlos Gonzalez Rivera (machine learning engineering expert). You help visitors learn about Carlos's background, projects, and expertise.
 
 Key information about Carlos:
-- Machine Learning Engineer specializing in computer vision, NLP, and recommendation systems
+- Machine Learning Engineer and Data Scientist specializing in computer vision, NLP, and recommendation systems
 - Experience with TensorFlow, PyTorch, Hugging Face Transformers, React, and TypeScript
-- Built production ML applications including SIDS prediction models, image segmentation, and this interactive portfolio
+- Built production ML applications including SIDS prediction models, cell culture segmentations, and this interactive portfolio
 - Focuses on practical, deployable ML solutions that bridge research and production
-- Passionate about client-side ML inference and making AI accessible through web technologies
+- Passionate about client-side ML inference, inter and making AI accessible through web technologies
 
 Guidelines:
 - Be helpful, knowledgeable, and enthusiastic about ML engineering
@@ -58,7 +60,7 @@ Guidelines:
 - Encourage exploration of the interactive demos and projects
 - If you don't have specific information, be honest but still helpful
 
-Always maintain a professional yet approachable tone that reflects Carlos's expertise and passion for ML engineering.`;
+Always maintain a professional yet approachable tone that reflects Carlos's expertise and passion for Data Science and ML engineering.`;
 
 /**
  * Generate a response using RAG (Retrieval-Augmented Generation)
@@ -82,6 +84,7 @@ export async function generateRAGResponse(
       preferredEngine = 'auto',
       model = DEFAULT_MODEL,
       transformersModel = "HuggingFaceTB/SmolLM3-3B-ONNX",
+      adaptive_tokens = true,
       ...llmConfig
     } = config;
 
@@ -92,7 +95,14 @@ export async function generateRAGResponse(
     // Retrieve relevant context if RAG is enabled
     if (useRAG) {
       try {
-        onProgress?.("Finding relevant context...");
+        onProgress?.("Finding relevant context from workspace...");
+        
+        // Ensure workspace embeddings are loaded
+        await import("./embeddings").then(async (embeddings) => {
+          await embeddings.loadWorkspaceEmbeddings();
+          await embeddings.initializeEmbeddingModel();
+        });
+        
         relevantChunks = await findRelevantChunks(
           userMessage,
           maxContextChunks,
@@ -116,7 +126,7 @@ export async function generateRAGResponse(
       {
         role: "system",
         content: contextString
-          ? `${SYSTEM_PROMPT}\n\n${contextString}`
+          ? `${SYSTEM_PROMPT}\n\n${contextString} /no_think`
           : SYSTEM_PROMPT
       },
       {
@@ -142,12 +152,21 @@ export async function generateRAGResponse(
       if (shouldTryTransformers) {
         // Try Transformers.js first (better for limited storage)
         try {
-          onProgress?.("Initializing lightweight AI model...");
-
-          await initializeTransformersLLM({
-            model: transformersModel,
-            ...llmConfig
-          }, onProgress);
+          // Check if we have a pre-loaded text generator
+          const preloadedGenerator = chatPreloader.getTextGenerator();
+          const preloaderStatus = chatPreloader.getStatus();
+          
+          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'transformers') {
+            onProgress?.("Using pre-loaded AI model...");
+            console.log("✅ Using pre-loaded Transformers.js model!");
+          } else {
+            onProgress?.("Initializing lightweight AI model...");
+            await initializeTransformersLLM({
+              model: transformersModel,
+              adaptive_tokens,
+              ...llmConfig
+            }, onProgress);
+          }
 
           // Convert messages format
           const transformersMessages: TransformersMessage[] = messages.map(msg => ({
@@ -163,18 +182,35 @@ export async function generateRAGResponse(
           console.log("🔄 Transformers.js failed, trying WebLLM...");
           onProgress?.("Trying advanced AI model...");
 
-          // Fallback to WebLLM
-          await initializeWebLLM({ model, ...llmConfig });
-          response = await generateResponse(messages, llmConfig, onToken);
+          // Check if we have a pre-loaded WebLLM engine
+          const preloadedGenerator = chatPreloader.getTextGenerator();
+          const preloaderStatus = chatPreloader.getStatus();
+          
+          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'webllm') {
+            onProgress?.("Using pre-loaded WebLLM model...");
+            console.log("✅ Using pre-loaded WebLLM model!");
+          } else {
+            // Fallback to WebLLM
+            await initializeWebLLM({ model, adaptive_tokens, ...llmConfig });
+          }
+          response = await generateResponse(messages, { adaptive_tokens, ...llmConfig }, onToken);
           method = useRAG && relevantChunks.length > 0 ? 'webllm-rag' : 'webllm-direct';
           engine = 'webllm';
         }
       } else {
         // Try WebLLM first
         try {
-          onProgress?.("Initializing advanced AI model...");
-
-          await initializeWebLLM({ model, ...llmConfig });
+          // Check if we have a pre-loaded WebLLM engine
+          const preloadedGenerator = chatPreloader.getTextGenerator();
+          const preloaderStatus = chatPreloader.getStatus();
+          
+          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'webllm') {
+            onProgress?.("Using pre-loaded WebLLM model...");
+            console.log("✅ Using pre-loaded WebLLM model!");
+          } else {
+            onProgress?.("Initializing advanced AI model...");
+            await initializeWebLLM({ model, ...llmConfig });
+          }
           response = await generateResponse(messages, llmConfig, onToken);
           method = useRAG && relevantChunks.length > 0 ? 'webllm-rag' : 'webllm-direct';
           engine = 'webllm';
@@ -183,11 +219,20 @@ export async function generateRAGResponse(
           console.log("🔄 WebLLM failed, trying Transformers.js...");
           onProgress?.("Trying lightweight AI model...");
 
-          // Fallback to Transformers.js
-          await initializeTransformersLLM({
-            model: transformersModel,
-            ...llmConfig
-          }, onProgress);
+          // Check if we have a pre-loaded Transformers.js engine
+          const preloadedGenerator = chatPreloader.getTextGenerator();
+          const preloaderStatus = chatPreloader.getStatus();
+          
+          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'transformers') {
+            onProgress?.("Using pre-loaded Transformers.js model...");
+            console.log("✅ Using pre-loaded Transformers.js model!");
+          } else {
+            // Fallback to Transformers.js
+            await initializeTransformersLLM({
+              model: transformersModel,
+              ...llmConfig
+            }, onProgress);
+          }
 
           const transformersMessages: TransformersMessage[] = messages.map(msg => ({
             role: msg.role,

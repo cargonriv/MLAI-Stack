@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star, Hash, Bot } from "lucide-react";
+import { Menu, Home, User, BookOpen, FileText, Folder, Brain, GraduationCap, ExternalLink, ChevronDown, Camera, MessageSquare, Star, Hash, Bot, Zap } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAccessibility } from "@/hooks/use-accessibility";
@@ -33,11 +33,12 @@ const Header = () => {
 
   const showcaseItems = [
     { name: "Showcase Overview", href: "#/showcase", icon: Brain },
-    { name: "Smart Chat Bot", href: "#/demos/chatbot", icon: Bot },
+    { name: "Smart ChatBot", href: "#/demos/chatbot", icon: Bot },
     { name: "Image Classification", href: "#/demos/image-classification", icon: Camera },
     { name: "Sentiment Analysis", href: "#/demos/sentiment-analysis", icon: MessageSquare },
     { name: "Movie Recommendation", href: "#/demos/movie-recommendation", icon: Star },
-    { name: "Tokenized Chat", href: "#/demos/tokenized-chat", icon: Hash },
+    { name: "Output Completion", href: "#/demos/output-completion", icon: Zap },
+    // { name: "Tokenized Chat", href: "#/demos/tokenized-chat", icon: Hash },
   ];
 
   return (

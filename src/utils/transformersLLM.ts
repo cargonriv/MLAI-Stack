@@ -4,25 +4,14 @@
  */
 
 import { pipeline, TextGenerationPipeline, TextStreamer } from '@huggingface/transformers';
+import { analyzeInputComplexity } from './complexityAnalysis';
 
-// Available lightweight models compatible with Transformers.js (verified working)
+// Available ONNX-compatible models from HuggingFaceTB (verified working)
 const AVAILABLE_MODELS = [
-  "HuggingFaceTB/SmolLM3-3B-ONNX",
-  "HuggingFaceTB/SmolLM2-135M-Instruct", // ~60MB - Ultra lightweight, excellent for limited storage
-  "HuggingFaceTB/SmolLM2-360M-Instruct", // ~150MB - Better quality, good balance
-  "HuggingFaceTB/SmolLM2-1.7B-Instruct", // ~700MB - Largest SmolLM2, best quality
-  "Xenova/distilgpt2", // ~80MB - Classic GPT-2 distilled, reliable
-  "Xenova/gpt2", // ~500MB - Full GPT-2 model, good general performance
-  "Xenova/llama2.c-stories15M", // ~15MB - Tiny model for extreme constraints
-  "microsoft/DialoGPT-medium", // ~350MB - Conversational AI, great for chat
-  "microsoft/DialoGPT-large", // ~750MB - Larger conversational model
-  "Xenova/LaMini-Flan-T5-248M", // ~250MB - Instruction-tuned T5 model
-  "Xenova/LaMini-Flan-T5-783M", // ~780MB - Larger instruction-tuned model
-  "Xenova/flan-t5-small", // ~80MB - Google's instruction-tuned T5
-  "Xenova/flan-t5-base", // ~250MB - Larger T5 model with better performance
-  "Xenova/flan-t5-large", // ~780MB - High-quality instruction following
-  "Xenova/CodeT5-small", // ~60MB - Code generation and understanding
-  "Xenova/CodeT5-base", // ~220MB - Better code generation capabilities
+  "HuggingFaceTB/SmolLM3-3B-ONNX", // ~250MB quantized - Best quality, dual reasoning, 6 languages
+  "HuggingFaceTB/SmolLM2-1.7B-Instruct-ONNX", // ~170MB quantized - Good balance of size and quality
+  "HuggingFaceTB/SmolLM2-360M-Instruct-ONNX", // ~40MB quantized - Lightweight with decent quality
+  "HuggingFaceTB/SmolLM2-135M-Instruct-ONNX", // ~15MB quantized - Ultra lightweight for limited resources
 ] as const;
 
 export type TransformersModelName = typeof AVAILABLE_MODELS[number];
@@ -33,6 +22,7 @@ export interface TransformersLLMConfig {
   temperature?: number;
   top_p?: number;
   do_sample?: boolean;
+  adaptive_tokens?: boolean; // Enable adaptive token allocation
 }
 
 export interface TransformersMessage {
@@ -130,13 +120,26 @@ export async function generateTransformersResponse(
       });
     }
 
+    // Analyze input complexity and adjust token allocation
+    let maxTokens = config.max_new_tokens || 250;
+    let complexityInfo = null;
+    
+    if (config.adaptive_tokens !== false) { // Default to enabled
+      const userMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
+      complexityInfo = analyzeInputComplexity(userMessage);
+      maxTokens = complexityInfo.suggestedTokens;
+      
+      console.log(`🧠 Input complexity: ${complexityInfo.complexity} (${complexityInfo.reasoning})`);
+      console.log(`📊 Allocated tokens: ${maxTokens}`);
+    }
+
     const result = await generator(chatMessages, {
-      max_new_tokens: config.max_new_tokens || 250,
+      max_new_tokens: maxTokens,
       temperature: config.temperature || 0.7,
       top_p: config.top_p || 0.9,
       do_sample: config.do_sample ?? true,
-      streamer: onToken ? new TextStreamer(generator.tokenizer, { 
-        skip_prompt: true, 
+      streamer: onToken ? new TextStreamer(generator.tokenizer, {
+        skip_prompt: true,
         skip_special_tokens: true,
         callback_function: onToken
       }) : undefined,
@@ -147,8 +150,8 @@ export async function generateTransformersResponse(
       ? result[0]?.generated_text?.at(-1)?.content || result[0]?.generated_text
       : result?.generated_text?.at(-1)?.content || result?.generated_text;
 
-    return typeof generatedText === 'string' ? generatedText.trim() : 
-           "I'd be happy to help you learn more about Carlos's machine learning engineering expertise. Could you ask a more specific question?";
+    return typeof generatedText === 'string' ? generatedText.trim() :
+      "I'd be happy to help you learn more about Carlos's machine learning engineering expertise. Could you ask a more specific question?";
 
   } catch (error) {
     console.error("Error generating response with Transformers.js:", error);
@@ -298,117 +301,34 @@ export function getTransformersModelInfo(model: TransformersModelName): {
 } {
   const modelInfo = {
     "HuggingFaceTB/SmolLM3-3B-ONNX": {
-      name: "SmolLM3 3B",
-      size: "1GB",
-      description: "ONNX compatible dual reasoning, supports 6 languages and long context with strong function calling",
+      name: "SmolLM3 3B (Recommended)",
+      size: "~250MB",
+      description: "Latest model with dual reasoning, 6 languages, and function calling",
       compatibility: 'excellent' as const,
-      quality: 4 as const
-    },
-    "HuggingFaceTB/SmolLM2-135M-Instruct": {
-      name: "SmolLM2 135M",
-      size: "~60MB",
-      description: "Ultra-lightweight instruction-tuned model, excellent for limited storage",
-      compatibility: 'excellent' as const,
-      quality: 3 as const
-    },
-    "HuggingFaceTB/SmolLM2-360M-Instruct": {
-      name: "SmolLM2 360M",
-      size: "~150MB",
-      description: "Balanced SmolLM2 model with improved quality and reasoning",
-      compatibility: 'excellent' as const,
-      quality: 4 as const
-    },
-    "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
-      name: "SmolLM2 1.7B",
-      size: "~700MB",
-      description: "Largest SmolLM2 model with excellent instruction following",
-      compatibility: 'good' as const,
       quality: 5 as const
     },
-    "Xenova/distilgpt2": {
-      name: "DistilGPT-2",
-      size: "~80MB",
-      description: "Distilled GPT-2 model, reliable for general text generation",
+    "HuggingFaceTB/SmolLM2-1.7B-Instruct-ONNX": {
+      name: "SmolLM2 1.7B",
+      size: "~170MB",
+      description: "Good balance of performance and size with excellent instruction following",
+      compatibility: 'excellent' as const,
+      quality: 4 as const
+    },
+    "HuggingFaceTB/SmolLM2-360M-Instruct-ONNX": {
+      name: "SmolLM2 360M",
+      size: "~40MB",
+      description: "Lightweight model with decent conversational abilities",
       compatibility: 'excellent' as const,
       quality: 3 as const
     },
-    "Xenova/gpt2": {
-      name: "GPT-2",
-      size: "~500MB",
-      description: "Full GPT-2 model with good general-purpose text generation",
-      compatibility: 'good' as const,
-      quality: 4 as const
-    },
-    "Xenova/llama2.c-stories15M": {
-      name: "Llama2.c 15M",
+    "HuggingFaceTB/SmolLM2-135M-Instruct-ONNX": {
+      name: "SmolLM2 135M",
       size: "~15MB",
-      description: "Tiny model for basic text generation, very limited capabilities",
+      description: "Ultra-lightweight for very limited storage environments",
       compatibility: 'excellent' as const,
       quality: 2 as const
     },
-    "microsoft/DialoGPT-medium": {
-      name: "DialoGPT Medium",
-      size: "~350MB",
-      description: "Conversational AI optimized for natural dialogue and chat",
-      compatibility: 'excellent' as const,
-      quality: 4 as const
-    },
-    "microsoft/DialoGPT-large": {
-      name: "DialoGPT Large",
-      size: "~750MB",
-      description: "Larger conversational model with enhanced dialogue capabilities",
-      compatibility: 'good' as const,
-      quality: 4 as const
-    },
-    "Xenova/LaMini-Flan-T5-248M": {
-      name: "LaMini Flan-T5 248M",
-      size: "~250MB",
-      description: "Instruction-tuned T5 model with strong reasoning capabilities",
-      compatibility: 'excellent' as const,
-      quality: 4 as const
-    },
-    "Xenova/LaMini-Flan-T5-783M": {
-      name: "LaMini Flan-T5 783M",
-      size: "~780MB",
-      description: "Larger instruction-tuned model with enhanced performance",
-      compatibility: 'good' as const,
-      quality: 5 as const
-    },
-    "Xenova/flan-t5-small": {
-      name: "Flan-T5 Small",
-      size: "~80MB",
-      description: "Google's compact instruction-tuned T5 model",
-      compatibility: 'excellent' as const,
-      quality: 3 as const
-    },
-    "Xenova/flan-t5-base": {
-      name: "Flan-T5 Base",
-      size: "~250MB",
-      description: "Balanced T5 model with good instruction following",
-      compatibility: 'excellent' as const,
-      quality: 4 as const
-    },
-    "Xenova/flan-t5-large": {
-      name: "Flan-T5 Large",
-      size: "~780MB",
-      description: "High-quality instruction-tuned T5 with excellent performance",
-      compatibility: 'good' as const,
-      quality: 5 as const
-    },
-    "Xenova/CodeT5-small": {
-      name: "CodeT5 Small",
-      size: "~60MB",
-      description: "Compact model specialized for code generation and understanding",
-      compatibility: 'excellent' as const,
-      quality: 3 as const
-    },
-    "Xenova/CodeT5-base": {
-      name: "CodeT5 Base",
-      size: "~220MB",
-      description: "Enhanced code generation model with better programming capabilities",
-      compatibility: 'excellent' as const,
-      quality: 4 as const
-    }
+
   };
 
   return modelInfo[model] || {

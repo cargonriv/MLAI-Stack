@@ -21,6 +21,7 @@ import {
     ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { autoCompleteOutput, CompletionConfig } from "@/utils/outputCompletion";
 
 interface TokenizedMessage {
     id: string;
@@ -30,6 +31,12 @@ interface TokenizedMessage {
     tokens: number[];
     tokenCount: number;
     decodedTokens?: string[];
+    completionInfo?: {
+        wasCompleted: boolean;
+        additionalTokensUsed: number;
+        completionReason: string;
+        processingTimeMs: number;
+    };
 }
 
 interface TokenizedChatWidgetProps {
@@ -207,6 +214,66 @@ Response:`;
         }
     };
 
+    // Perform output completion asynchronously
+    const performOutputCompletion = async (
+        botMessage: TokenizedMessage,
+        userMessage: string
+    ) => {
+        try {
+            // Configure completion for simple chat
+            const completionConfig: CompletionConfig = {
+                maxAdditionalTokens: 30,
+                timeoutMs: 5000,
+                minCompletionLength: 5,
+                contentType: 'conversational',
+                languageCode: 'en'
+            };
+
+            // Create message context for completion
+            const messages = [
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: botMessage.content }
+            ];
+
+            // Attempt completion using simple fallback method
+            const completionResult = await autoCompleteOutput(
+                botMessage.content,
+                messages,
+                'simple-fallback',
+                completionConfig
+            );
+
+            // If completion was successful and added meaningful content
+            if (completionResult.wasCompleted && completionResult.completedText !== botMessage.content) {
+                console.log(`✅ Simple chat completed: ${completionResult.completionReason}`);
+                
+                // Update the message with completed text
+                setMessages(prevMessages => prevMessages.map(msg => {
+                    if (msg.id === botMessage.id) {
+                        const { tokens, decodedTokens, tokenCount } = tokenizeText(completionResult.completedText);
+                        return {
+                            ...msg,
+                            content: completionResult.completedText,
+                            tokens,
+                            decodedTokens,
+                            tokenCount,
+                            completionInfo: {
+                                wasCompleted: true,
+                                additionalTokensUsed: completionResult.additionalTokensUsed,
+                                completionReason: completionResult.completionReason,
+                                processingTimeMs: completionResult.processingTimeMs
+                            }
+                        };
+                    }
+                    return msg;
+                }));
+            }
+        } catch (error) {
+            console.warn('Simple chat completion failed:', error);
+            // Completion failure is not critical for simple chat
+        }
+    };
+
     // Fallback function for curated responses when text generation fails
     const getFallbackResponse = (userMessage: string, userTokens: number[]): string => {
         const lowerMessage = userMessage.toLowerCase();
@@ -284,6 +351,9 @@ Response:`;
             };
 
             setMessages(prev => [...prev, botMessage]);
+
+            // Perform output completion asynchronously
+            performOutputCompletion(botMessage, userMessage.content);
         } catch (error) {
             console.error('Error generating response:', error);
             const errorResponse = "I apologize, but I encountered an error processing your message. Please try again!";

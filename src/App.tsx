@@ -24,6 +24,7 @@ import {
 import { OfflineIndicator } from "@/hooks/use-offline";
 import { ErrorProvider } from "@/components/ui/global-error-handler";
 import AdvancedTokenizedChat from "@/components/AdvancedTokenizedChat";
+import { initializeChatPreloading } from "@/utils/chatPreloader";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -47,6 +48,7 @@ const SentimentAnalysis = () => <SentimentAnalysisPage />;
 const MovieRecommendation = lazy(() => import("./pages/demos/MovieRecommendation"));
 const ChatBot = lazy(() => import("./pages/demos/ChatBot"));
 const TokenizedChatPage = lazy(() => import("./pages/demos/TokenizedChat"));
+const OutputCompletionDemo = lazy(() => import("./pages/demos/OutputCompletionDemo"));
 // Page loading fallback component
 const PageSkeleton = () => (
   <div className="min-h-screen bg-background p-4">
@@ -100,6 +102,11 @@ const AppContent = () => {
         console.warn("Compatibility testing failed:", error);
       }
     }
+
+    // Initialize chat pre-loading to reduce response time
+    initializeChatPreloading().catch((error) => {
+      console.warn("Chat pre-loading initialization failed:", error);
+    });
 
     // Announce page changes for screen readers
     const handleHashChange = () => {
@@ -158,6 +165,7 @@ const AppContent = () => {
               <Route path="/demos/movie-recommendation" element={<MovieRecommendation />} />
               <Route path="/demos/chatbot" element={<ChatBot />} />
               <Route path="/demos/tokenized-chat" element={<TokenizedChatPage />} />
+              <Route path="/demos/output-completion" element={<OutputCompletionDemo />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
