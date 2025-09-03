@@ -22,7 +22,7 @@
     "test:accuracy": "vitest run src/test/accuracy.test.ts",
     "test:browser": "npm run test:compatibility",
     "test:coverage": "vitest run --coverage",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build:prod",
     "deploy": "gh-pages -d dist",
     "test:compatibility": "node scripts/test-browser-compatibility.js",
     "analyze:bundle": "node scripts/analyze-bundle.js",
