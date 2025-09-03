@@ -114,7 +114,6 @@ function isIncompleteThought(text: string, contentType?: string): boolean {
 }
 
 function isIncompleteTechnical(text: string): boolean {
-  // Technical explanations often have multi-part structures
   const technicalPatterns = [
     /\b(step|phase|stage|part|section|component|element|aspect|feature|function|method|process|procedure|algorithm|implementation|configuration|setup|installation|deployment|testing|debugging|optimization|analysis|evaluation|comparison|example|demonstration|illustration|explanation|description|definition|specification|requirement|constraint|limitation|advantage|disadvantage|benefit|drawback|consideration|recommendation|suggestion|conclusion|summary|overview|introduction|background|context|scope|objective|goal|purpose|result|outcome|finding|observation|insight|implication|application|usage|practice|approach|strategy|technique|solution|problem|issue|challenge|difficulty|complexity|simplicity|efficiency|performance|scalability|reliability|security|maintainability|usability|accessibility|compatibility|interoperability|portability|flexibility|extensibility|modularity|reusability|testability|debuggability|readability)\s+\d+[:\.]?\s*$/i,
     /\b(first|second|third|fourth|fifth|next|then|finally|lastly|additionally|furthermore|moreover|however|therefore|thus|consequently|as a result|in conclusion|to summarize)\b.*$/i,
@@ -221,13 +220,94 @@ function isIncompleteExplanation(text: string, complexityLevel?: string): boolea
     return true;
   }
 
-  // Check for incomplete explanatory patterns
+  // Check for incomplete explanatory patterns (simplified)
   const incompleteExplanationPatterns = [
     /\b(let me explain|to understand|it's important to note|keep in mind|consider|remember|note that|it's worth mentioning|another important point|furthermore|additionally|moreover|also|in addition|besides|what's more)\b.*$/i,
     /\b(step|phase|stage|part|section|component|element|aspect|feature|function|method|process|procedure|algorithm|implementation|configuration|setup|installation|deployment|testing|debugging|optimization|analysis|evaluation|comparison|example|demonstration|illustration|explanation|description|definition|specification|requirement|constraint|limitation|advantage|disadvantage|benefit|drawback|consideration|recommendation|suggestion|conclusion|summary|overview|introduction|background|context|scope|objective|goal|purpose|result|outcome|finding|observation|insight|implication|application|usage|practice|approach|strategy|technique|solution|problem|issue|challenge|difficulty|complexity|simplicity|efficiency|performance|scalability|reliability|security|maintainability|usability|accessibility|compatibility|interoperability|portability|flexibility|extensibility|modularity|reusability|testability|debuggability|readability)\s+\d+[:\.]?\s*$/i,
   ];
 
   return incompleteExplanationPatterns.some(pattern => pattern.test(trimmed));
+}
+
+/**
+ * Estimate the number of tokens needed for completion
+ */
+export function estimateCompletionTokens(text: string, config: CompletionConfig = {}): number {
+  const wordCount = text.split(/\s+/).length;
+  const complexity = config.complexityLevel || 'moderate';
+  
+  // Base estimation based on complexity
+  const baseTokens = {
+    simple: 20,
+    moderate: 50,
+    complex: 100,
+    detailed: 200
+  };
+  
+  // Adjust based on current text length
+  const lengthMultiplier = wordCount < 10 ? 1.5 : wordCount < 50 ? 1.2 : 1.0;
+  
+  return Math.round(baseTokens[complexity] * lengthMultiplier);
+}
+
+/**
+ * Simple completion function for fallback scenarios
+ */
+export function createSimpleCompletionFunction(originalText: string): (tokens: number) => Promise<string> {
+  return async (tokens: number): Promise<string> => {
+    // Simple completion logic for demo purposes
+    const words = originalText.split(' ');
+    const lastWord = words[words.length - 1];
+    
+    // Generate simple completions based on context
+    const completions = [
+      ' to be completed properly.',
+      ' and requires additional context.',
+      ' for better understanding.',
+      ' with more detailed information.',
+      ' to provide comprehensive coverage.'
+    ];
+    
+    // Return a random completion
+    const completion = completions[Math.floor(Math.random() * completions.length)];
+    return originalText + completion;
+  };
+}
+
+/**
+ * Core completion function that uses a completion function to generate text
+ */
+export async function completeOutput(
+  originalText: string,
+  completionFunction: (tokens: number) => Promise<string>,
+  config: CompletionConfig = {}
+): Promise<CompletionResult> {
+  const startTime = Date.now();
+  
+  try {
+    const maxTokens = config.maxAdditionalTokens || 100;
+    const completedText = await completionFunction(maxTokens);
+    
+    const wasCompleted = completedText !== originalText;
+    const additionalTokens = wasCompleted ? 
+      completedText.substring(originalText.length).split(/\s+/).length : 0;
+    
+    return {
+      completedText,
+      wasCompleted,
+      additionalTokensUsed: additionalTokens,
+      completionReason: wasCompleted ? 'Completed using simple completion' : 'No completion needed',
+      processingTimeMs: Date.now() - startTime
+    };
+  } catch (error) {
+    return {
+      completedText: originalText,
+      wasCompleted: false,
+      additionalTokensUsed: 0,
+      completionReason: `Completion failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      processingTimeMs: Date.now() - startTime
+    };
+  }
 }
 
 /**
