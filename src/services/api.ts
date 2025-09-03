@@ -1,4 +1,6 @@
-const API_URL = '/api';
+import { config } from '@/config/environment';
+
+const API_URL = `${config.apiUrl}/api`;
 
 export const login = async (email, password) => {
   const response = await fetch(`${API_URL}/auth/login`, {

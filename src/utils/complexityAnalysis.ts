@@ -16,7 +16,7 @@ export function analyzeInputComplexity(input: string): ComplexityAnalysis {
   const messageLength = input.length;
   const wordCount = input.split(/\s+/).length;
   const sentenceCount = input.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
-  
+
   // Complexity indicators
   const hasQuestions = (input.match(/\?/g) || []).length;
   const hasCodeKeywords = /\b(code|implementation|function|class|algorithm|debug|error|syntax|programming|development)\b/i.test(input);
@@ -26,10 +26,10 @@ export function analyzeInputComplexity(input: string): ComplexityAnalysis {
   const hasMultipleTopics = input.includes(' and ') || input.includes(' or ') || hasQuestions > 1;
   const hasComparisons = /\b(vs|versus|difference|compare|better|best|pros|cons|advantages|disadvantages)\b/i.test(input);
   const hasDeepDive = /\b(deep|detailed|comprehensive|thorough|complete|full|extensive|in-depth)\b/i.test(input);
-  
+
   let complexityScore = 0;
   let reasoning = [];
-  
+
   // Length-based scoring
   if (wordCount > 50) {
     complexityScore += 2;
@@ -38,7 +38,7 @@ export function analyzeInputComplexity(input: string): ComplexityAnalysis {
     complexityScore += 1;
     reasoning.push('medium input');
   }
-  
+
   // Content-based scoring
   if (hasCodeKeywords) {
     complexityScore += 2;
@@ -76,11 +76,11 @@ export function analyzeInputComplexity(input: string): ComplexityAnalysis {
     complexityScore += 2;
     reasoning.push('detailed analysis requested');
   }
-  
+
   // Determine complexity level and token allocation
   let complexity: 'simple' | 'moderate' | 'complex' | 'detailed';
   let suggestedTokens: number;
-  
+
   if (complexityScore <= 2) {
     complexity = 'simple';
     suggestedTokens = 400; // Short, direct answers
@@ -94,7 +94,7 @@ export function analyzeInputComplexity(input: string): ComplexityAnalysis {
     complexity = 'detailed';
     suggestedTokens = 5000; // Comprehensive responses
   }
-  
+
   return {
     complexity,
     suggestedTokens,

@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+docker-compose.yml
 public/models-backup/
 qwen-model.tar.gz
 qwen-model.zip
@@ -25,6 +26,7 @@ unused
 .idea
 .DS_Store
 *.suo
+*.yml
 *.ntvs*
 *.njsproj
 *.sln
@@ -34,3 +36,4 @@ unused
 .env.development.local
 .env.test.local
 .env.production.local
+docker-compose.yml

@@ -7,7 +7,7 @@ const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) {
-      console.error('MONGO_URI not found in .env file');
+      console.error('MONGO_URI not found in .env file', process.env);
       process.exit(1);
     }
     await mongoose.connect(mongoUri);

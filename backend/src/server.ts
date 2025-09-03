@@ -9,6 +9,9 @@ import recommendationRoutes from './routes/recommendations.routes';
 import CollaborativeFilteringEngine from './utils/collaborativeFiltering';
 import { modelManager } from './utils/modelManager';
 
+// Load environment variables
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -21,6 +24,11 @@ const startServer = async () => {
 
     app.use(cors());
     app.use(express.json());
+
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+      res.json({ status: 'healthy', message: 'ML Portfolio Backend API' });
+    });
 
     app.use('/api/auth', authRoutes);
     app.use('/api/user', userRoutes);
