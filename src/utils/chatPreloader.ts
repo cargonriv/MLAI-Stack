@@ -114,28 +114,51 @@ class ChatPreloader {
    * Pre-load Transformers.js LLM
    */
   private async preloadTransformersLLM(): Promise<void> {
-    try {
-      console.log('🤖 Pre-loading Transformers.js LLM...');
-      
-      const onProgress = (status: string) => {
-        this.updateStatus({ progress: `Transformers.js: ${status}` });
-      };
+    const maxRetries = 3;
+    const models = [
+      "HuggingFaceTB/SmolLM3-3B-ONNX", // Primary choice
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct-ONNX", // Fallback 1
+      "HuggingFaceTB/SmolLM2-360M-Instruct-ONNX", // Fallback 2
+    ];
 
-      this.textGenerator = await initializeTransformersLLM({
-        model: "HuggingFaceTB/SmolLM3-3B-ONNX" // Use the best balance model
-      }, onProgress);
+    for (const model of models) {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`🤖 Pre-loading Transformers.js LLM (${model}, attempt ${attempt}/${maxRetries})...`);
+          
+          const onProgress = (status: string) => {
+            this.updateStatus({ progress: `Transformers.js: ${status}` });
+          };
 
-      this.updateStatus({ 
-        textGenerator: 'ready', 
-        engine: 'transformers',
-        progress: 'Transformers.js ready' 
-      });
-      
-      console.log('✅ Transformers.js LLM pre-loaded successfully!');
-      
-    } catch (error) {
-      console.error('❌ Failed to pre-load Transformers.js LLM:', error);
-      throw error;
+          this.textGenerator = await initializeTransformersLLM({
+            model: model as any
+          }, onProgress);
+
+          this.updateStatus({ 
+            textGenerator: 'ready', 
+            engine: 'transformers',
+            progress: 'Transformers.js ready' 
+          });
+          
+          console.log(`✅ Transformers.js LLM pre-loaded successfully with ${model}!`);
+          return; // Success, exit all loops
+          
+        } catch (error) {
+          console.error(`❌ Failed to pre-load Transformers.js LLM (${model}, attempt ${attempt}):`, error);
+          
+          // If this is the last attempt with the last model, throw the error
+          if (attempt === maxRetries && model === models[models.length - 1]) {
+            throw error;
+          }
+          
+          // Wait before retry (exponential backoff)
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+            console.log(`⏳ Retrying in ${delay/1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
     }
   }
 

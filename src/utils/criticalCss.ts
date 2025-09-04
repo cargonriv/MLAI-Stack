@@ -106,23 +106,27 @@ export function injectCriticalCSS(): void {
 export function preloadNonCriticalCSS(): void {
   if (typeof document === 'undefined') return;
 
-  const link = document.createElement('link');
-  link.rel = 'preload';
-  link.as = 'style';
-  link.href = '/src/index.css';
-  link.onload = function() {
-    this.onload = null;
-    this.rel = 'stylesheet';
-  };
-  document.head.appendChild(link);
+  // In production, CSS is already bundled and loaded by Vite
+  // Only preload in development mode
+  if (import.meta.env.DEV) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'style';
+    link.href = '/src/index.css';
+    link.onload = function() {
+      this.onload = null;
+      this.rel = 'stylesheet';
+    };
+    document.head.appendChild(link);
 
-  // Fallback for browsers that don't support preload
-  const noscript = document.createElement('noscript');
-  const fallbackLink = document.createElement('link');
-  fallbackLink.rel = 'stylesheet';
-  fallbackLink.href = '/src/index.css';
-  noscript.appendChild(fallbackLink);
-  document.head.appendChild(noscript);
+    // Fallback for browsers that don't support preload
+    const noscript = document.createElement('noscript');
+    const fallbackLink = document.createElement('link');
+    fallbackLink.rel = 'stylesheet';
+    fallbackLink.href = '/src/index.css';
+    noscript.appendChild(fallbackLink);
+    document.head.appendChild(noscript);
+  }
 }
 
 /**

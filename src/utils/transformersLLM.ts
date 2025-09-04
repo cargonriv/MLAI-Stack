@@ -4,7 +4,6 @@
  */
 
 import { pipeline, TextGenerationPipeline, TextStreamer } from '@huggingface/transformers';
-import { analyzeInputComplexity } from './complexityAnalysis';
 
 // Available ONNX-compatible models from HuggingFaceTB (verified working)
 const AVAILABLE_MODELS = [
@@ -63,8 +62,8 @@ export async function initializeTransformersLLM(
     console.log(`🤖 Initializing Transformers.js with model: ${model}`);
     onProgress?.(`Loading ${model.split('/')[1]}...`);
 
-    // Create optimized text generation pipeline with quantization and WebGPU
-    generator = await pipeline('text-generation', model, {
+    // Try with WebGPU first, fallback to CPU if needed
+    let pipelineConfig = {
       dtype: "q4f16", // 4-bit quantization for memory efficiency
       device: "webgpu", // GPU acceleration
       progress_callback: (progress: any) => {
@@ -75,7 +74,19 @@ export async function initializeTransformersLLM(
           onProgress?.('Loading model into memory...');
         }
       }
-    }) as TextGenerationPipeline;
+    };
+
+    try {
+      // First attempt with WebGPU
+      generator = await pipeline('text-generation', model, pipelineConfig) as TextGenerationPipeline;
+    } catch (webgpuError) {
+      console.warn("WebGPU failed, falling back to CPU:", webgpuError);
+      onProgress?.('WebGPU unavailable, using CPU...');
+      
+      // Fallback to CPU
+      pipelineConfig.device = "cpu";
+      generator = await pipeline('text-generation', model, pipelineConfig) as TextGenerationPipeline;
+    }
 
     currentModel = model;
     console.log("✅ Transformers.js LLM initialized successfully!");
@@ -85,6 +96,21 @@ export async function initializeTransformersLLM(
 
   } catch (error) {
     console.error("❌ Failed to initialize Transformers.js LLM:", error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        console.error("Network error - check internet connection");
+        onProgress?.('Network error - please check your connection');
+      } else if (error.message.includes('quota') || error.message.includes('storage')) {
+        console.error("Storage quota exceeded");
+        onProgress?.('Storage full - please free up space');
+      } else if (error.message.includes('CORS')) {
+        console.error("CORS error - model access blocked");
+        onProgress?.('Model access blocked - trying alternative...');
+      }
+    }
+    
     generator = null;
     currentModel = null;
     throw error;
@@ -121,17 +147,7 @@ export async function generateTransformersResponse(
     }
 
     // Analyze input complexity and adjust token allocation
-    let maxTokens = config.max_new_tokens || 250;
-    let complexityInfo = null;
-    
-    if (config.adaptive_tokens !== false) { // Default to enabled
-      const userMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
-      complexityInfo = analyzeInputComplexity(userMessage);
-      maxTokens = complexityInfo.suggestedTokens;
-      
-      console.log(`🧠 Input complexity: ${complexityInfo.complexity} (${complexityInfo.reasoning})`);
-      console.log(`📊 Allocated tokens: ${maxTokens}`);
-    }
+    const maxTokens = config.max_new_tokens || 4096;
 
     const result = await generator(chatMessages, {
       max_new_tokens: maxTokens,
@@ -158,6 +174,112 @@ export async function generateTransformersResponse(
     throw error;
   }
 }
+
+/**
+ * Check if Transformers.js is supported
+ */
+export function isTransformersLLMSupported(): boolean {
+  try {
+    // Check for WebAssembly support
+    if (typeof WebAssembly === 'undefined') {
+      console.warn("WebAssembly not supported");
+      return false;
+    }
+
+    // Check for modern browser features
+    if (!window.fetch || !window.Promise) {
+      console.warn("Modern browser features not supported");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error checking Transformers.js support:", error);
+    return false;
+  }
+}
+
+/**
+ * Cleanup Transformers.js resources
+ */
+export async function cleanupTransformersLLM(): Promise<void> {
+  if (generator) {
+    try {
+      // Transformers.js doesn't have explicit cleanup, but we can clear references
+      generator = null;
+      currentModel = null;
+      console.log("✅ Transformers.js LLM cleaned up");
+    } catch (error) {
+      console.error("Error cleaning up Transformers.js LLM:", error);
+    }
+  }
+}
+
+// /**
+//  * Generate response using Transformers.js
+//  */
+// export async function generateTransformersResponse(
+//   messages: TransformersMessage[],
+//   config: TransformersLLMConfig = {},
+//   onToken?: (token: string) => void
+// ): Promise<string> {
+//   if (!generator) {
+//     throw new Error("Transformers.js LLM not initialized. Call initializeTransformersLLM first.");
+//   }
+
+//   try {
+//     // Use modern chat format instead of raw text generation
+//     const chatMessages = messages.map(msg => ({
+//       role: msg.role,
+//       content: msg.content
+//     }));
+
+//     // Add system message for thinking capability if not present
+//     if (!chatMessages.find(m => m.role === 'system')) {
+//       chatMessages.unshift({
+//         role: 'system',
+//         content: 'You are a helpful AI assistant for Carlos Gonzalez Rivera\'s portfolio. Provide informative and engaging responses about his ML engineering expertise, projects, and experience.'
+//       });
+//     }
+
+//     // Analyze input complexity and adjust token allocation
+//     let maxTokens = config.max_new_tokens || 250;
+//     let complexityInfo = null;
+    
+//     if (config.adaptive_tokens !== false) { // Default to enabled
+//       const userMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
+//       complexityInfo = analyzeInputComplexity(userMessage);
+//       maxTokens = complexityInfo.suggestedTokens;
+      
+//       console.log(`🧠 Input complexity: ${complexityInfo.complexity} (${complexityInfo.reasoning})`);
+//       console.log(`📊 Allocated tokens: ${maxTokens}`);
+//     }
+
+//     const result = await generator(chatMessages, {
+//       max_new_tokens: maxTokens,
+//       temperature: config.temperature || 0.7,
+//       top_p: config.top_p || 0.9,
+//       do_sample: config.do_sample ?? true,
+//       streamer: onToken ? new TextStreamer(generator.tokenizer, {
+//         skip_prompt: true,
+//         skip_special_tokens: true,
+//         callback_function: onToken
+//       }) : undefined,
+//     });
+
+//     // Extract generated text from chat format
+//     const generatedText = Array.isArray(result) && result.length > 0
+//       ? result[0]?.generated_text?.at(-1)?.content || result[0]?.generated_text
+//       : result?.generated_text?.at(-1)?.content || result?.generated_text;
+
+//     return typeof generatedText === 'string' ? generatedText.trim() :
+//       "I'd be happy to help you learn more about Carlos's machine learning engineering expertise. Could you ask a more specific question?";
+
+//   } catch (error) {
+//     console.error("Error generating response with Transformers.js:", error);
+//     throw error;
+//   }
+// }
 
 /**
  * Format messages for different model types
@@ -272,7 +394,7 @@ function cleanGeneratedText(text: string, originalPrompt: string): string {
   cleaned = cleaned.replace(/\n\s*\n/g, "\n").trim();
 
   // Remove leading/trailing special characters
-  cleaned = cleaned.replace(/^[^\w\s]+|[^\w\s.!?]+$/g, "").trim();
+  cleaned = cleaned.replace(/^[^\w\s]+|[^\u0000-\u007E\s.!?]+$/g, "").trim();
 
   // If response is too short or repetitive, provide a fallback
   if (cleaned.length < 10 || cleaned.split(' ').length < 3) {
@@ -340,42 +462,42 @@ export function getTransformersModelInfo(model: TransformersModelName): {
   };
 }
 
-/**
- * Check if Transformers.js is supported
- */
-export function isTransformersLLMSupported(): boolean {
-  try {
-    // Check for WebAssembly support
-    if (typeof WebAssembly === 'undefined') {
-      console.warn("WebAssembly not supported");
-      return false;
-    }
+// /**
+//  * Check if Transformers.js is supported
+//  */
+// export function isTransformersLLMSupported(): boolean {
+//   try {
+//     // Check for WebAssembly support
+//     if (typeof WebAssembly === 'undefined') {
+//       console.warn("WebAssembly not supported");
+//       return false;
+//     }
 
-    // Check for modern browser features
-    if (!window.fetch || !window.Promise) {
-      console.warn("Modern browser features not supported");
-      return false;
-    }
+//     // Check for modern browser features
+//     if (!window.fetch || !window.Promise) {
+//       console.warn("Modern browser features not supported");
+//       return false;
+//     }
 
-    return true;
-  } catch (error) {
-    console.error("Error checking Transformers.js support:", error);
-    return false;
-  }
-}
+//     return true;
+//   } catch (error) {
+//     console.error("Error checking Transformers.js support:", error);
+//     return false;
+//   }
+// }
 
-/**
- * Cleanup Transformers.js resources
- */
-export async function cleanupTransformersLLM(): Promise<void> {
-  if (generator) {
-    try {
-      // Transformers.js doesn't have explicit cleanup, but we can clear references
-      generator = null;
-      currentModel = null;
-      console.log("✅ Transformers.js LLM cleaned up");
-    } catch (error) {
-      console.error("Error cleaning up Transformers.js LLM:", error);
-    }
-  }
-}
+// /**
+//  * Cleanup Transformers.js resources
+//  */
+// export async function cleanupTransformersLLM(): Promise<void> {
+//   if (generator) {
+//     try {
+//       // Transformers.js doesn't have explicit cleanup, but we can clear references
+//       generator = null;
+//       currentModel = null;
+//       console.log("✅ Transformers.js LLM cleaned up");
+//     } catch (error) {
+//       console.error("Error cleaning up Transformers.js LLM:", error);
+//     }
+//   }
+// }

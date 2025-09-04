@@ -46,7 +46,7 @@ async function checkStorageQuota(): Promise<{ available: number; used: number; q
   try {
     if ('storage' in navigator && 'estimate' in navigator.storage) {
       const estimate = await navigator.storage.estimate();
-      console.log("estimate:",estimate)
+      
       const quota = estimate.quota || 0;
       const used = estimate.usage || 0;
       const available = quota - used;

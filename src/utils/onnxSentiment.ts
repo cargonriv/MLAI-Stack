@@ -37,13 +37,13 @@ export class ONNXSentiment {
     }
 
     try {
-      console.log('🤖 Loading Hugging Face sentiment model...');
+      
 
       if (progressCallback) progressCallback(10);
 
       // Allow dynamic model selection
       const modelToLoad = modelName || 'Xenova/twitter-roberta-base-sentiment-latest';
-      console.log(`📥 Loading sentiment model: ${modelToLoad} (Xenova)...`);
+      
 
       if (progressCallback) progressCallback(50);
 

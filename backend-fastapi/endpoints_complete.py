@@ -46,7 +46,7 @@ async def chat(req: ChatRequest):
     print(f"🔍 Using RAG: {req.use_rag}, Found {len(relevant_chunks)} relevant chunks")
     
     # Generate response with streaming
-    stream = llm(prompt, max_tokens=512, stream=True, temperature=0.7)
+    stream = llm(prompt, max_tokens=4096, stream=True, temperature=0.7)
 
     async def event_generator():
         for output in stream:

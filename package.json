@@ -27,8 +27,8 @@
     "test:compatibility": "node scripts/test-browser-compatibility.js",
     "analyze:bundle": "node scripts/analyze-bundle.js",
     "analyze:bundle:compare": "node scripts/analyze-bundle.js --compare",
-    "optimize:images": "echo 'Image optimization would run here - integrate with your preferred tool'",
-    "performance:audit": "echo 'Performance audit complete - check console for metrics'",
+    
+    
     "dev:backend": "cd backend && python main.py",
     "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
     "docker:build": "docker-compose build",

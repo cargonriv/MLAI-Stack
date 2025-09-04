@@ -1,11 +1,6 @@
 import {
-  initializeWebLLM,
-  generateResponse,
   ChatMessage,
-  WebLLMConfig,
-  ModelName,
-  clearWebLLMCache,
-  DEFAULT_MODEL
+  WebLLMConfig
 } from "./webllm";
 import {
   initializeTransformersLLM,
@@ -33,11 +28,11 @@ export interface RAGConfig extends Partial<WebLLMConfig>, Partial<TransformersLL
 
 export interface RAGResponse {
   response: string;
-  method: 'webllm-rag' | 'webllm-direct' | 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error';
+  method: 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error';
   processingTime: number;
   contextUsed: string[];
   relevantChunks?: { chunk: DocumentChunk; similarity: number }[];
-  engine: 'webllm' | 'transformers' | 'fallback';
+  engine: 'transformers' | 'fallback';
 }
 
 /**
@@ -142,108 +137,33 @@ export async function generateRAGResponse(
     let method: RAGResponse['method'];
     let engine: RAGResponse['engine'];
 
-    // Determine which engine to try first
-    const shouldTryTransformers = preferredEngine === 'transformers' ||
-      (preferredEngine === 'auto' && isTransformersLLMSupported());
-    const shouldTryWebLLM = preferredEngine === 'webllm' ||
-      (preferredEngine === 'auto' && !shouldTryTransformers);
-
     try {
-      if (shouldTryTransformers) {
-        // Try Transformers.js first (better for limited storage)
-        try {
-          // Check if we have a pre-loaded text generator
-          const preloadedGenerator = chatPreloader.getTextGenerator();
-          const preloaderStatus = chatPreloader.getStatus();
-          
-          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'transformers') {
-            onProgress?.("Using pre-loaded AI model...");
-            console.log("✅ Using pre-loaded Transformers.js model!");
-          } else {
-            onProgress?.("Initializing lightweight AI model...");
-            await initializeTransformersLLM({
-              model: transformersModel,
-              adaptive_tokens,
-              ...llmConfig
-            }, onProgress);
-          }
-
-          // Convert messages format
-          const transformersMessages: TransformersMessage[] = messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }));
-
-          response = await generateTransformersResponse(transformersMessages, llmConfig, onToken);
-          method = useRAG && relevantChunks.length > 0 ? 'transformers-rag' : 'transformers-direct';
-          engine = 'transformers';
-
-        } catch (transformersError) {
-          console.log("🔄 Transformers.js failed, trying WebLLM...");
-          onProgress?.("Trying advanced AI model...");
-
-          // Check if we have a pre-loaded WebLLM engine
-          const preloadedGenerator = chatPreloader.getTextGenerator();
-          const preloaderStatus = chatPreloader.getStatus();
-          
-          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'webllm') {
-            onProgress?.("Using pre-loaded WebLLM model...");
-            console.log("✅ Using pre-loaded WebLLM model!");
-          } else {
-            // Fallback to WebLLM
-            await initializeWebLLM({ model, adaptive_tokens, ...llmConfig });
-          }
-          response = await generateResponse(messages, { adaptive_tokens, ...llmConfig }, onToken);
-          method = useRAG && relevantChunks.length > 0 ? 'webllm-rag' : 'webllm-direct';
-          engine = 'webllm';
-        }
+      // Always try Transformers.js
+      // Check if we have a pre-loaded text generator
+      const preloadedGenerator = chatPreloader.getTextGenerator();
+      const preloaderStatus = chatPreloader.getStatus();
+      
+      if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'transformers') {
+        onProgress?.("Using pre-loaded AI model...");
+        console.log("✅ Using pre-loaded Transformers.js model!");
       } else {
-        // Try WebLLM first
-        try {
-          // Check if we have a pre-loaded WebLLM engine
-          const preloadedGenerator = chatPreloader.getTextGenerator();
-          const preloaderStatus = chatPreloader.getStatus();
-          
-          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'webllm') {
-            onProgress?.("Using pre-loaded WebLLM model...");
-            console.log("✅ Using pre-loaded WebLLM model!");
-          } else {
-            onProgress?.("Initializing advanced AI model...");
-            await initializeWebLLM({ model, ...llmConfig });
-          }
-          response = await generateResponse(messages, llmConfig, onToken);
-          method = useRAG && relevantChunks.length > 0 ? 'webllm-rag' : 'webllm-direct';
-          engine = 'webllm';
-
-        } catch (webllmError) {
-          console.log("🔄 WebLLM failed, trying Transformers.js...");
-          onProgress?.("Trying lightweight AI model...");
-
-          // Check if we have a pre-loaded Transformers.js engine
-          const preloadedGenerator = chatPreloader.getTextGenerator();
-          const preloaderStatus = chatPreloader.getStatus();
-          
-          if (preloadedGenerator && preloaderStatus.textGenerator === 'ready' && preloaderStatus.engine === 'transformers') {
-            onProgress?.("Using pre-loaded Transformers.js model...");
-            console.log("✅ Using pre-loaded Transformers.js model!");
-          } else {
-            // Fallback to Transformers.js
-            await initializeTransformersLLM({
-              model: transformersModel,
-              ...llmConfig
-            }, onProgress);
-          }
-
-          const transformersMessages: TransformersMessage[] = messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }));
-
-          response = await generateTransformersResponse(transformersMessages, llmConfig, onToken);
-          method = useRAG && relevantChunks.length > 0 ? 'transformers-rag' : 'transformers-direct';
-          engine = 'transformers';
-        }
+        onProgress?.("Initializing lightweight AI model...");
+        await initializeTransformersLLM({
+          model: transformersModel,
+          adaptive_tokens,
+          ...llmConfig
+        }, onProgress);
       }
+
+      // Convert messages format
+      const transformersMessages: TransformersMessage[] = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      response = await generateTransformersResponse(transformersMessages, llmConfig, onToken);
+      method = useRAG && relevantChunks.length > 0 ? 'transformers-rag' : 'transformers-direct';
+      engine = 'transformers';
 
     } catch (allLLMError) {
       console.log("🤖 All LLM engines failed, using intelligent fallback...");

@@ -4,7 +4,7 @@ import { ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SentimentAnalysisPage = () => {
-  console.log('🔥 SentimentAnalysisPage component loaded!');
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />

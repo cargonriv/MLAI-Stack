@@ -13,7 +13,6 @@ export interface CompletionConfig {
   contentType?: 'conversational' | 'technical' | 'code' | 'creative' | 'structured';
   ensureCompleteThought?: boolean;
   adaptiveTokens?: boolean;
-  complexityLevel?: 'simple' | 'moderate' | 'complex' | 'detailed';
 }
 
 export interface CompletionResult {
@@ -49,11 +48,6 @@ export function needsCompletion(text: string, config: CompletionConfig = {}): bo
 
     // Check for mid-sentence cutoffs
     if (isMidSentenceCutoff(trimmedText)) {
-      return true;
-    }
-
-    // Check for incomplete explanations
-    if (isIncompleteExplanation(trimmedText, config.complexityLevel)) {
       return true;
     }
   }
@@ -200,57 +194,6 @@ function isMidSentenceCutoff(text: string): boolean {
 }
 
 /**
- * Detects if an explanation is incomplete based on complexity level
- */
-function isIncompleteExplanation(text: string, complexityLevel?: string): boolean {
-  const trimmed = text.trim();
-  const wordCount = trimmed.split(/\s+/).length;
-  
-  // Minimum word counts based on complexity
-  const minWordCounts = {
-    simple: 20,
-    moderate: 40,
-    complex: 80,
-    detailed: 150
-  };
-
-  const minWords = complexityLevel ? minWordCounts[complexityLevel as keyof typeof minWordCounts] || 30 : 30;
-  
-  if (wordCount < minWords) {
-    return true;
-  }
-
-  // Check for incomplete explanatory patterns (simplified)
-  const incompleteExplanationPatterns = [
-    /\b(let me explain|to understand|it's important to note|keep in mind|consider|remember|note that|it's worth mentioning|another important point|furthermore|additionally|moreover|also|in addition|besides|what's more)\b.*$/i,
-    /\b(step|phase|stage|part|section|component|element|aspect|feature|function|method|process|procedure|algorithm|implementation|configuration|setup|installation|deployment|testing|debugging|optimization|analysis|evaluation|comparison|example|demonstration|illustration|explanation|description|definition|specification|requirement|constraint|limitation|advantage|disadvantage|benefit|drawback|consideration|recommendation|suggestion|conclusion|summary|overview|introduction|background|context|scope|objective|goal|purpose|result|outcome|finding|observation|insight|implication|application|usage|practice|approach|strategy|technique|solution|problem|issue|challenge|difficulty|complexity|simplicity|efficiency|performance|scalability|reliability|security|maintainability|usability|accessibility|compatibility|interoperability|portability|flexibility|extensibility|modularity|reusability|testability|debuggability|readability)\s+\d+[:\.]?\s*$/i,
-  ];
-
-  return incompleteExplanationPatterns.some(pattern => pattern.test(trimmed));
-}
-
-/**
- * Estimate the number of tokens needed for completion
- */
-export function estimateCompletionTokens(text: string, config: CompletionConfig = {}): number {
-  const wordCount = text.split(/\s+/).length;
-  const complexity = config.complexityLevel || 'moderate';
-  
-  // Base estimation based on complexity
-  const baseTokens = {
-    simple: 20,
-    moderate: 50,
-    complex: 100,
-    detailed: 200
-  };
-  
-  // Adjust based on current text length
-  const lengthMultiplier = wordCount < 10 ? 1.5 : wordCount < 50 ? 1.2 : 1.0;
-  
-  return Math.round(baseTokens[complexity] * lengthMultiplier);
-}
-
-/**
  * Simple completion function for fallback scenarios
  */
 export function createSimpleCompletionFunction(originalText: string): (tokens: number) => Promise<string> {
@@ -332,19 +275,6 @@ export async function autoCompleteOutput(
         adaptiveTokens: true,
         ...config
     };
-
-    // Adjust completion tokens based on complexity
-    if (enhancedConfig.adaptiveTokens && enhancedConfig.complexityLevel) {
-        const complexityMultipliers = {
-            simple: 0.5,
-            moderate: 1.0,
-            complex: 1.5,
-            detailed: 2.0
-        };
-        
-        const multiplier = complexityMultipliers[enhancedConfig.complexityLevel] || 1.0;
-        enhancedConfig.maxAdditionalTokens = Math.round((enhancedConfig.maxAdditionalTokens || 100) * multiplier);
-    }
 
     if (!needsCompletion(originalText, enhancedConfig)) {
         return {

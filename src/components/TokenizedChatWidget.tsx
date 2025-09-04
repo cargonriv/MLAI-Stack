@@ -70,7 +70,7 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
 
         const initTokenizer = async () => {
             try {
-                console.log('🤖 Loading GPT-4 tokenizer for advanced text processing...');
+                
                 const { AutoTokenizer } = await import('@huggingface/transformers');
 
                 if (!mountedRef.current) return;
@@ -84,8 +84,8 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
                 const testTokens = tokenizer.encode(testText);
                 const decodedTokens = testTokens.map((token: number) => tokenizer.decode([token]));
 
-                console.log('✅ Tokenizer loaded successfully!');
-                console.log(`Test: "${testText}" → [${testTokens.join(', ')}] → ${testTokens.length} tokens`);
+                
+                
 
                 tokenizerRef.current = tokenizer;
                 setTokenizerStatus('ready');
@@ -106,7 +106,7 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
                 }]);
 
             } catch (error) {
-                console.error('❌ Failed to load tokenizer:', error);
+                
                 if (mountedRef.current) {
                     setTokenizerStatus('error');
                     setMessages([{
@@ -153,7 +153,7 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
             const decodedTokens = tokens.map((token: number) => tokenizerRef.current.decode([token]));
             return { tokens, decodedTokens, tokenCount: tokens.length };
         } catch (error) {
-            console.error('Tokenization error:', error);
+            
             return { tokens: [], decodedTokens: [], tokenCount: 0 };
         }
     };
@@ -168,7 +168,7 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
             const { pipeline } = await import('@huggingface/transformers');
             
             // Create a text generation pipeline with a smaller, faster model
-            console.log('🤖 Loading text generation model...');
+            
             const generator = await pipeline('text-generation', 'Xenova/distilgpt2', {
                 max_new_tokens: 100,
                 do_sample: true,
@@ -182,7 +182,7 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
 
 Response:`;
 
-            console.log('🧠 Generating response with language model...');
+            
             const result = await generator(contextPrompt, {
                 max_new_tokens: 80,
                 do_sample: true,
@@ -208,8 +208,8 @@ Response:`;
             return tokenInfo + generatedText;
 
         } catch (error) {
-            console.error('Text generation failed:', error);
-            console.log('📝 Falling back to curated responses...');
+            
+            
             return getFallbackResponse(userMessage, userTokens);
         }
     };
@@ -245,7 +245,7 @@ Response:`;
 
             // If completion was successful and added meaningful content
             if (completionResult.wasCompleted && completionResult.completedText !== botMessage.content) {
-                console.log(`✅ Simple chat completed: ${completionResult.completionReason}`);
+                
                 
                 // Update the message with completed text
                 setMessages(prevMessages => prevMessages.map(msg => {
@@ -269,7 +269,7 @@ Response:`;
                 }));
             }
         } catch (error) {
-            console.warn('Simple chat completion failed:', error);
+            
             // Completion failure is not critical for simple chat
         }
     };
@@ -355,7 +355,7 @@ Response:`;
             // Perform output completion asynchronously
             performOutputCompletion(botMessage, userMessage.content);
         } catch (error) {
-            console.error('Error generating response:', error);
+            
             const errorResponse = "I apologize, but I encountered an error processing your message. Please try again!";
             const { tokens: errorTokens, decodedTokens: errorDecodedTokens, tokenCount: errorTokenCount } = tokenizeText(errorResponse);
 
@@ -388,32 +388,32 @@ Response:`;
         return (
             <Button
                 onClick={onToggle}
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+                className="fixed bottom-4 right-4 mobile:bottom-3 mobile:right-3 w-14 h-14 mobile:w-12 mobile:h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 z-50 touch:active:scale-95"
                 size="icon"
             >
-                <MessageSquare className="w-6 h-6" />
+                <MessageSquare className="w-6 h-6 mobile:w-5 mobile:h-5" />
             </Button>
         );
     }
 
     return (
         <Card className={cn(
-            "fixed bottom-6 right-6 w-[420px] shadow-2xl border-purple-200 dark:border-purple-800 z-50 transition-all duration-300",
-            isMinimized ? "h-16" : "h-[600px]"
+            "fixed bottom-4 right-4 mobile:bottom-0 mobile:right-0 mobile:left-0 mobile:top-0 w-[420px] mobile:w-full mobile:h-full shadow-2xl border-purple-200 dark:border-purple-800 z-50 transition-all duration-300 mobile:rounded-none",
+            isMinimized ? "h-16 mobile:h-16" : "h-[600px] mobile:h-full"
         )}>
-            <CardHeader className="pb-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
+            <CardHeader className="pb-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg mobile:rounded-none mobile:pb-2">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg mobile:text-base mobile:gap-1">
                         <Bot className="w-5 h-5" />
                         Tokenized AI Chat
                         {tokenizerStatus === 'loading' && <Loader2 className="w-4 h-4 animate-spin" />}
                     </CardTitle>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 mobile:gap-0.5">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setShowTokenDetails(!showTokenDetails)}
-                            className="w-8 h-8 text-white hover:bg-white/20"
+                            className="w-8 h-8 mobile:w-9 mobile:h-9 text-white hover:bg-white/20 touch:active:scale-95"
                             title="Toggle token details"
                         >
                             <Code className="w-4 h-4" />
@@ -422,7 +422,7 @@ Response:`;
                             variant="ghost"
                             size="icon"
                             onClick={() => setIsMinimized(!isMinimized)}
-                            className="w-8 h-8 text-white hover:bg-white/20"
+                            className="w-8 h-8 mobile:w-9 mobile:h-9 text-white hover:bg-white/20 touch:active:scale-95 mobile:hidden"
                         >
                             {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
                         </Button>
@@ -430,14 +430,14 @@ Response:`;
                             variant="ghost"
                             size="icon"
                             onClick={onToggle}
-                            className="w-8 h-8 text-white hover:bg-white/20"
+                            className="w-8 h-8 mobile:w-9 mobile:h-9 text-white hover:bg-white/20 touch:active:scale-95"
                         >
                             <X className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
                 {!isMinimized && (
-                    <div className="flex items-center gap-2 text-sm opacity-90">
+                    <div className="flex items-center gap-2 mobile:gap-1 text-sm mobile:text-xs opacity-90">
                         <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                             <Brain className="w-3 h-3 mr-1" />
                             {tokenizerStatus === 'ready' ? 'GPT-4 Ready' :
@@ -456,8 +456,8 @@ Response:`;
             </CardHeader>
 
             {!isMinimized && (
-                <CardContent className="p-0 flex flex-col h-[calc(100%-100px)]">
-                    <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+                <CardContent className="p-0 flex flex-col h-[calc(100%-100px)] mobile:h-[calc(100vh-100px)]">
+                    <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 mobile:p-3">
                         <div className="space-y-4">
                             {messages.map((message) => (
                                 <div key={message.id} className="space-y-2">

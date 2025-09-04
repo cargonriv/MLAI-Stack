@@ -32,8 +32,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AutoTokenizer } from "@huggingface/transformers";
 import { generateRAGResponse, getAvailableRAGModels, getModelInfo, RAGConfig, checkModelCompatibility } from "@/utils/rag";
-import { analyzeInputComplexity, getComplexityDescription } from "@/utils/complexityAnalysis";
-import { isWebLLMSupported, clearWebLLMCache } from "@/utils/webllm";
 import { isTransformersLLMSupported, getAvailableTransformersModels, getTransformersModelInfo } from "@/utils/transformersLLM";
 import { getEmbeddingModelStatus, getWorkspaceEmbeddingsStatus } from "@/utils/embeddings";
 import { autoCompleteOutput, CompletionConfig } from "@/utils/outputCompletion";
@@ -48,14 +46,10 @@ interface AdvancedTokenizedMessage {
     tokens: number[];
     tokenCount: number;
     decodedTokens?: string[];
-    generationMethod: 'webllm-rag' | 'webllm-direct' | 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error';
+    generationMethod: 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error';
     processingTime?: number;
     contextUsed?: string[];
-    complexityAnalysis?: {
-        complexity: 'simple' | 'moderate' | 'complex' | 'detailed';
-        allocatedTokens: number;
-        reasoning: string;
-    };
+    
     completionInfo?: {
         wasCompleted: boolean;
         additionalTokensUsed: number;
@@ -81,10 +75,9 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     const [preloaderStatus, setPreloaderStatus] = useState(chatPreloader.getStatus());
 
     // LLM engine state
-    const [webllmSupported, setWebllmSupported] = useState(false);
     const [transformersSupported, setTransformersSupported] = useState(false);
     const [modelStatus, setModelStatus] = useState<'not-loaded' | 'loading' | 'ready' | 'error'>('not-loaded');
-    const [selectedEngine, setSelectedEngine] = useState<'auto' | 'webllm' | 'transformers'>('transformers');
+    const [selectedEngine, setSelectedEngine] = useState<'auto' | 'transformers'>('transformers');
     const [selectedModel, setSelectedModel] = useState<string>("SmolLM-360M-Instruct-q4f16_1-MLC");
     const [selectedTransformersModel, setSelectedTransformersModel] = useState<string>("HuggingFaceTB/SmolLM3-3B-ONNX");
     const [useRAG, setUseRAG] = useState(true);
@@ -94,11 +87,6 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         available: string;
         used: string;
         warning?: string;
-    } | null>(null);
-    const [lastComplexityAnalysis, setLastComplexityAnalysis] = useState<{
-        complexity: string;
-        tokens: number;
-        reasoning: string;
     } | null>(null);
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -125,18 +113,14 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         const initializeSystem = async () => {
             try {
                 // Check LLM engine support
-                const webllmAvailable = isWebLLMSupported();
                 const transformersAvailable = isTransformersLLMSupported();
-                setWebllmSupported(webllmAvailable);
                 setTransformersSupported(transformersAvailable);
-                console.log("WebLLM supported:", webllmAvailable);
-                console.log("Transformers.js supported:", transformersAvailable);
 
-                if (!webllmAvailable && !transformersAvailable) {
+                if (!transformersAvailable) {
                     setMessages([
                         {
                             id: Date.now().toString(),
-                            content: "Your browser doesn't support WebLLM (requires WebGPU). I'll use fallback responses, but the full AI features won't be available. Try using Chrome/Edge with WebGPU enabled.",
+                            content: "Your browser doesn't fully support client-side AI (requires WebGPU). I'll use fallback responses, but the full AI features won't be available. Try using Chrome/Edge with WebGPU enabled.",
                             sender: 'bot',
                             timestamp: new Date(),
                             tokens: [],
@@ -150,12 +134,12 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 // Check if tokenizer is already pre-loaded
                 const preloadedTokenizer = chatPreloader.getTokenizer();
                 if (preloadedTokenizer && chatPreloader.getStatus().tokenizer === 'ready') {
-                    console.log('✅ Using pre-loaded tokenizer!');
+                    
                     tokenizerRef.current = preloadedTokenizer;
                     setTokenizerStatus('ready');
                     setInitializationStatus("Using pre-loaded models - Ready for AI chat!");
                 } else {
-                    console.log('🤖 Loading tokenizer...');
+                    
                     setInitializationStatus("Loading tokenizer...");
 
                     // Load tokenizer
@@ -164,7 +148,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
                     const testText = 'Hello! I can encode, decode, and generate text.';
                     const testTokens = tokenizer.encode(testText);
-                    console.log('✅ Tokenizer loaded successfully!');
+                    
 
                     tokenizerRef.current = tokenizer;
                     setTokenizerStatus('ready');
@@ -175,14 +159,14 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 const preloaderStatus = chatPreloader.getStatus();
                 if (preloaderStatus.textGenerator === 'ready') {
                     setModelStatus('ready');
-                    console.log(`✅ Using pre-loaded ${preloaderStatus.engine} text generator!`);
+                    
                 } else if (preloaderStatus.textGenerator === 'loading') {
                     setModelStatus('loading');
                     setInitializationStatus(`Pre-loading ${preloaderStatus.engine}... ${preloaderStatus.progress}`);
                 }
 
             } catch (error) {
-                console.error('❌ Failed to initialize system:', error);
+
                 if (mountedRef.current) {
                     setTokenizerStatus('error');
                     setInitializationStatus("Initialization failed");
@@ -215,7 +199,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 if (status.textGenerator === 'ready' && modelStatus !== 'ready') {
                     setModelStatus('ready');
                     setInitializationStatus(`${status.engine} ready - Chat optimized!`);
-                    console.log(`✅ Pre-loaded ${status.engine} is now ready!`);
+                    
                 } else if (status.textGenerator === 'loading') {
                     setModelStatus('loading');
                     setInitializationStatus(status.progress);
@@ -237,8 +221,8 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
         const isPreloaded = preloaderStatus.textGenerator === 'ready';
 
-        const welcomeText = webllmSupported || transformersSupported
-            ? `Hi! I'm Carlos's AI assistant powered by ${webllmSupported ? 'WebLLM' : 'Transformers.js'} running entirely in your browser${isPreloaded ? ' (pre-loaded for faster responses)' : ''}. I can help you learn about his ML engineering expertise and projects. Ask me anything!`
+        const welcomeText = transformersSupported
+            ? `Hi! I'm Carlos's AI assistant powered by Transformers.js running entirely in your browser${isPreloaded ? ' (pre-loaded for faster responses)' : ''}. I can help you learn about his ML engineering expertise and projects. Ask me anything!`
             : `Hi! I'm Carlos's AI assistant. Your browser has limited AI support, but I can still help you learn about his ML engineering expertise using intelligent responses.`;
 
         const tokenizer = tokenizerRef.current;
@@ -253,14 +237,14 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             tokens: welcomeTokens,
             tokenCount: welcomeTokens.length,
             decodedTokens: welcomeDecodedTokens,
-            generationMethod: webllmSupported ? "webllm-direct" : transformersSupported ? "transformers-direct" : "simple-fallback",
+            generationMethod: transformersSupported ? "transformers-direct" : "simple-fallback",
             processingTime: 0,
         };
 
         setMessages([welcomeMessage]);
         setWelcomeAdded(true);
 
-    }, [isOpen, tokenizerStatus, webllmSupported, transformersSupported]);
+    }, [isOpen, preloaderStatus.textGenerator, tokenizerStatus, transformersSupported, welcomeAdded]);
 
 
 
@@ -292,7 +276,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             const decodedTokens = tokens.map((token: number) => tokenizerRef.current!.decode([token]));
             return { tokens, decodedTokens, tokenCount: tokens.length };
         } catch (error) {
-            console.error('Tokenization error:', error);
+            
             return { tokens: [], decodedTokens: [], tokenCount: 0 };
         }
     };
@@ -303,9 +287,9 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         userMessage: string,
         onNewToken: (token: string) => void,
         onProgress: (status: string) => void
-    ): Promise<{ method: 'webllm-rag' | 'webllm-direct' | 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error'; processingTime: number; contextUsed: string[]; complexityAnalysis?: any }> => {
+    ): Promise<{ method: 'transformers-rag' | 'transformers-direct' | 'intelligent-fallback' | 'simple-fallback' | 'error'; processingTime: number; contextUsed: string[]; }> => {
 
-        if (!webllmSupported && !transformersSupported) {
+        if (!transformersSupported) {
             // Use fallback response for unsupported browsers
             const startTime = Date.now();
             const fallbackResponse = generateFallbackResponse(userMessage);
@@ -324,13 +308,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }
 
         try {
-            // Analyze input complexity for UI feedback
-            const complexityAnalysis = analyzeInputComplexity(userMessage);
-            setLastComplexityAnalysis({
-                complexity: complexityAnalysis.complexity,
-                tokens: complexityAnalysis.suggestedTokens,
-                reasoning: complexityAnalysis.reasoning
-            });
+            
 
             const config: RAGConfig = {
                 model: selectedModel as any,
@@ -340,8 +318,8 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 maxContextChunks: 5,
                 similarityThreshold: 0.3,
                 temperature: 0.7,
-                max_tokens: 1024,
-                max_new_tokens: 250, // Base token count (will be adjusted by complexity analysis)
+                // max_tokens: 4096,
+                max_new_tokens: 4096, // Base token count (will be adjusted by complexity analysis)
                 adaptive_tokens: true // Enable adaptive token allocation
             };
 
@@ -356,15 +334,10 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 method: ragResponse.method,
                 processingTime: ragResponse.processingTime,
                 contextUsed: ragResponse.contextUsed,
-                complexityAnalysis: {
-                    complexity: complexityAnalysis.complexity,
-                    allocatedTokens: complexityAnalysis.suggestedTokens,
-                    reasoning: complexityAnalysis.reasoning
-                }
             };
 
         } catch (error) {
-            console.error('WebLLM generation failed:', error);
+            
 
             // Fallback to simple response
             const startTime = Date.now();
@@ -404,6 +377,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         generationMethod: string,
         userMessage: string
     ) => {
+        console.log('Performing output completion with method:', generationMethod, 'and user message:', userMessage);
         try {
             // Configure completion based on content type and complexity
             const completionConfig: CompletionConfig = {
@@ -414,7 +388,6 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 languageCode: 'en',
                 ensureCompleteThought: true,
                 adaptiveTokens: true,
-                complexityLevel: botMessage.complexityAnalysis?.complexity
             };
 
             // Create message context for completion
@@ -433,7 +406,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
             // If completion was successful and added meaningful content
             if (completionResult.wasCompleted && completionResult.completedText !== botMessage.content) {
-                console.log(`✅ Output completed: ${completionResult.completionReason}`);
+                
 
                 // Update the message with completed text
                 setMessages(prevMessages => prevMessages.map(msg => {
@@ -456,10 +429,10 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                     return msg;
                 }));
             } else {
-                console.log(`ℹ️ No completion needed: ${completionResult.completionReason}`);
+                
             }
         } catch (error) {
-            console.warn('Output completion failed:', error);
+            
             // Completion failure is not critical, so we don't show error to user
         }
     };
@@ -494,7 +467,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 });
             }
         } catch (error) {
-            console.error("Error checking storage:", error);
+            
             setStorageInfo({
                 available: "Error checking storage",
                 used: "Please try again"
@@ -505,7 +478,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     const clearModelCache = async () => {
         try {
             setLoadingProgress("Clearing model cache...");
-            await clearWebLLMCache();
+            // No WebLLM cache to clear, as WebLLM is no longer used.
             setLoadingProgress("");
 
             // Refresh storage info
@@ -525,7 +498,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 } : null);
             }, 3000);
         } catch (error) {
-            console.error("Error clearing cache:", error);
+            
             setLoadingProgress("");
             setStorageInfo(prev => prev ? {
                 ...prev,
@@ -536,12 +509,12 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
     const handleSendMessage = async () => {
         const trimmedInput = inputValue?.trim() || '';
-        console.log("Sending message!!!", trimmedInput)
+        
         if (!trimmedInput) return;
 
         // Tokenize user input
         const { tokens, decodedTokens, tokenCount } = tokenizeText(trimmedInput);
-        console.log("tokenized text", tokens)
+        
         // Create user message with tokenization details
         const userMessage: AdvancedTokenizedMessage = {
             id: Date.now().toString(),
@@ -551,11 +524,11 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             tokens,
             tokenCount,
             decodedTokens,
-            generationMethod: 'webllm-direct' // User input doesn't need generation, just mark as processed
+            generationMethod: 'transformers-rag' // User input doesn't need generation, just mark as processed
         };
 
         setMessages(prev => [...prev, userMessage]);
-        console.log("Set the message!")
+        
         setInputValue(""); // Clear input immediately after sending
         setIsTyping(true);
 
@@ -567,10 +540,10 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             timestamp: new Date(),
             tokens: [],
             tokenCount: 0,
-            generationMethod: 'webllm-direct', // Start with a valid method to avoid error display
+            generationMethod: 'transformers-rag', // Start with a valid method to avoid error display
         };
         // Don't add empty bot message immediately - let typing indicator handle the loading state
-        console.log("Starting bot response generation...")
+        
 
         const onNewToken = (token: string) => {
             setMessages(prevMessages => {
@@ -604,7 +577,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                         tokens,
                         decodedTokens,
                         tokenCount,
-                        generationMethod: 'webllm-direct',
+                        generationMethod: 'transformers-rag',
                     };
                     return [...prevMessages, newBotMessage];
                 }
@@ -616,7 +589,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         };
 
         try {
-            const { method, processingTime, contextUsed, complexityAnalysis } = await generateResponse(
+            const { method, processingTime, contextUsed } = await generateResponse(
                 userMessage.content,
                 onNewToken,
                 onProgress
@@ -631,25 +604,20 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                             generationMethod: method,
                             processingTime,
                             contextUsed,
-                            complexityAnalysis: complexityAnalysis ? {
-                                complexity: complexityAnalysis.complexity,
-                                allocatedTokens: complexityAnalysis.allocatedTokens,
-                                reasoning: complexityAnalysis.reasoning
-                            } : undefined
                         };
                     }
                     return msg;
                 });
 
-                // Find the bot message to check for completion
-                const botMessage = updatedMessages.find(msg => msg.id === botMessageId);
-                if (botMessage && botMessage.content) {
-                    // Perform output completion asynchronously
-                    performOutputCompletion(botMessage, method, userMessage.content);
-                }
-
                 return updatedMessages;
             });
+
+            // Find the bot message to check for completion after state update
+            const botMessage = messages.find(msg => msg.id === botMessageId); // Use the latest messages state
+            if (botMessage && botMessage.content) {
+                // Perform output completion asynchronously
+                performOutputCompletion(botMessage, method, userMessage.content);
+            }
         } catch (error) {
             console.error('Error generating response:', error);
             const errorResponse = "I apologize, but I encountered an error processing your message. Please try again!";
@@ -687,23 +655,23 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         const isPreloaded = preloaderStatus.tokenizer === 'ready' && preloaderStatus.textGenerator === 'ready';
 
         return (
-            <div className="fixed bottom-6 right-6 z-50">
+            <div className="fixed bottom-4 right-4 mobile:bottom-3 mobile:right-3 z-50">
                 <Button
                     onClick={onToggle}
-                    className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative"
+                    className="w-14 h-14 mobile:w-12 mobile:h-12 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 relative touch:active:scale-95"
                     size="icon"
                     title={isPreloaded ? "AI Chat Ready (Pre-loaded)" : isPreloading ? "AI Chat Loading..." : "AI Chat"}
                 >
                     {isPreloading ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <Loader2 className="w-6 h-6 mobile:w-5 mobile:h-5 animate-spin" />
                     ) : (
-                        <Cpu className="w-6 h-6" />
+                        <Cpu className="w-6 h-6 mobile:w-5 mobile:h-5" />
                     )}
 
                     {/* Status indicator */}
                     {isPreloaded && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                            <CheckCircle className="w-2 h-2 text-white" />
+                        <div className="absolute -top-1 -right-1 mobile:-top-0.5 mobile:-right-0.5 w-4 h-4 mobile:w-3 mobile:h-3 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                            <CheckCircle className="w-2 h-2 mobile:w-1.5 mobile:h-1.5 text-white" />
                         </div>
                     )}
                     {isPreloading && (
@@ -722,385 +690,386 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
     }
 
     return (
-        <Card className={cn(
-            "fixed bottom-6 right-6 w-[450px] shadow-2xl border-blue-200 dark:border-blue-800 z-50 transition-all duration-300",
-            isMinimized ? "h-16" : "h-[650px]"
+        <div className={cn(
+            "fixed bottom-4 right-4 w-[450px] h-[650px] shadow-2xl border-blue-200 dark:border-blue-800 z-50 transition-all duration-300 flex flex-col",
+            "mobile:bottom-0 mobile:right-0 mobile:left-0 mobile:top-0 mobile:w-full mobile:h-full mobile:rounded-none",
+            isMinimized ? "h-16 mobile:h-16" : "h-[650px] mobile:h-[100svh]"
         )}>
-            <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <Cpu className="w-5 h-5" />
-                        Advanced AI Chat
-                        {(tokenizerStatus === 'loading') && <Loader2 className="w-4 h-4 animate-spin" />}
-                    </CardTitle>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowTokenDetails(!showTokenDetails)}
-                            className="w-8 h-8 text-white hover:bg-white/20"
-                            title="Toggle token details"
-                        >
-                            <Code className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowSettings(!showSettings)}
-                            className="w-8 h-8 text-white hover:bg-white/20"
-                            title="AI Settings"
-                        >
-                            <Settings className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setIsMinimized(!isMinimized)}
-                            className="w-8 h-8 text-white hover:bg-white/20"
-                        >
-                            {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onToggle}
-                            className="w-8 h-8 text-white hover:bg-white/20"
-                        >
-                            <X className="w-4 h-4" />
-                        </Button>
+            <Card className="w-full h-full flex flex-col">
+                <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg mobile:rounded-none mobile:pb-2 flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-lg mobile:text-base mobile:gap-1">
+                            <Cpu className="w-5 h-5" />
+                            Advanced AI Chat
+                            {(tokenizerStatus === 'loading') && <Loader2 className="w-4 h-4 animate-spin" />}
+                        </CardTitle>
+                        <div className="flex items-center gap-1 mobile:gap-0">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowTokenDetails(!showTokenDetails)}
+                                className="w-9 h-9 text-white hover:bg-white/20 touch:active:scale-95"
+                                title="Toggle token details"
+                            >
+                                <Code className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowSettings(!showSettings)}
+                                className="w-9 h-9 text-white hover:bg-white/20 touch:active:scale-95"
+                                title="AI Settings"
+                            >
+                                <Settings className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setIsMinimized(!isMinimized)}
+                                className="w-9 h-9 text-white hover:bg-white/20 touch:active:scale-95 mobile:hidden"
+                            >
+                                {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onToggle}
+                                className="w-9 h-9 text-white hover:bg-white/20 touch:active:scale-95"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
-                </div>
-                {!isMinimized && (
-                    <div className="flex items-center gap-2 text-sm opacity-90 flex-wrap">
-                        <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
-                            <Brain className="w-3 h-3 mr-1" />
-                            {tokenizerStatus === 'ready' ? 'GPT-4 Tokenizer' :
-                                tokenizerStatus === 'loading' ? 'Loading...' : 'Tokenizer Error'}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
-                            {webllmSupported ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
-                            {webllmSupported ? 'WebLLM Ready' : 'WebLLM Unsupported'}
-                        </Badge>
-                        {(() => {
-                            const isPreloaded = preloaderStatus.textGenerator === 'ready';
-                            const isPreloading = preloaderStatus.textGenerator === 'loading';
-
-                            if (isPreloaded) {
-                                return (
-                                    <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-100 border-green-300/30">
-                                        <Sparkles className="w-3 h-3 mr-1" />
-                                        Pre-loaded
-                                    </Badge>
-                                );
-                            } else if (isPreloading) {
-                                return (
-                                    <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-100 border-yellow-300/30">
-                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                        Pre-loading...
-                                    </Badge>
-                                );
-                            }
-                            return null;
-                        })()}
-                        {useRAG && (
+                    {!isMinimized && (
+                        <div className="flex items-center gap-2 mobile:gap-1 text-sm mobile:text-xs opacity-90 flex-wrap pt-1">
                             <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
-                                <Zap className="w-3 h-3 mr-1" />
-                                RAG Enabled
+                                <Brain className="w-3 h-3 mr-1" />
+                                {tokenizerStatus === 'ready' ? 'GPT-4 Tokenizer' :
+                                    tokenizerStatus === 'loading' ? 'Loading...' : 'Tokenizer Error'}
                             </Badge>
-                        )}
-                    </div>
-                )}
-            </CardHeader>
+                            <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                                {transformersSupported ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
+                                {transformersSupported ? 'AI Ready' : 'Transformers.js Unsupported'}
+                            </Badge>
+                            {(() => {
+                                const isPreloaded = preloaderStatus.textGenerator === 'ready';
+                                const isPreloading = preloaderStatus.textGenerator === 'loading';
 
-            {!isMinimized && (
-                <CardContent className="p-0 flex flex-col h-[calc(100%-120px)]">
-                    {/* Settings Panel */}
-                    {showSettings && (
-                        <div className="p-4 border-b bg-muted/50 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-medium">AI Model Selection</h4>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowSettings(false)}
-                                >
-                                    <X className="w-4 h-4" />
-                                </Button>
-                            </div>
-
-                            {transformersSupported ? (
-                                <div className="space-y-3">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Choose AI Model</label>
-                                        <Select value={selectedTransformersModel} onValueChange={setSelectedTransformersModel}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {getAvailableTransformersModels().map(model => {
-                                                    const info = getTransformersModelInfo(model);
-                                                    return (
-                                                        <SelectItem key={model} value={model}>
-                                                            <div className="flex flex-col">
-                                                                <span>{info.name}</span>
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    {info.size} - {info.description}
-                                                                </span>
-                                                            </div>
-                                                        </SelectItem>
-                                                    );
-                                                })}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">RAG (Retrieval-Augmented Generation)</label>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setUseRAG(!useRAG)}
-                                            className="w-full justify-between"
-                                        >
-                                            <span>Use portfolio context</span>
-                                            <Badge variant={useRAG ? "default" : "secondary"}>
-                                                {useRAG ? "Enabled" : "Disabled"}
-                                            </Badge>
-                                        </Button>
-                                        <p className="text-xs text-muted-foreground">
-                                            When enabled, the AI uses Carlos's portfolio content to provide more accurate responses.
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Adaptive Token Allocation</label>
-                                        <div className="p-3 bg-muted/30 rounded-lg">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Brain className="w-4 h-4 text-blue-500" />
-                                                <span className="text-sm font-medium">Smart Response Length</span>
-                                                <Badge variant="secondary" className="text-xs">
-                                                    Auto
-                                                </Badge>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                The AI automatically adjusts response length based on your question's complexity:
-                                            </p>
-                                            <ul className="text-xs text-muted-foreground mt-1 space-y-1">
-                                                <li>• <strong>Simple</strong> (150 tokens): Basic questions, greetings, definitions</li>
-                                                <li>• <strong>Moderate</strong> (250 tokens): Standard explanations with context</li>
-                                                <li>• <strong>Complex</strong> (400 tokens): Technical topics, code explanations</li>
-                                                <li>• <strong>Detailed</strong> (600 tokens): Multi-part questions, comparisons, guides</li>
-                                            </ul>
-                                            <p className="text-xs text-muted-foreground mt-2 italic">
-                                                Factors: question length, technical terms, explanation keywords, multiple topics
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <Alert>
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertDescription>
-                                        Your browser doesn't support the required AI features. The chat will use fallback responses.
-                                    </AlertDescription>
-                                </Alert>
+                                if (isPreloaded) {
+                                    return (
+                                        <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-100 border-green-300/30">
+                                            <Sparkles className="w-3 h-3 mr-1" />
+                                            Pre-loaded
+                                        </Badge>
+                                    );
+                                } else if (isPreloading) {
+                                    return (
+                                        <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-100 border-yellow-300/30">
+                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                            Pre-loading...
+                                        </Badge>
+                                    );
+                                }
+                                return null;
+                            })()}
+                            {useRAG && (
+                                <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                                    <Zap className="w-3 h-3 mr-1" />
+                                    RAG Enabled
+                                </Badge>
                             )}
                         </div>
                     )}
+                </CardHeader>
 
-                    {/* Status Alerts */}
-                    {(tokenizerStatus !== 'ready' || !webllmSupported || loadingProgress) && (
-                        <Alert className="m-4 mb-2">
-                            <Info className="h-4 w-4" />
-                            <AlertDescription>
-                                {loadingProgress ||
-                                    (tokenizerStatus === 'loading' ? "Loading AI models and workspace data..." :
-                                        !webllmSupported ? "WebLLM not supported. Using intelligent responses based on Carlos's portfolio content." :
-                                            "Some AI features are unavailable.")}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    {/* Storage Warning */}
-                    {storageInfo?.warning && (
-                        <Alert className="m-4 mb-2" variant={storageInfo.warning.includes('Low storage') ? 'destructive' : 'default'}>
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                                {storageInfo.warning}
-                                {storageInfo.warning.includes('Low storage') && (
-                                    <span className="block mt-1 text-sm">
-                                        💡 Don't worry! The chatbot will automatically use cloud AI for the best experience.
-                                    </span>
-                                )}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-                        <div className="space-y-4">
-                            {messages.map((message) => (
-                                <div key={message.id} className="space-y-2">
-                                    <div
-                                        className={cn(
-                                            "flex gap-3",
-                                            message.sender === 'user' ? "justify-end" : "justify-start"
-                                        )}
+                {!isMinimized && (
+                    <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+                        {/* Settings Panel */}
+                        {showSettings && (
+                            <div className="p-4 border-b bg-muted/50 space-y-4 overflow-y-auto">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-medium">AI Model Selection</h4>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowSettings(false)}
                                     >
-                                        {message.sender === 'bot' && (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                                                <Cpu className="w-4 h-4 text-white" />
-                                            </div>
-                                        )}
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
 
-                                        <div
-                                            className={cn(
-                                                "max-w-[85%] rounded-lg px-3 py-2 text-sm",
-                                                message.sender === 'user'
-                                                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                                                    : "bg-muted"
+                                {transformersSupported ? (
+                                    <div className="space-y-3">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Choose AI Model</label>
+                                            <Select value={selectedTransformersModel} onValueChange={setSelectedTransformersModel}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {getAvailableTransformersModels().map(model => {
+                                                        const info = getTransformersModelInfo(model);
+                                                        return (
+                                                            <SelectItem key={model} value={model}>
+                                                                <div className="flex flex-col">
+                                                                    <span>{info.name}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {info.size} - {info.description}
+                                                                    </span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">RAG (Retrieval-Augmented Generation)</label>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setUseRAG(!useRAG)}
+                                                className="w-full justify-between"
+                                            >
+                                                <span>Use portfolio context</span>
+                                                <Badge variant={useRAG ? "default" : "secondary"}>
+                                                    {useRAG ? "Enabled" : "Disabled"}
+                                                </Badge>
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">
+                                                When enabled, the AI uses Carlos's portfolio content to provide more accurate responses.
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Adaptive Token Allocation</label>
+                                            <div className="p-3 bg-muted/30 rounded-lg">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Brain className="w-4 h-4 text-blue-500" />
+                                                    <span className="text-sm font-medium">Smart Response Length</span>
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        Auto
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    The AI automatically adjusts response length based on your question's complexity:
+                                                </p>
+                                                <ul className="text-xs text-muted-foreground mt-1 space-y-1">
+                                                    <li>• <strong>Simple</strong> (150 tokens): Basic questions, greetings, definitions</li>
+                                                    <li>• <strong>Moderate</strong> (250 tokens): Standard explanations with context</li>
+                                                    <li>• <strong>Complex</strong> (400 tokens): Technical topics, code explanations</li>
+                                                    <li>• <strong>Detailed</strong> (600 tokens): Multi-part questions, comparisons, guides</li>
+                                                </ul>
+                                                <p className="text-xs text-muted-foreground mt-2 italic">
+                                                    Factors: question length, technical terms, explanation keywords, multiple topics
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <Alert>
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertDescription>
+                                            Your browser doesn't support the required AI features. The chat will use fallback responses.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex-1 flex flex-col min-h-0">
+                            {/* Status Alerts */}
+                            <div className="flex-shrink-0">
+                                {(tokenizerStatus !== 'ready' || loadingProgress) && (
+                                    <Alert className="m-4 mb-2">
+                                        <Info className="h-4 w-4" />
+                                        <AlertDescription>
+                                            {loadingProgress ||
+                                                (tokenizerStatus === 'loading' ? "Loading AI models and workspace data..." :
+                                                    "Transformers.js not supported. Using intelligent responses based on Carlos's portfolio content.")}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
+                                {/* Storage Warning */}
+                                {storageInfo?.warning && (
+                                    <Alert className="m-4 mb-2" variant={storageInfo.warning.includes('Low storage') ? 'destructive' : 'default'}>
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertDescription>
+                                            {storageInfo.warning}
+                                            {storageInfo.warning.includes('Low storage') && (
+                                                <span className="block mt-1 text-sm">
+                                                    💡 Don't worry! The chatbot will automatically use cloud AI for the best experience.
+                                                </span>
                                             )}
-                                        >
-                                            <div className="whitespace-pre-wrap">{message.content}</div>
-                                            <div className={cn(
-                                                "text-xs mt-1 opacity-70 flex items-center gap-2",
-                                                message.sender === 'user' ? "text-white/70" : "text-muted-foreground"
-                                            )}>
-                                                <span>{message.tokenCount} tokens</span>
-                                                {message.generationMethod && (
-                                                    <Badge variant="outline" className="text-xs">
-                                                        {message.generationMethod === 'webllm-rag' ? '🧠 WebLLM+RAG' :
-                                                            message.generationMethod === 'webllm-direct' ? '🤖 WebLLM' :
-                                                                message.generationMethod === 'transformers-rag' ? '⚡ Transformers+RAG' :
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
+
+                            <ScrollArea ref={scrollAreaRef} className="flex-1 min-h-0 p-4 mobile:p-3">
+                                <div className="space-y-4">
+                                    {messages.map((message) => (
+                                        <div key={message.id} className="space-y-2">
+                                            <div
+                                                className={cn(
+                                                    "flex gap-3",
+                                                    message.sender === 'user' ? "justify-end" : "justify-start"
+                                                )}
+                                            >
+                                                {message.sender === 'bot' && (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                                                        <Cpu className="w-4 h-4 text-white" />
+                                                    </div>
+                                                )}
+
+                                                <div
+                                                    className={cn(
+                                                        "max-w-[85%] mobile:max-w-[90%] rounded-lg px-3 py-2 mobile:px-2 mobile:py-1.5 text-sm mobile:text-base",
+                                                        message.sender === 'user'
+                                                            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                                                            : "bg-muted"
+                                                    )}
+                                                >
+                                                    <div className="whitespace-pre-wrap">{message.content}</div>
+                                                    <div className={cn(
+                                                        "text-xs mt-1 opacity-70 flex items-center gap-2 flex-wrap",
+                                                        message.sender === 'user' ? "text-white/70" : "text-muted-foreground"
+                                                    )}>
+                                                        <span>{message.tokenCount} tokens</span>
+                                                        {message.generationMethod && (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                {message.generationMethod === 'transformers-rag' ? '⚡ Transformers+RAG' :
                                                                     message.generationMethod === 'transformers-direct' ? '🔬 Transformers.js' :
                                                                         message.generationMethod === 'intelligent-fallback' ? '🎯 Smart Response' :
                                                                             message.generationMethod === 'simple-fallback' ? '📝 Basic Response' :
                                                                                 '❌ Error'}
-                                                    </Badge>
-                                                )}
-                                                {message.contextUsed && message.contextUsed.length > 0 && (
-                                                    <Badge variant="outline" className="text-xs">
-                                                        📚 {message.contextUsed.length} context
-                                                    </Badge>
-                                                )}
-                                                {message.processingTime && (
-                                                    <span>{message.processingTime}ms</span>
-                                                )}
-                                                {message.complexityAnalysis && (
-                                                    <Badge variant="outline" className="text-xs">
-                                                        🧠 {message.complexityAnalysis.complexity} ({message.complexityAnalysis.allocatedTokens}t)
-                                                    </Badge>
+                                                            </Badge>
+                                                        )}
+                                                        {message.contextUsed && message.contextUsed.length > 0 && (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                📚 {message.contextUsed.length} context
+                                                            </Badge>
+                                                        )}
+                                                        {message.processingTime && (
+                                                            <span>{message.processingTime}ms</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {message.sender === 'user' && (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                                                        <User className="w-4 h-4 text-white" />
+                                                    </div>
                                                 )}
                                             </div>
+
+                                            {/* Token breakdown details */}
+                                            {showTokenDetails && message.decodedTokens && message.decodedTokens.length > 0 && (
+                                                <div className={cn(
+                                                    "text-xs p-2 rounded border bg-muted/50 font-mono",
+                                                    message.sender === 'user' ? "ml-12" : "mr-12"
+                                                )}>
+                                                    <div className="flex items-center gap-1 mb-1 text-muted-foreground">
+                                                        <ArrowRight className="w-3 h-3" />
+                                                        Token breakdown ({message.generationMethod}):
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {message.decodedTokens.slice(0, 20).map((token, idx) => (
+                                                            <span key={idx} className="bg-background px-1 py-0.5 rounded border text-xs">
+                                                                {token.replace(/\s/g, '·')}
+                                                            </span>
+                                                        ))}
+                                                        {message.decodedTokens.length > 20 && (
+                                                            <span className="text-muted-foreground">+{message.decodedTokens.length - 20} more</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
+                                    ))}
 
-                                        {message.sender === 'user' && (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                                                <User className="w-4 h-4 text-white" />
+                                    {isTyping && (
+                                        <div className="flex gap-3 justify-start">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                                                <Cpu className="w-4 h-4 text-white animate-pulse" />
                                             </div>
-                                        )}
-                                    </div>
-
-                                    {/* Token breakdown details */}
-                                    {showTokenDetails && message.decodedTokens && message.decodedTokens.length > 0 && (
-                                        <div className={cn(
-                                            "text-xs p-2 rounded border bg-muted/50 font-mono",
-                                            message.sender === 'user' ? "ml-12" : "mr-12"
-                                        )}>
-                                            <div className="flex items-center gap-1 mb-1 text-muted-foreground">
-                                                <ArrowRight className="w-3 h-3" />
-                                                Token breakdown ({message.generationMethod}):
-                                            </div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {message.decodedTokens.slice(0, 20).map((token, idx) => (
-                                                    <span key={idx} className="bg-background px-1 py-0.5 rounded border text-xs">
-                                                        {token.replace(/\s/g, '·')}
+                                            <div className="bg-muted rounded-lg px-3 py-2 text-sm">
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                    <span className="ml-2 text-xs text-muted-foreground">
+                                                        {loadingProgress || "Generating AI response..."}
                                                     </span>
-                                                ))}
-                                                {message.decodedTokens.length > 20 && (
-                                                    <span className="text-muted-foreground">+{message.decodedTokens.length - 20} more</span>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                            </ScrollArea>
+                        </div>
 
-                            {isTyping && (
-                                <div className="flex gap-3 justify-start">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                                        <Cpu className="w-4 h-4 text-white animate-pulse" />
-                                    </div>
-                                    <div className="bg-muted rounded-lg px-3 py-2 text-sm">
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                            <span className="ml-2 text-xs text-muted-foreground">
-                                                {loadingProgress || "Generating AI response..."}
+                        <div className="p-4 mobile:p-3 border-t space-y-2 mobile:space-y-1.5 flex-shrink-0">
+                            <div className="flex gap-2 mobile:gap-1.5 items-end">
+                                <Textarea
+                                    ref={inputRef}
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Ask me anything..."
+                                    className="flex-1 min-h-[44px] max-h-[120px] mobile:text-base resize-none"
+                                    disabled={isTyping}
+                                    rows={1}
+                                />
+                                <Button
+                                    onClick={handleSendMessage}
+                                    disabled={!inputValue?.trim() || isTyping}
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white w-11 h-11 mobile:w-12 mobile:h-12 flex-shrink-0 touch:active:scale-95"
+                                    size="icon"
+                                >
+                                    <Send className="w-5 h-5" />
+                                </Button>
+                            </div>
+
+                            {/* Live tokenization and complexity preview */}
+                            {tokenizerStatus === 'ready' && inputValue?.trim() && !isTyping && (
+                                <div className="text-xs text-muted-foreground space-y-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <Hash className="w-3 h-3" />
+                                        <span>{currentInputTokens.tokenCount} input tokens</span>
+                                        {showTokenDetails && currentInputTokens.tokens.length > 0 && (
+                                            <span className="font-mono">
+                                                [{currentInputTokens.tokens.slice(0, 5).join(', ')}{currentInputTokens.tokens.length > 5 ? '...' : ''}]
                                             </span>
-                                        </div>
+                                        )}
+                                        <Badge variant="outline" className="text-xs">
+                                            {transformersSupported ? 'AI Ready' : 'Fallback Mode'}
+                                        </Badge>
                                     </div>
+                                    {/* {(() => {
+                                        const liveComplexity = analyzeInputComplexity(inputValue);
+                                        return (
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <Brain className="w-3 h-3" />
+                                                <span>Complexity: {liveComplexity.complexity}</span>
+                                                <Badge variant="secondary" className="text-xs">
+                                                    ~{liveComplexity.suggestedTokens} response tokens
+                                                </Badge>
+                                                {liveComplexity.reasoning && (
+                                                    <span className="opacity-70 hidden sm:inline">({liveComplexity.reasoning})</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })()} */}
                                 </div>
                             )}
                         </div>
-                    </ScrollArea>
-
-                    <div className="p-4 border-t space-y-2">
-                        <div className="flex gap-2">
-                            <Textarea
-                                ref={inputRef}
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Ask me anything - I'll use AI generation + tokenization..."
-                                className="flex-1 min-h-[40px] max-h-[100px] resize-none"
-                                disabled={isTyping}
-                            />
-                            <Button
-                                onClick={handleSendMessage}
-                                disabled={!inputValue?.trim() || isTyping}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white self-end"
-                            >
-                                <Send className="w-4 h-4" />
-                            </Button>
-                        </div>
-
-                        {/* Live tokenization and complexity preview */}
-                        {tokenizerStatus === 'ready' && inputValue?.trim() && (
-                            <div className="text-xs text-muted-foreground space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <Hash className="w-3 h-3" />
-                                    <span>{currentInputTokens.tokenCount} input tokens</span>
-                                    {showTokenDetails && currentInputTokens.tokens.length > 0 && (
-                                        <span className="font-mono">
-                                            [{currentInputTokens.tokens.slice(0, 5).join(', ')}{currentInputTokens.tokens.length > 5 ? '...' : ''}]
-                                        </span>
-                                    )}
-                                    <Badge variant="outline" className="text-xs">
-                                        {webllmSupported || transformersSupported ? 'AI Ready' : 'Fallback Mode'}
-                                    </Badge>
-                                </div>
-                                {(() => {
-                                    const liveComplexity = analyzeInputComplexity(inputValue);
-                                    return (
-                                        <div className="flex items-center gap-2">
-                                            <Brain className="w-3 h-3" />
-                                            <span>Complexity: {liveComplexity.complexity}</span>
-                                            <Badge variant="secondary" className="text-xs">
-                                                ~{liveComplexity.suggestedTokens} response tokens
-                                            </Badge>
-                                            {liveComplexity.reasoning && (
-                                                <span className="opacity-70">({liveComplexity.reasoning})</span>
-                                            )}
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            )}
-        </Card>
+                    </CardContent>
+                )}
+            </Card>
+        </div>
     );
 };
 

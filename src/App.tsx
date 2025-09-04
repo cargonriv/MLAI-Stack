@@ -90,7 +90,7 @@ const AppContent = () => {
     // Load polyfills if needed
     if (needsPolyfills()) {
       loadPolyfills().catch((error) => {
-        console.warn("Failed to load some polyfills:", error);
+        
       });
     }
 
@@ -99,13 +99,13 @@ const AppContent = () => {
       try {
         initializeCompatibilityTesting();
       } catch (error) {
-        console.warn("Compatibility testing failed:", error);
+        
       }
     }
 
     // Initialize chat pre-loading to reduce response time
     initializeChatPreloading().catch((error) => {
-      console.warn("Chat pre-loading initialization failed:", error);
+      
     });
 
     // Announce page changes for screen readers
@@ -120,7 +120,7 @@ const AppContent = () => {
     // Performance monitoring setup
     const handleWebVital = (event: CustomEvent) => {
       const { name, value, rating } = event.detail;
-      console.log(`[Web Vital] ${name}: ${value.toFixed(2)}ms (${rating})`);
+      
     };
 
     window.addEventListener("web-vital", handleWebVital as EventListener);
@@ -144,7 +144,7 @@ const AppContent = () => {
 
       <ErrorBoundary
         onError={(error) => {
-          console.error("Page content error:", error);
+
         }}
       >
         <PageTransition>
@@ -176,7 +176,7 @@ const AppContent = () => {
       {/* Global Chat Widget */}
       <ErrorBoundary
         onError={(error) => {
-          console.error("Chat widget error:", error);
+          
         }}
       >
         <AdvancedTokenizedChat isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
@@ -190,7 +190,7 @@ const AppContent = () => {
 const App = () => (
   <AsyncErrorBoundary
     onError={(error, errorInfo) => {
-      console.error("Global error caught:", error, errorInfo);
+      
       // In production, send to error tracking service
       if (process.env.NODE_ENV === "production") {
         // Example: errorTrackingService.captureException(error, { extra: errorInfo });

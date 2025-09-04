@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 const TestSentimentDemo = () => {
-  console.log('🚨 TestSentimentDemo component loaded successfully!');
+  
 
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,16 +16,16 @@ const TestSentimentDemo = () => {
   useEffect(() => {
     const initModel = async () => {
       try {
-        console.log('🚀 Initializing Hugging Face model...');
+        
         setIsLoading(true);
 
         await onnxSentiment.initialize((progress) => {
-          console.log(`📊 Loading progress: ${progress}%`);
+          
         });
 
         setIsModelReady(true);
         setIsLoading(false);
-        console.log('✅ Hugging Face model ready!');
+        
       } catch (err) {
         console.error('❌ Model initialization failed:', err);
         setError(`Model failed to load: ${err}`);
@@ -45,12 +45,12 @@ const TestSentimentDemo = () => {
       console.log('🤖 Analyzing sentiment with Hugging Face...');
 
       const sentimentResult = await onnxSentiment.analyze(text);
-      console.log('📊 Sentiment result:', sentimentResult);
+      
 
       setResult(sentimentResult);
       setIsLoading(false);
     } catch (err) {
-      console.error('❌ Analysis failed:', err);
+      
       setError(`Analysis failed: ${err}`);
       setIsLoading(false);
     }

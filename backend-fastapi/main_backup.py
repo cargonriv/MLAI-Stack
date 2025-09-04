@@ -158,6 +158,10 @@ Context:
 {context}
 
 User Question: {user_query}
+"""
+    return prompt
+
+@app.get("/search")
 async def search_documents(query: str, max_chunks: int = 5, threshold: float = 0.3):
     """Search for relevant document chunks"""
     if not embedding_model:
@@ -199,7 +203,7 @@ async def chat(req: ChatRequest):
     print(f"🔍 Using RAG: {req.use_rag}, Found {len(relevant_chunks)} relevant chunks")
     
     # Generate response with streaming
-    stream = llm(prompt, max_tokens=512, stream=True, temperature=0.7)
+    stream = llm(prompt, max_tokens=4096, stream=True, temperature=0.7)
 
     async def event_generator():
         for output in stream:
@@ -210,7 +214,7 @@ async def chat(req: ChatRequest):
     return EventSourceResponse(event_generator())
 
 @app.get("/health")
-async def health_check():
+def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",

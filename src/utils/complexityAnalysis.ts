@@ -83,7 +83,7 @@ export function analyzeInputComplexity(input: string): ComplexityAnalysis {
 
   if (complexityScore <= 2) {
     complexity = 'simple';
-    suggestedTokens = 400; // Short, direct answers
+    suggestedTokens = 4096; // Short, direct answers
   } else if (complexityScore <= 4) {
     complexity = 'moderate';
     suggestedTokens = 800; // Standard responses

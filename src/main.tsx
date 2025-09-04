@@ -6,12 +6,15 @@ import './index.css'
 // import '@/lib/preloaded-models';
 
 // Performance and optimization utilities
-import { optimizeCSSDelivery } from './utils/criticalCss'
 import { performanceMonitor } from './utils/performanceMonitoring'
 import { preloadCriticalImages } from './utils/imageOptimization'
 
-// Initialize critical CSS optimization
-optimizeCSSDelivery()
+// Initialize critical CSS optimization only in development
+if (import.meta.env.DEV) {
+  import('./utils/criticalCss').then(({ optimizeCSSDelivery }) => {
+    optimizeCSSDelivery();
+  });
+}
 
 // Preload critical images
 preloadCriticalImages([

@@ -48,9 +48,9 @@ class PerformanceMonitor {
       // Observe different types of performance entries
       this.observer.observe({ entryTypes: ['navigation', 'paint', 'largest-contentful-paint', 'first-input', 'layout-shift'] });
     } catch (error) {
-      console.warn('Performance monitoring not supported:', error);
+      // console.warn('Performance monitoring not supported:', error);
     }
-  }
+  };
 
   private processEntry(entry: PerformanceEntry) {
     const timestamp = Date.now();
@@ -131,7 +131,7 @@ class PerformanceMonitor {
     
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${name}: ${value.toFixed(2)}ms (${rating})`);
+      // console.log(`[Performance] ${name}: ${value.toFixed(2)}ms (${rating})`);
     }
     
     // Emit custom event for external monitoring
