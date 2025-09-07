@@ -10,7 +10,7 @@ railway up
 
 # Get the deployment URL
 echo "🌐 Getting deployment URL..."
-RAILWAY_URL=$(railway status --json | grep -o '"url":"[^"]*' | cut -d'"' -f4)
+RAILWAY_URL=$(railway status --json | grep "domain" | cut -d'"' -f4)
 
 if [ -n "$RAILWAY_URL" ]; then
     echo "✅ Deployment successful!"

@@ -39,4 +39,3 @@ backend-fastapi/venv
 .env.test.local
 .env.production
 docker-compose.yml
-./**.md
