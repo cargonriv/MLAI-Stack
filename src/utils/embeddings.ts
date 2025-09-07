@@ -1,4 +1,5 @@
-import { pipeline, Pipeline } from "@xenova/transformers";
+import { pipeline, Pipeline, env } from "@xenova/transformers";
+import workspaceEmbeddingsData from '../data/workspace_embeddings.json';
 
 // Document chunk interface matching the precomputed embeddings
 export interface DocumentChunk {
@@ -28,8 +29,8 @@ export async function initializeEmbeddingModel(): Promise<Pipeline> {
     // Use the same model as the backend for consistency
     embeddingModel = await pipeline(
       "feature-extraction",
-      "Xenova/all-MiniLM-L6-v2",
-      { 
+      "/models/all-MiniLM-L6-v2",
+      {
         quantized: true,
         progress_callback: (progress: any) => {
           if (progress.status === 'downloading') {
@@ -68,12 +69,7 @@ export async function loadWorkspaceEmbeddings(): Promise<DocumentChunk[]> {
   try {
     console.log("📚 Loading precomputed workspace embeddings...");
     
-    const response = await fetch("/workspace_embeddings.json");
-    if (!response.ok) {
-      throw new Error(`Failed to load embeddings: ${response.statusText}`);
-    }
-
-    workspaceEmbeddings = await response.json();
+    workspaceEmbeddings = workspaceEmbeddingsData as DocumentChunk[];
     console.log(`✅ Loaded ${workspaceEmbeddings.length} document chunks`);
     
     return workspaceEmbeddings;
@@ -123,7 +119,6 @@ export function cosineSimilarity(a: number[], b: number[]): number {
     normA += a[i] * a[i];
     normB += b[i] * b[i];
   }
-
   normA = Math.sqrt(normA);
   normB = Math.sqrt(normB);
 
@@ -177,11 +172,9 @@ export function buildContext(relevantChunks: { chunk: DocumentChunk; similarity:
   if (relevantChunks.length === 0) {
     return "";
   }
-
   const contextParts = relevantChunks.map(({ chunk, similarity }) => {
     return `File: ${chunk.filePath}\nContent: ${chunk.content}\nRelevance: ${(similarity * 100).toFixed(1)}%`;
   });
-
   return `Context from codebase:\n\n${contextParts.join('\n\n---\n\n')}`;
 }
 
@@ -197,12 +190,12 @@ export function getEmbeddingModelStatus(): 'not-loaded' | 'loading' | 'ready' | 
 /**
  * Get workspace embeddings status
  */
-export function getWorkspaceEmbeddingsStatus(): { 
+export function getWorkspaceEmbeddingsStatus(): {
   status: 'not-loaded' | 'loading' | 'ready' | 'error';
   count: number;
 } {
   return {
-    status: workspaceEmbeddings.length > 0 ? 'ready' : 
+    status: workspaceEmbeddings.length > 0 ? 'ready' :
             isLoadingEmbeddings ? 'loading' : 'not-loaded',
     count: workspaceEmbeddings.length
   };

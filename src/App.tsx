@@ -104,9 +104,9 @@ const AppContent = () => {
     }
 
     // Initialize chat pre-loading to reduce response time
-    initializeChatPreloading().catch((error) => {
-      
-    });
+    // initializeChatPreloading().catch((error) => {
+    //   
+    // });
 
     // Announce page changes for screen readers
     const handleHashChange = () => {

@@ -6,163 +6,103 @@ Welcome to my comprehensive portfolio website featuring an interactive machine l
 
 This is a full-stack React application that serves as both my personal portfolio and a demonstration platform for various machine learning and AI capabilities. The site showcases my work as a Machine Learning Engineer while providing interactive demos of cutting-edge AI models.
 
-## 🤖 ML/AI Demo Stack
+## 🤖 New Architecture: Server-Hosted LLM
 
-### Interactive Model Demonstrations
+The chat functionality has been re-architected to use a powerful, server-hosted Language Model (LLM) powered by a Python FastAPI backend. This replaces the previous implementation that used Transformers.js for client-side inference.
 
-**Image Classification & Segmentation**
-- **Grounded SAM (Segment Anything Model)**: Upload images and use natural language prompts to identify and segment objects
-- Real-time object detection with confidence scoring
-- Advanced computer vision capabilities using state-of-the-art foundation models
+### Key Changes:
 
-**Natural Language Processing**
-- **BERT Sentiment Analysis**: Real-time text sentiment classification using BERT with confidence metrics
-- **FastAPI Backend**: Dedicated Python backend with DistilBERT model for server-side inference
-- Input validation and text preprocessing
-- Supports various text formats and lengths
-
-**Recommendation Systems**
-- **Movie Recommendation Engine**: Genre-based collaborative filtering demo
-- Multi-genre selection with personalized recommendations
-- Rating-based ranking and recommendation algorithms
-
-### Technical Stack
-
-**Frontend Technologies**
-- React 18 with TypeScript for type-safe development
-- Tailwind CSS with custom design system
-- Vite for lightning-fast development and builds
-- React Router for seamless navigation
-- Shadcn/ui component library for consistent UI
-
-**ML/AI Integration**
-- Hugging Face Transformers.js for client-side model inference
-- ONNX Runtime for optimized model performance
-- WebGL acceleration for computer vision tasks
-- Custom model loading and management utilities
-
-**Backend & Infrastructure**
-- **FastAPI Backend**: Python-based API server with BERT sentiment analysis
-- Supabase integration for data management
-- Edge functions for serverless ML processing
-- Real-time data synchronization
-- Secure API endpoints with CORS support
-
-## 📋 Portfolio Sections
-
-### Professional Content
-- **About Me**: Background, expertise, and professional journey
-- **Resume**: Comprehensive CV with education, experience, and skills
-- **Past Projects**: Detailed project showcase with technologies and outcomes
-- **Capstone Project**: SIDS prediction system using machine learning
-- **Technical Blog**: In-depth articles on ML, AI, and data science topics
-
-### Interactive Demos
-- **Live Model Collection**: 6+ interactive ML models with real-time inference
-- **Performance Metrics**: Model accuracy, dataset information, and benchmarks
-- **GitHub Integration**: Direct links to model implementations and research
-
-## 🚀 Key Features
-
-### Advanced ML Capabilities
-- **Client-side Inference**: Models run directly in the browser for privacy and speed
-- **Multi-modal Support**: Text, image, and structured data processing
-- **Real-time Processing**: Instant results with loading states and progress indicators
-- **Error Handling**: Robust fallback mechanisms and user feedback
-- **Mobile Compatibility**: The chatbot is now fully responsive and mobile-friendly.
-
-### Professional Portfolio
-- **SEO Optimized**: Semantic HTML, meta tags, and structured data
-- **Responsive Design**: Mobile-first approach with dark/light mode support
-- **Performance Focused**: Lazy loading, code splitting, and optimized assets
-- **Accessibility**: WCAG compliant with proper ARIA labels and keyboard navigation
-
-### Technical Excellence
-- **Type Safety**: Full TypeScript implementation with strict typing
-- **Modern React**: Hooks, context, and functional components
-- **Clean Architecture**: Modular components with separation of concerns
-- **Best Practices**: ESLint, proper error boundaries, and code organization
-- **Code Cleanup**: Removed all `console.log`, `console.warn`, and `console.error` statements from the codebase.
+- **FastAPI Backend**: A new backend service built with FastAPI hosts a Hugging Face text-generation model (e.g., `mistralai/Mistral-7B-Instruct-v0.2`).
+- **GPU-Powered**: The backend is designed for deployment on a GPU server for high-performance inference, with Docker support included.
+- **Streaming API**: The backend exposes a `/chat` endpoint with streaming support, allowing for real-time, token-by-token responses in the UI.
+- **Decoupled Frontend**: The React frontend now communicates with the FastAPI backend, making it a lightweight and highly scalable client application.
 
 ## 🛠️ Development Setup
 
-```bash
-# Clone the repository
-git clone github.com/cargonriv/MLAI-Stack
+This project now consists of two main parts: the React frontend and the FastAPI backend.
 
-# Navigate to project directory
-cd MLAI-Stack
+### 1. Backend Setup (FastAPI + Hugging Face)
 
-# Install dependencies
-npm install
+The backend runs a Hugging Face model on a Python server. It requires a machine with a GPU for optimal performance.
 
-# Start development server (frontend only)
-npm run dev
+**Prerequisites:**
+- Python 3.10+
+- An NVIDIA GPU with CUDA drivers installed.
 
-# Start full-stack development (frontend + FastAPI backend)
-npm run dev:full
+**Instructions:**
 
-# Or start services separately:
-# Terminal 1: Start FastAPI backend
-npm run dev:backend
+1.  **Navigate to the backend directory:**
+    ```bash
+    cd backend-fastapi
+    ```
 
-# Terminal 2: Start frontend
-npm run dev
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate
+    ```
 
-# Build for production
-npm run build
-```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## 🐍 FastAPI Backend
+4.  **Configure the model:**
+    Create a `.env` file in the `backend-fastapi` directory and specify the Hugging Face model you want to use:
+    ```
+    MODEL_ID="mistralai/Mistral-7B-Instruct-v0.2"
+    ```
 
-The sentiment analysis demo now includes a dedicated FastAPI backend for server-side BERT inference:
+5.  **Run the backend server:**
+    ```bash
+    uvicorn main:app --host 0.0.0.0 --port 8000
+    ```
+    The server will download the model on the first run, which may take some time.
 
-### Backend Features
-- **DistilBERT Model**: Fast, accurate sentiment analysis using Hugging Face Transformers
-- **Real-time API**: `/api/sentiment` endpoint for instant text analysis
-- **Model Information**: `/api/model-info` endpoint with detailed model specs
-- **Health Monitoring**: `/api/health` for service status checks
-- **CORS Enabled**: Ready for frontend integration
+### 2. Frontend Setup (React)
 
-### Backend Setup
-```bash
-# Navigate to backend directory
-cd backend
+1.  **Navigate to the project root directory:**
+    ```bash
+    cd /path/to/MLAI-Stack
+    ```
 
-# Create virtual environment
-python -m venv venv
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
+3.  **Run the frontend development server:**
+    ```bash
+    npm run dev
+    ```
+    The frontend will be available at `http://localhost:5173` and will connect to the backend running on port 8000.
 
-# Install dependencies
-pip install -r requirements.txt
+## 🐳 Docker Deployment (Backend)
 
-# Start FastAPI server
-python main.py
-```
+The FastAPI backend can be easily deployed as a Docker container, which is the recommended approach for production.
 
-### API Usage
-```bash
-# Test sentiment analysis
-curl -X POST "http://localhost:8000/api/sentiment" \
-     -H "Content-Type: application/json" \
-     -d '{"text": "I love this product!"}'
+**Prerequisites:**
+- Docker
+- NVIDIA Container Toolkit (for GPU support)
 
-# Check API documentation
-open http://localhost:8000/docs
-```
+**Instructions:**
 
-## 📊 Model Performance
+1.  **Navigate to the backend directory:**
+    ```bash
+    cd backend-fastapi
+    ```
 
-The ML demo stack features models with varying capabilities:
-- **Image Classification**: 94%+ accuracy on standard benchmarks
-- **Sentiment Analysis**: Real-time processing with confidence scoring
-- **Recommendation Systems**: Collaborative filtering with personalized results
-- **Computer Vision**: Advanced object detection and segmentation
+2.  **Build the Docker image:**
+    ```bash
+    docker build -t llm-backend .
+    ```
+
+3.  **Run the Docker container with GPU access:**
+    ```bash
+    docker run --gpus all -p 8000:8000 -v ./huggingface:/app/huggingface llm-backend
+    ```
+    - `--gpus all` provides the container with access to all available GPUs.
+    - `-v ./huggingface:/app/huggingface` mounts a local directory to the container to cache the Hugging Face models, preventing re-downloads on container restarts.
 
 ## 🔗 Live Demo
 

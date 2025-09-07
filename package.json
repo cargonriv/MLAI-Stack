@@ -29,8 +29,9 @@
     "analyze:bundle:compare": "node scripts/analyze-bundle.js --compare",
     
     
-    "dev:backend": "cd backend && python main.py",
+    "dev:backend": "cd backend-fastapi && python3 main.py",
     "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+    "start:static-backend": "cd backend && npm run start:static",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",

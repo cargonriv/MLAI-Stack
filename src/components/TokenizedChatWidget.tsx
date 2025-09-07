@@ -91,19 +91,21 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
                 setTokenizerStatus('ready');
 
                 // Add welcome message with tokenization details
-                const welcomeText = "Hi! I'm your AI assistant with GPT-4 tokenization. I can show you exactly how text gets encoded into tokens and decoded back. Try sending a message to see the tokenization process in action!";
+                                const welcomeText = "Hi! I'm your AI assistant with GPT-4 tokenization. I can show you exactly how text gets encoded into tokens and decoded back. Try sending a message to see the tokenization process in action!";
                 const welcomeTokens = tokenizer.encode(welcomeText);
                 const welcomeDecodedTokens = welcomeTokens.map((token: number) => tokenizer.decode([token]));
 
-                setMessages([{
-                    id: Date.now().toString(),
-                    content: welcomeText,
-                    sender: 'bot',
-                    timestamp: new Date(),
-                    tokens: welcomeTokens,
-                    tokenCount: welcomeTokens.length,
-                    decodedTokens: welcomeDecodedTokens
-                }]);
+                setMessages([
+                    {
+                        id: Date.now().toString(),
+                        content: welcomeText,
+                        sender: 'bot',
+                        timestamp: new Date(),
+                        tokens: welcomeTokens,
+                        tokenCount: welcomeTokens.length,
+                        decodedTokens: welcomeDecodedTokens
+                    }
+                ]);
 
             } catch (error) {
                 
@@ -180,7 +182,7 @@ const TokenizedChatWidget = ({ isOpen, onToggle }: TokenizedChatWidgetProps) => 
             // Create a context-aware prompt
             const contextPrompt = `You are an AI assistant for Carlos Gonzalez Rivera's ML portfolio. The user said: "${userMessage}" (${userTokens.length} tokens). Respond helpfully about his ML projects, skills, or tokenization. Keep it concise and informative.
 
-Response:`;
+Response:`
 
             
             const result = await generator(contextPrompt, {

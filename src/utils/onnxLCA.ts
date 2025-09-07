@@ -1,7 +1,7 @@
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to always download models
-env.allowLocalModels = false;
+env.allowRemoteModels = true;
 env.useBrowserCache = true;
 
 export interface GroundedSAMResult {

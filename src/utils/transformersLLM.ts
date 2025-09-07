@@ -3,14 +3,11 @@
  * Alternative to WebLLM for storage-constrained environments
  */
 
-import { pipeline, TextGenerationPipeline, TextStreamer } from '@huggingface/transformers';
+import { env, pipeline, TextGenerationPipeline, TextStreamer } from '@huggingface/transformers';
 
 // Available ONNX-compatible models from HuggingFaceTB (verified working)
 const AVAILABLE_MODELS = [
-  "HuggingFaceTB/SmolLM3-3B-ONNX", // ~250MB quantized - Best quality, dual reasoning, 6 languages
-  "HuggingFaceTB/SmolLM2-1.7B-Instruct-ONNX", // ~170MB quantized - Good balance of size and quality
-  "HuggingFaceTB/SmolLM2-360M-Instruct-ONNX", // ~40MB quantized - Lightweight with decent quality
-  "HuggingFaceTB/SmolLM2-135M-Instruct-ONNX", // ~15MB quantized - Ultra lightweight for limited resources
+  "http://localhost:8080/models/SmolLM3-3B-ONNX/",
 ] as const;
 
 export type TransformersModelName = typeof AVAILABLE_MODELS[number];
@@ -41,7 +38,8 @@ export async function initializeTransformersLLM(
   config: TransformersLLMConfig = {},
   onProgress?: (status: string) => void
 ): Promise<TextGenerationPipeline> {
-  const model = config.model || "HuggingFaceTB/SmolLM3-3B-ONNX";
+  const baseUrl = window.location.origin;
+  const model = config.model || `${baseUrl}/models/SmolLM3-3B-ONNX/`;
 
   // Return existing pipeline if same model
   if (generator && currentModel === model) {
@@ -60,12 +58,10 @@ export async function initializeTransformersLLM(
 
   try {
     console.log(`🤖 Initializing Transformers.js with model: ${model}`);
-    onProgress?.(`Loading ${model.split('/')[1]}...`);
+    onProgress?.(`Loading ${model.split('/').pop()}...`);
 
-    // Try with WebGPU first, fallback to CPU if needed
-    let pipelineConfig = {
-      dtype: "q4f16", // 4-bit quantization for memory efficiency
-      device: "webgpu", // GPU acceleration
+    // Base pipeline config
+    const pipelineConfig = {
       progress_callback: (progress: any) => {
         if (progress.status === 'downloading') {
           const percent = Math.round((progress.loaded / progress.total) * 100);
@@ -78,14 +74,22 @@ export async function initializeTransformersLLM(
 
     try {
       // First attempt with WebGPU
-      generator = await pipeline('text-generation', model, pipelineConfig) as TextGenerationPipeline;
+      env.allowLocalModels = true;
+      generator = await pipeline('text-generation', model, {
+        ...pipelineConfig,
+        device: "webgpu",
+        dtype: "q4f16",
+      }) as TextGenerationPipeline;
     } catch (webgpuError) {
-      console.warn("WebGPU failed, falling back to CPU:", webgpuError);
-      onProgress?.('WebGPU unavailable, using CPU...');
+      console.warn("WebGPU failed, falling back to WASM:", webgpuError);
+      onProgress?.('WebGPU unavailable, using WASM...');
       
-      // Fallback to CPU
-      pipelineConfig.device = "cpu";
-      generator = await pipeline('text-generation', model, pipelineConfig) as TextGenerationPipeline;
+      // Fallback to WASM
+      generator = await pipeline('text-generation', model, {
+        ...pipelineConfig,
+        device: "wasm",
+        dtype: "q4f16",
+      }) as TextGenerationPipeline;
     }
 
     currentModel = model;
@@ -215,7 +219,7 @@ export async function cleanupTransformersLLM(): Promise<void> {
   }
 }
 
-// /**
+// **
 //  * Generate response using Transformers.js
 //  */
 // export async function generateTransformersResponse(
@@ -304,14 +308,20 @@ function formatMessagesForModel(messages: TransformersMessage[], model: Transfor
     let prompt = "";
     for (const message of messages) {
       if (message.role === "system") {
-        prompt += `<|system|>\n${message.content}<|end|>\n`;
+        prompt += `<|system|>
+${message.content}<|end|>
+`;
       } else if (message.role === "user") {
-        prompt += `<|user|>\n${message.content}<|end|>\n`;
+        prompt += `<|user|>
+${message.content}<|end|>
+`;
       } else if (message.role === "assistant") {
-        prompt += `<|assistant|>\n${message.content}<|end|>\n`;
+        prompt += `<|assistant|>
+${message.content}<|end|>
+`;
       }
     }
-    prompt += "<|assistant|>\n";
+    prompt += "<|assistant|>";
     return prompt;
   } else if (model.includes('gemma')) {
     // Gemma uses specific format
@@ -394,7 +404,7 @@ function cleanGeneratedText(text: string, originalPrompt: string): string {
   cleaned = cleaned.replace(/\n\s*\n/g, "\n").trim();
 
   // Remove leading/trailing special characters
-  cleaned = cleaned.replace(/^[^\w\s]+|[^\u0000-\u007E\s.!?]+$/g, "").trim();
+  cleaned = cleaned.replace(/^[^\w\s]+|[^\u0000-\u007E -~.!?]+/g, "").trim();
 
   // If response is too short or repetitive, provide a fallback
   if (cleaned.length < 10 || cleaned.split(' ').length < 3) {
@@ -422,35 +432,13 @@ export function getTransformersModelInfo(model: TransformersModelName): {
   quality: 1 | 2 | 3 | 4 | 5;
 } {
   const modelInfo = {
-    "HuggingFaceTB/SmolLM3-3B-ONNX": {
-      name: "SmolLM3 3B (Recommended)",
-      size: "~250MB",
-      description: "Latest model with dual reasoning, 6 languages, and function calling",
+    "http://localhost:8080/models/SmolLM3-3B-ONNX/": {
+      name: "SmolLM3 3B",
+      size: "~1GB",
+      description: "Lightweight model with decent conversational abilities",
       compatibility: 'excellent' as const,
       quality: 5 as const
     },
-    "HuggingFaceTB/SmolLM2-1.7B-Instruct-ONNX": {
-      name: "SmolLM2 1.7B",
-      size: "~170MB",
-      description: "Good balance of performance and size with excellent instruction following",
-      compatibility: 'excellent' as const,
-      quality: 4 as const
-    },
-    "HuggingFaceTB/SmolLM2-360M-Instruct-ONNX": {
-      name: "SmolLM2 360M",
-      size: "~40MB",
-      description: "Lightweight model with decent conversational abilities",
-      compatibility: 'excellent' as const,
-      quality: 3 as const
-    },
-    "HuggingFaceTB/SmolLM2-135M-Instruct-ONNX": {
-      name: "SmolLM2 135M",
-      size: "~15MB",
-      description: "Ultra-lightweight for very limited storage environments",
-      compatibility: 'excellent' as const,
-      quality: 2 as const
-    },
-
   };
 
   return modelInfo[model] || {
@@ -462,7 +450,7 @@ export function getTransformersModelInfo(model: TransformersModelName): {
   };
 }
 
-// /**
+// **
 //  * Check if Transformers.js is supported
 //  */
 // export function isTransformersLLMSupported(): boolean {
@@ -486,7 +474,7 @@ export function getTransformersModelInfo(model: TransformersModelName): {
 //   }
 // }
 
-// /**
+// **
 //  * Cleanup Transformers.js resources
 //  */
 // export async function cleanupTransformersLLM(): Promise<void> {

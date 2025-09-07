@@ -3,12 +3,13 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   base: mode === 'production' ? '/' : '/',
   server: {
     host: "::",
     port: 8080,
+    publicDir: 'public',
     headers: {
       // Enable SharedArrayBuffer for WebLLM
       'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -21,6 +22,14 @@ export default defineConfig(({ mode }) => ({
         secure: process.env.NODE_ENV === 'production',
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
+    },
+    configureServer({ middlewares }) {
+      middlewares.use((req, res, next) => {
+        if (req.url.endsWith('.onnx')) {
+          res.setHeader('Content-Type', 'application/octet-stream');
+        }
+        next();
+      });
     },
   },
   plugins: [

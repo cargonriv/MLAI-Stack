@@ -4,18 +4,6 @@
 
 set -e
 
-echo "🚀 Deploying backend to Railway..."
-
-# Backup original files
-echo "📋 Backing up original files..."
-cp requirements.txt requirements_original.txt
-cp main.py main_original.py
-
-# Use minimal production files
-echo "🔄 Switching to minimal production configuration..."
-cp requirements_minimal.txt requirements.txt
-cp main_minimal.py main.py
-
 # Deploy to Railway
 echo "🚀 Deploying to Railway..."
 railway up
@@ -35,11 +23,5 @@ if [ -n "$RAILWAY_URL" ]; then
 else
     echo "⚠️ Could not retrieve Railway URL. Check Railway dashboard for deployment status."
 fi
-
-# Restore original files
-echo "🔄 Restoring original files..."
-cp requirements_original.txt requirements.txt
-cp main_original.py main.py
-rm requirements_original.txt main_original.py
 
 echo "✅ Backend deployment complete!"
