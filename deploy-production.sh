@@ -26,7 +26,8 @@ rm -rf dist/
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-npm ci --production=false
+rm -rf node_modules
+npm ci
 
 # Generate embeddings (if needed)
 echo "🔍 Generating embeddings..."
