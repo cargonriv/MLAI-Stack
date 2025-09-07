@@ -110,39 +110,51 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }]);
 
         try {
-            const encodedPrompt = encodeURIComponent(trimmedInput);
-            const eventSource = new EventSource(`${config.apiUrl}/chat?prompt=${encodedPrompt}`);
+            const response = await fetch(`${config.apiUrl}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: trimmedInput }),
+            });
 
-            eventSource.onmessage = (event) => {
-                const token = event.data;
-                if (token === "[DONE]") {
-                    eventSource.close();
-                    setIsTyping(false);
-                    const endTime = Date.now();
-                    setMessages(prev => prev.map(msg => 
-                        msg.id === botMessageId ? { ...msg, processingTime: endTime - startTime } : msg
-                    ));
-                } else {
-                    setMessages(prev => prev.map(msg => 
-                        msg.id === botMessageId ? { ...msg, content: msg.content + token } : msg
-                    ));
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const reader = response.body?.getReader();
+            if (!reader) {
+                throw new Error("Failed to get readable stream from response.");
+            }
+
+            const decoder = new TextDecoder();
+            let accumulatedContent = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
                 }
-            };
+                const chunk = decoder.decode(value, { stream: true });
+                accumulatedContent += chunk;
 
-            eventSource.onerror = (err) => {
-                console.error("EventSource failed:", err);
-                setError("Failed to connect to the AI server. Please ensure it's running.");
-                eventSource.close();
-                setIsTyping(false);
-                 // Remove the placeholder message on error
-                setMessages(prev => prev.filter(msg => msg.id !== botMessageId));
-            };
+                // Update message content with each chunk
+                setMessages(prev => prev.map(msg =>
+                    msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
+                ));
+            }
+
+            setIsTyping(false);
+            const endTime = Date.now();
+            setMessages(prev => prev.map(msg =>
+                msg.id === botMessageId ? { ...msg, processingTime: endTime - startTime } : msg
+            ));
 
         } catch (err) {
             console.error("Failed to send message:", err);
-            setError("Failed to send message to the AI server.");
+            setError(`Failed to connect to the AI server: ${err.message || err}. Please ensure it's running.`);
             setIsTyping(false);
-            // Remove the placeholder message on error
             setMessages(prev => prev.filter(msg => msg.id !== botMessageId));
         }
     };
