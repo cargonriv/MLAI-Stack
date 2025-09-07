@@ -24,6 +24,7 @@ import {
     Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { config } from "@/config/environment";
 
 interface Message {
     id: string;
@@ -110,7 +111,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
         try {
             const encodedPrompt = encodeURIComponent(trimmedInput);
-            const eventSource = new EventSource(`http://localhost:8000/chat?prompt=${encodedPrompt}`);
+            const eventSource = new EventSource(`${config.apiUrl}/chat?prompt=${encodedPrompt}`);
 
             eventSource.onmessage = (event) => {
                 const token = event.data;
