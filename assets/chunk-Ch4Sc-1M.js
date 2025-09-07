@@ -1,5 +1,5 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/transformersLLM-aXVedRsf.js","assets/transformers.web.js-BNI60vAQ.js","assets/webllm-BWRc2Rtu.js","assets/chunk-DJ5HabuJ.js"])))=>i.map(i=>d[i]);
-import{c as e}from"./index-UIF2JAyp.js";import{_ as t}from"./chunk-C_tfXL3w.js";
+import{c as e}from"./index-Z9URA8dj.js";import{_ as t}from"./chunk-C_tfXL3w.js";
 /**
  * @license lucide-react v0.462.0 - ISC
  *
