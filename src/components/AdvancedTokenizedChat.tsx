@@ -130,19 +130,37 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
 
             const decoder = new TextDecoder();
             let accumulatedContent = "";
+            let buffer = ""; // To handle incomplete JSON objects
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
                     break;
                 }
-                const chunk = decoder.decode(value, { stream: true });
-                accumulatedContent += chunk;
+                buffer += decoder.decode(value, { stream: true });
 
-                // Update message content with each chunk
-                setMessages(prev => prev.map(msg =>
-                    msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
-                ));
+                // Process buffer to extract complete JSON objects, assuming each JSON object is on a new line
+                let newlineIndex;
+                while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+                    const line = buffer.substring(0, newlineIndex).trim();
+                    buffer = buffer.substring(newlineIndex + 1);
+
+                    if (line) {
+                        try {
+                            const json = JSON.parse(line);
+                            if (json.response !== undefined) { // Check if 'response' field exists
+                                accumulatedContent += json.response;
+                                setMessages(prev => prev.map(msg =>
+                                    msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
+                                ));
+                            }
+                        } catch (e) {
+                            console.warn("Could not parse JSON chunk:", line, e);
+                            // If it's not valid JSON, it might be a raw token or an error message
+                            // For now, we'll just ignore it.
+                        }
+                    }
+                }
             }
 
             setIsTyping(false);
