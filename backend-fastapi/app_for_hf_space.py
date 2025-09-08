@@ -187,13 +187,15 @@ async def chat_endpoint(request: ChatRequest):
                 # no_repeat_ngram_size can prevent repetitive output
                 # do_sample, top_p, temperature for controlling creativity
                 
-                generated_tokens = []
-                # Iterate over generated tokens to stream them
-                for output in llm_model.generate(
+                # For now, let's just yield the full response at the end of generation,
+                # but ensure the prompt removal and sentence completion are correct.
+                # This will revert to non-streaming for now, but fix the logic.
+
+                generation_output = llm_model.generate(
                     input_ids,
                     max_new_tokens=100,
                     num_return_sequences=1,
-                    pad_token_id=llm_tokenizer.eos_token_id, # Use EOS token as pad token
+                    pad_token_id=llm_tokenizer.eos_token_id,
                     eos_token_id=llm_tokenizer.eos_token_id,
                     do_sample=True,
                     top_p=0.9,
@@ -201,35 +203,22 @@ async def chat_endpoint(request: ChatRequest):
                     no_repeat_ngram_size=2,
                     return_dict_in_generate=True,
                     output_scores=True,
-                    # Add `stream=True` if the model.generate supports it directly for streaming
-                    # For now, we'll simulate streaming by yielding token by token
-                ):
-                    # Decode the newly generated token
-                    new_token = llm_tokenizer.decode(output.sequences[0][input_ids.shape[-1]:], skip_special_tokens=True)
-                    
-                    # This is a simplified streaming. In a real scenario, you'd yield token by token
-                    # and manage the accumulated text to ensure complete sentences.
-                    # For now, we'll yield the full generated text after each token for demonstration
-                    # and then apply sentence completion at the end.
-                    
-                    # This part needs careful adaptation for true token-by-token streaming
-                    # and sentence completion on the fly.
-                    # For now, we'll yield the full response at the end of generation.
-                    generated_tokens.append(output.sequences[0])
-
-                # After generation is complete, decode the full sequence
-                full_generated_sequence = generated_tokens[0] if generated_tokens else input_ids
-                generated_text_raw = llm_tokenizer.decode(full_generated_sequence[input_ids.shape[-1]:], skip_special_tokens=True)
+                )
+                
+                generated_text_raw = llm_tokenizer.decode(generation_output.sequences[0][input_ids.shape[-1]:], skip_special_tokens=True)
 
                 # More robust prompt removal
                 response_start_index = generated_text_raw.find("Answer:")
                 if response_start_index != -1:
-                    response_text = generated_text_raw[response_start_index + len("Answer:"):].strip()
+                    response_text = generated_text_raw[response_start_index + len("Answer:"):
+].strip()
                 else:
                     response_text = generated_text_raw.replace(prompt_for_llm, "").strip()
                 
-                # Ensure complete sentence and yield as a single chunk for now
+                # Ensure complete sentence
                 final_response_text = ensure_complete_sentence(response_text)
+                
+                # Yield the final response as a single chunk
                 yield json.dumps({"response": final_response_text, "processing_time": time.time() - start_time, "method": "rag_llm"}) + "\n"
 
             elif context_used and not llm_model:

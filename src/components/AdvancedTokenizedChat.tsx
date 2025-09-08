@@ -132,9 +132,24 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             }
 
             const decoder = new TextDecoder();
-            let accumulatedContent = "";
+            let accumulatedContent = ""; // Initialize to empty string
             let buffer = ""; // To handle incomplete JSON objects
             let finalProcessingTime: number | undefined;
+
+            // Find the index of the bot's message to update
+            let botMessageIndex = messages.findIndex(msg => msg.id === botMessageId);
+            if (botMessageIndex === -1) {
+                // This should not happen if placeholder is added correctly
+                // Add a new message if not found (fallback)
+                setMessages(prev => [...prev, {
+                    id: botMessageId,
+                    content: "",
+                    sender: 'bot',
+                    timestamp: new Date(),
+                    generationMethod: 'api',
+                }]);
+                botMessageIndex = messages.length; // Update index
+            }
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -152,12 +167,19 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                         try {
                             const jsonChunk = JSON.parse(line);
                             if (jsonChunk.response !== undefined) {
-                                accumulatedContent = jsonChunk.response; // The backend sends the full response in each chunk
+                                accumulatedContent = jsonChunk.response;
                                 finalProcessingTime = jsonChunk.processing_time;
+
+                                // Update the specific message in the array without re-mapping the whole array
                                 setMessages(prevMessages => {
-                                    return prevMessages.map(msg =>
-                                        msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
-                                    );
+                                    const newMessages = [...prevMessages];
+                                    if (newMessages[botMessageIndex]) {
+                                        newMessages[botMessageIndex] = {
+                                            ...newMessages[botMessageIndex],
+                                            content: accumulatedContent,
+                                        };
+                                    }
+                                    return newMessages;
                                 });
                             }
                         } catch (e) {
@@ -168,6 +190,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             }
 
             setIsTyping(false);
+            // Final update for processing time
             setMessages(prev => prev.map(msg =>
                 msg.id === botMessageId ? { ...msg, processingTime: finalProcessingTime } : msg
             ));
