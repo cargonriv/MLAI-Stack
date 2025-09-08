@@ -110,18 +110,21 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }]);
 
         try {
-            const response = await fetch(`${config.apiUrl}/chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ prompt: trimmedInput }),
-            });
+                  const response = await fetch('https://cargonriv-chatbot-backend.hf.space/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: currentMessage }),
+      });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
+      console.log('Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response body:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
             const reader = response.body?.getReader();
             if (!reader) {
@@ -148,11 +151,14 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                     if (line) {
                         try {
                             const json = JSON.parse(line);
+                            console.log('Received chunk:', json);
                             if (json.response !== undefined) { // Check if 'response' field exists
                                 accumulatedContent += json.response;
-                                setMessages(prev => prev.map(msg =>
-                                    msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
-                                ));
+                                setMessages(prevMessages => {
+                                    return prevMessages.map(msg =>
+                                        msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
+                                    );
+                                });
                             }
                         } catch (e) {
                             console.warn("Could not parse JSON chunk:", line, e);
