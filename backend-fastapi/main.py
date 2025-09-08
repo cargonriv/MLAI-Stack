@@ -9,9 +9,15 @@ import asyncio
 from llama_cpp import Llama
 from huggingface_hub import hf_hub_download
 from sentence_transformers import SentenceTransformer, util
+from pydantic import BaseModel # Added this line
 
 # Load environment variables
 load_dotenv()
+
+class ChatRequest(BaseModel): # Added this block
+    prompt: str
+    max_new_tokens: int = 512
+    temperature: float = 0.7
 
 # Configuration
 MODEL_REPO = os.getenv("MODEL_REPO")
@@ -103,11 +109,15 @@ def retrieve_context(query: str, top_k: int = 3) -> str:
     return "\n".join(context)
 
 
-@app.get("/chat")
-async def chat(prompt: str, max_new_tokens: int = 512, temperature: float = 0.7):
+@app.post("/chat")
+async def chat(request: ChatRequest):
     """
     Handle chat requests with streaming, incorporating RAG.
     """
+    prompt = request.prompt
+    max_new_tokens = request.max_new_tokens
+    temperature = request.temperature
+
     if not llm:
         raise HTTPException(status_code=503, detail="Model is not available.")
 
@@ -118,15 +128,15 @@ async def chat(prompt: str, max_new_tokens: int = 512, temperature: float = 0.7)
     if context:
         augmented_prompt = (
             f"Based on the following context, answer the question concisely and directly. "
-            f"If the context is not relevant, ignore it. Do not explain your reasoning or refer to the context.\n\n"
-            f"Context:\n{context}\n\n"
+            f"If the context is not relevant, ignore it. Do not explain your reasoning or refer to the context."
+            f"\n\nContext:\n{context}\n\n"
             f"Question: {prompt}\n\n"
             f"Answer:"
         )
     else:
         augmented_prompt = (
-            f"Answer the following question concisely and directly. Do not explain your reasoning.\n\n"
-            f"Question: {prompt}\n\n"
+            f"Answer the following question concisely and directly. Do not explain your reasoning."
+            f"\n\nQuestion: {prompt}\n\n"
             f"Answer:"
         )
     
@@ -150,6 +160,7 @@ async def chat(prompt: str, max_new_tokens: int = 512, temperature: float = 0.7)
             yield "Error generating response."
 
     return EventSourceResponse(generate())
+
 
 
 if __name__ == "__main__":
