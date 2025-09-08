@@ -110,13 +110,13 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }]);
 
         try {
-                  const response = await fetch('https://cargonriv-chatbot-backend.hf.space/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: currentMessage }),
-      });
+            const response = await fetch('https://cargonriv-chatbot-backend.hf.space/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: trimmedInput }),
+            });
 
       console.log('Response status:', response.status, response.statusText);
 
@@ -151,7 +151,6 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                     if (line) {
                         try {
                             const json = JSON.parse(line);
-                            console.log('Received chunk:', json);
                             if (json.response !== undefined) { // Check if 'response' field exists
                                 accumulatedContent += json.response;
                                 setMessages(prevMessages => {
