@@ -110,12 +110,8 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         }]);
 
         try {
-            const response = await fetch('https://cargonriv-chatbot-backend.hf.space/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: trimmedInput }),
+            const response = await fetch(`https://cargonriv-chatbot-backend.hf.space/chat?prompt=${encodeURIComponent(trimmedInput)}`, {
+                method: 'GET',
             });
 
       console.log('Response status:', response.status, response.statusText);
