@@ -307,7 +307,7 @@ export async function autoCompleteOutput(
                 completionMessages.map(m => ({ role: m.role as any, content: m.content })),
                 {
                     max_new_tokens: enhancedConfig.maxAdditionalTokens,
-                    temperature: 0.3, // Lower temperature for more focused completion
+                    temperature: 0.2, // Lower temperature for more focused completion
                     adaptive_tokens: false // Don't double-apply adaptive tokens
                 }
             );

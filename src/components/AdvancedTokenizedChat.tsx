@@ -126,13 +126,50 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-            const data = await response.json();
-            const botResponseContent = data.response;
-            const processingTime = data.processing_time;
+            const reader = response.body?.getReader();
+            if (!reader) {
+                throw new Error("Failed to get readable stream from response.");
+            }
+
+            const decoder = new TextDecoder();
+            let accumulatedContent = "";
+            let buffer = ""; // To handle incomplete JSON objects
+            let finalProcessingTime: number | undefined;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                buffer += decoder.decode(value, { stream: true });
+
+                let newlineIndex;
+                while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+                    const line = buffer.substring(0, newlineIndex).trim();
+                    buffer = buffer.substring(newlineIndex + 1);
+
+                    if (line) {
+                        try {
+                            const jsonChunk = JSON.parse(line);
+                            if (jsonChunk.response !== undefined) {
+                                accumulatedContent = jsonChunk.response; // The backend sends the full response in each chunk
+                                finalProcessingTime = jsonChunk.processing_time;
+                                setMessages(prevMessages => {
+                                    return prevMessages.map(msg =>
+                                        msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
+                                    );
+                                });
+                            }
+                        } catch (e) {
+                            console.warn("Could not parse JSON chunk:", line, e);
+                        }
+                    }
+                }
+            }
 
             setIsTyping(false);
             setMessages(prev => prev.map(msg =>
-                msg.id === botMessageId ? { ...msg, content: botResponseContent, processingTime: processingTime } : msg
+                msg.id === botMessageId ? { ...msg, processingTime: finalProcessingTime } : msg
             ));
 
         } catch (err) {
@@ -236,7 +273,7 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                                                     <div className="whitespace-pre-wrap">{message.content}</div>
                                                     {message.sender === 'bot' && message.processingTime && (
                                                         <div className="text-xs mt-1 opacity-70 text-muted-foreground">
-                                                            <span>{message.processingTime}ms</span>
+                                                            <span>{message.processingTime} seconds</span>
                                                         </div>
                                                     )}
                                                 </div>
