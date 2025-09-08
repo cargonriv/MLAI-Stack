@@ -150,10 +150,10 @@ async def chat(request: ChatRequest):
             )
             
             for output in stream:
-                yield output["choices"][0]["text"]
+                yield json.dumps({"response": output["choices"][0]["text"]}) + "\n"
                 # await asyncio.sleep(0.001)
             
-            yield "[DONE]"
+            yield json.dumps({"response": "[DONE]"}) + "\n"
 
         except Exception as e:
             print(f"Error during generation: {e}")
