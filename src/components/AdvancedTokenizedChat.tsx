@@ -126,54 +126,13 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-            const reader = response.body?.getReader();
-            if (!reader) {
-                throw new Error("Failed to get readable stream from response.");
-            }
-
-            const decoder = new TextDecoder();
-            let accumulatedContent = "";
-            let buffer = ""; // To handle incomplete JSON objects
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                    break;
-                }
-                console.log('Raw value:', value); // Add this line
-                buffer += decoder.decode(value, { stream: true });
-                console.log('Current buffer:', buffer); // Add this line
-
-                // Process buffer to extract complete JSON objects, assuming each JSON object is on a new line
-                let newlineIndex;
-                while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-                    const line = buffer.substring(0, newlineIndex).trim();
-                    buffer = buffer.substring(newlineIndex + 1);
-
-                    if (line) {
-                        try {
-                            const json = JSON.parse(line);
-                            if (json.response !== undefined) { // Check if 'response' field exists
-                                accumulatedContent += json.response;
-                                setMessages(prevMessages => {
-                                    return prevMessages.map(msg =>
-                                        msg.id === botMessageId ? { ...msg, content: accumulatedContent } : msg
-                                    );
-                                });
-                            }
-                        } catch (e) {
-                            console.warn("Could not parse JSON chunk:", line, e);
-                            // If it's not valid JSON, it might be a raw token or an error message
-                            // For now, we'll just ignore it.
-                        }
-                    }
-                }
-            }
+            const data = await response.json();
+            const botResponseContent = data.response;
+            const processingTime = data.processing_time;
 
             setIsTyping(false);
-            const endTime = Date.now();
             setMessages(prev => prev.map(msg =>
-                msg.id === botMessageId ? { ...msg, processingTime: endTime - startTime } : msg
+                msg.id === botMessageId ? { ...msg, content: botResponseContent, processingTime: processingTime } : msg
             ));
 
         } catch (err) {
