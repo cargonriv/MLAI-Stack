@@ -140,7 +140,9 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 if (done) {
                     break;
                 }
+                console.log('Raw value:', value); // Add this line
                 buffer += decoder.decode(value, { stream: true });
+                console.log('Current buffer:', buffer); // Add this line
 
                 // Process buffer to extract complete JSON objects, assuming each JSON object is on a new line
                 let newlineIndex;
