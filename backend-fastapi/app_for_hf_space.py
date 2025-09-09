@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sentence_transformers import SentenceTransformer, util
 import random
 import time
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from threading import Thread
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer
 from fastapi.responses import StreamingResponse
 
 app = FastAPI(title="ML Portfolio RAG API", version="1.0.0")
@@ -72,7 +73,7 @@ def load_models():
             model_name,
             quantization_config=quantization_config,
             device_map="auto", # Automatically maps model to available devices (GPU/CPU)
-            torch_dtype=torch.bfloat16,
+            dtype=torch.bfloat16, # Use dtype instead of torch_dtype
         )
         llm_model.eval() # Set model to evaluation mode
         print("✅ LLM model and tokenizer loaded successfully!")
@@ -177,22 +178,16 @@ async def chat_endpoint(request: ChatRequest):
                     f"Answer:"
                 )
                 
-                # Tokenize the prompt
-                input_ids = llm_tokenizer.encode(prompt_for_llm, return_tensors="pt").to(llm_model.device)
+                # Tokenize the prompt to get input_ids and attention_mask
+                inputs = llm_tokenizer(prompt_for_llm, return_tensors="pt").to(llm_model.device)
                 
-                # Generate response using model.generate for more granular control
-                # max_new_tokens is important for controlling output length
-                # num_return_sequences=1 for single response
-                # pad_token_id and eos_token_id are crucial for proper generation and stopping
-                # no_repeat_ngram_size can prevent repetitive output
-                # do_sample, top_p, temperature for controlling creativity
-                
-                # For now, let's just yield the full response at the end of generation,
-                # but ensure the prompt removal and sentence completion are correct.
-                # This will revert to non-streaming for now, but fix the logic.
+                # Set up the streamer for streaming generation
+                streamer = TextIteratorStreamer(llm_tokenizer, skip_prompt=True, skip_special_tokens=True)
 
-                generation_output = llm_model.generate(
-                    input_ids,
+                # Generation arguments
+                generation_kwargs = dict(
+                    **inputs,
+                    streamer=streamer,
                     max_new_tokens=100,
                     num_return_sequences=1,
                     pad_token_id=llm_tokenizer.eos_token_id,
@@ -201,25 +196,17 @@ async def chat_endpoint(request: ChatRequest):
                     top_p=0.9,
                     temperature=0.7,
                     no_repeat_ngram_size=2,
-                    return_dict_in_generate=True,
-                    output_scores=True,
                 )
-                
-                generated_text_raw = llm_tokenizer.decode(generation_output.sequences[0][input_ids.shape[-1]:], skip_special_tokens=True)
 
-                # More robust prompt removal
-                response_start_index = generated_text_raw.find("Answer:")
-                if response_start_index != -1:
-                    response_text = generated_text_raw[response_start_index + len("Answer:"):
-].strip()
-                else:
-                    response_text = generated_text_raw.replace(prompt_for_llm, "").strip()
-                
-                # Ensure complete sentence
-                final_response_text = ensure_complete_sentence(response_text)
-                
-                # Yield the final response as a single chunk
-                yield json.dumps({"response": final_response_text, "processing_time": time.time() - start_time, "method": "rag_llm"}) + "\n"
+                # Run generation in a separate thread
+                thread = Thread(target=llm_model.generate, kwargs=generation_kwargs)
+                thread.start()
+
+                # Yield generated tokens as they become available in SSE format
+                for new_text in streamer:
+                    if new_text:
+                        payload = {"response": new_text, "processing_time": time.time() - start_time, "method": "rag_llm_stream"}
+                        yield f"data: {json.dumps(payload)}\n\n"
 
             elif context_used and not llm_model:
                 # Fallback to raw RAG output if LLM is not loaded
@@ -231,14 +218,17 @@ async def chat_endpoint(request: ChatRequest):
                     f"Based on your query, I found the following relevant information from my knowledge base:\n\n"
                     f"{formatted_context}"
                 )
-                yield json.dumps({"response": response_text, "processing_time": time.time() - start_time, "method": "rag_no_llm"}) + "\n"
+                payload = {"response": response_text, "processing_time": time.time() - start_time, "method": "rag_no_llm"}
+                yield f"data: {json.dumps(payload)}\n\n"
             else:
                 response_text = "I couldn't find any specific information related to your query in my document knowledge base. Please try rephrasing your question."
-                yield json.dumps({"response": response_text, "processing_time": time.time() - start_time, "method": "no_context_found"}) + "\n"
+                payload = {"response": response_text, "processing_time": time.time() - start_time, "method": "no_context_found"}
+                yield f"data: {json.dumps(payload)}\n\n"
                 
         except Exception as e:
             print(f"Error in chat endpoint: {e}")
-            yield json.dumps({"response": f"Internal server error: {str(e)}", "processing_time": time.time() - start_time, "method": "error"}) + "\n"
+            payload = {"response": f"Internal server error: {str(e)}", "processing_time": time.time() - start_time, "method": "error"}
+            yield f"data: {json.dumps(payload)}\n\n"
 
     return StreamingResponse(generate_stream_response(), media_type="text/event-stream")
 

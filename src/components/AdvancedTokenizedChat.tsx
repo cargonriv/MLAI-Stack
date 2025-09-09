@@ -98,16 +98,16 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
         setError(null);
 
         const botMessageId = (Date.now() + 1).toString();
-        const startTime = Date.now();
 
-        // Add a placeholder for the bot message
-        setMessages(prev => [...prev, {
+        // Add a placeholder for the bot's response
+        const botPlaceholder: Message = {
             id: botMessageId,
             content: "",
             sender: 'bot',
             timestamp: new Date(),
             generationMethod: 'api',
-        }]);
+        };
+        setMessages(prev => [...prev, botPlaceholder]);
 
         try {
             const response = await fetch('https://cargonriv-chatbot-backend.hf.space/chat', {
@@ -118,13 +118,10 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 body: JSON.stringify({ prompt: trimmedInput }),
             });
 
-      console.log('Response status:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log('Error response body:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+            }
 
             const reader = response.body?.getReader();
             if (!reader) {
@@ -132,73 +129,47 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
             }
 
             const decoder = new TextDecoder();
-            let accumulatedContent = ""; // Initialize to empty string
-            let buffer = ""; // To handle incomplete JSON objects
-            let finalProcessingTime: number | undefined;
-
-            // Find the index of the bot's message to update
-            let botMessageIndex = messages.findIndex(msg => msg.id === botMessageId);
-            if (botMessageIndex === -1) {
-                // This should not happen if placeholder is added correctly
-                // Add a new message if not found (fallback)
-                setMessages(prev => [...prev, {
-                    id: botMessageId,
-                    content: "",
-                    sender: 'bot',
-                    timestamp: new Date(),
-                    generationMethod: 'api',
-                }]);
-                botMessageIndex = messages.length; // Update index
-            }
+            let buffer = "";
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
+                    setIsTyping(false);
                     break;
                 }
                 buffer += decoder.decode(value, { stream: true });
 
-                let newlineIndex;
-                while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-                    const line = buffer.substring(0, newlineIndex).trim();
-                    buffer = buffer.substring(newlineIndex + 1);
+                // The backend sends SSE events separated by double newlines.
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop() || ""; // The last part might be incomplete.
 
-                    if (line) {
-                        try {
-                            const jsonChunk = JSON.parse(line);
-                            if (jsonChunk.response !== undefined) {
-                                accumulatedContent = jsonChunk.response;
-                                finalProcessingTime = jsonChunk.processing_time;
-
-                                // Update the specific message in the array without re-mapping the whole array
-                                setMessages(prevMessages => {
-                                    const newMessages = [...prevMessages];
-                                    if (newMessages[botMessageIndex]) {
-                                        newMessages[botMessageIndex] = {
-                                            ...newMessages[botMessageIndex],
-                                            content: accumulatedContent,
-                                        };
-                                    }
-                                    return newMessages;
-                                });
+                for (const part of parts) {
+                    if (part.startsWith("data:")) {
+                        const jsonString = part.substring(5).trim();
+                        if (jsonString) {
+                            try {
+                                const jsonChunk = JSON.parse(jsonString);
+                                if (jsonChunk.response) {
+                                    setMessages(prevMessages =>
+                                        prevMessages.map(msg =>
+                                            msg.id === botMessageId
+                                                ? { ...msg, content: msg.content + jsonChunk.response, processingTime: jsonChunk.processing_time }
+                                                : msg
+                                        )
+                                    );
+                                }
+                            } catch (e) {
+                                console.warn("Could not parse JSON chunk:", jsonString, e);
                             }
-                        } catch (e) {
-                            console.warn("Could not parse JSON chunk:", line, e);
                         }
                     }
                 }
             }
-
-            setIsTyping(false);
-            // Final update for processing time
-            setMessages(prev => prev.map(msg =>
-                msg.id === botMessageId ? { ...msg, processingTime: finalProcessingTime } : msg
-            ));
-
         } catch (err) {
             console.error("Failed to send message:", err);
-            setError(`Failed to connect to the AI server: ${err.message || err}. Please ensure it's running.`);
+            setError(`Failed to connect to the AI server: ${err.message || 'network error'}. Please ensure it's running.`);
             setIsTyping(false);
+            // Remove the placeholder on error
             setMessages(prev => prev.filter(msg => msg.id !== botMessageId));
         }
     };
