@@ -40,6 +40,23 @@ interface AdvancedTokenizedChatProps {
     onToggle: () => void;
 }
 
+const ensureCompleteSentence = (text: string): string => {
+    if (!text) {
+        return text;
+    }
+    const lastPunctuationIndex = Math.max(
+        text.lastIndexOf('.'),
+        text.lastIndexOf('!'),
+        text.lastIndexOf('?')
+    );
+
+    if (lastPunctuationIndex !== -1) {
+        return text.substring(0, lastPunctuationIndex + 1).trim();
+    }
+    
+    return text;
+};
+
 const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
@@ -135,6 +152,18 @@ const AdvancedTokenizedChat = ({ isOpen, onToggle }: AdvancedTokenizedChatProps)
                 const { done, value } = await reader.read();
                 if (done) {
                     setIsTyping(false);
+                    
+                    // Post-process the final message to ensure it ends with a complete sentence.
+                    setMessages(prevMessages => {
+                        const newMessages = [...prevMessages];
+                        const finalBotMessageIndex = newMessages.findIndex(msg => msg.id === botMessageId);
+                        if (finalBotMessageIndex !== -1) {
+                            const finalContent = newMessages[finalBotMessageIndex].content;
+                            newMessages[finalBotMessageIndex].content = ensureCompleteSentence(finalContent);
+                        }
+                        return newMessages;
+                    });
+
                     break;
                 }
                 buffer += decoder.decode(value, { stream: true });

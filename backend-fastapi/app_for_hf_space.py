@@ -58,20 +58,14 @@ def load_models():
 
     try:
         print("🧠 Loading LLM model and tokenizer...")
-        # Configure 4-bit quantization
-        quantization_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
-        )
-        
-        model_name = "HuggingFaceTB/SmolLM3-3B-Base"
+        # Quantization is disabled for CPU performance
+        # model_name = "HuggingFaceTB/SmolLM3-3B-Base"
+        model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         
         llm_tokenizer = AutoTokenizer.from_pretrained(model_name)
         llm_model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            quantization_config=quantization_config,
+            # quantization_config=quantization_config, # Disabled for CPU performance
             device_map="auto", # Automatically maps model to available devices (GPU/CPU)
             dtype=torch.bfloat16, # Use dtype instead of torch_dtype
         )
@@ -168,15 +162,19 @@ async def chat_endpoint(request: ChatRequest):
             context_used = retrieve_context(request.prompt, top_k=request.max_context_chunks)
             
             if context_used and llm_model and llm_tokenizer:
-                # Prepare context for LLM
-                formatted_context_for_llm = "\n".join([ctx['content'] for ctx in context_used])
+                # Build the prompt using the model's chat template
+                system_prompt = "You are CargonBot, a helpful AI assistant for a project portfolio. Your goal is to answer questions about the portfolio and the person who created it, based on the provided context. Answer the user's question concisely based ONLY on the provided context. If the context is not relevant or not provided, have a simple, friendly conversation. Do not make up information or perform actions. You are a read-only assistant."
                 
-                # Construct prompt for LLM
-                prompt_for_llm = (
-                    f"Given the following context:{formatted_context_for_llm}"
-                    f"Answer the following question: {request.prompt}"
-                    f"Answer:"
-                )
+                prompt_parts = [f"<|system|>\n{system_prompt}"]
+
+                if context_used:
+                    formatted_context = "\n".join([ctx['content'] for ctx in context_used])
+                    prompt_parts.append(f"<|user|>\nContext:\n{formatted_context}\n\nQuestion: {request.prompt}")
+                else:
+                    prompt_parts.append(f"<|user|>\n{request.prompt}")
+                
+                prompt_parts.append("<|assistant|>")
+                prompt_for_llm = "\n".join(prompt_parts)
                 
                 # Tokenize the prompt to get input_ids and attention_mask
                 inputs = llm_tokenizer(prompt_for_llm, return_tensors="pt").to(llm_model.device)
@@ -188,13 +186,12 @@ async def chat_endpoint(request: ChatRequest):
                 generation_kwargs = dict(
                     **inputs,
                     streamer=streamer,
-                    max_new_tokens=100,
+                    # max_new_tokens=100,
                     num_return_sequences=1,
                     pad_token_id=llm_tokenizer.eos_token_id,
                     eos_token_id=llm_tokenizer.eos_token_id,
                     do_sample=True,
-                    top_p=0.9,
-                    temperature=0.7,
+                    temperature=0.3, # Low temperature for less randomness
                     no_repeat_ngram_size=2,
                 )
 
@@ -230,7 +227,10 @@ async def chat_endpoint(request: ChatRequest):
             payload = {"response": f"Internal server error: {str(e)}", "processing_time": time.time() - start_time, "method": "error"}
             yield f"data: {json.dumps(payload)}\n\n"
 
-    return StreamingResponse(generate_stream_response(), media_type="text/event-stream")
+    return StreamingResponse(generate_stream_response(), 
+                             media_type="text/event-stream",
+                             headers={'Cache-Control': 'no-cache',
+                                      'X-Accel-Buffering': 'no'})
 
 if __name__ == "__main__":
     import uvicorn
